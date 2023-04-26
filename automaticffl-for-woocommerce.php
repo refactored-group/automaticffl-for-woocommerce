@@ -11,13 +11,13 @@
  *
  * Copyright: (c) 2023, Refactored Group
  *
- * License: @TODO: Find appropriate License
- * License URI: @TODO: find license URL
+ * License: GPLv3
+ * License URI: https://www.gnu.org/licenses/gpl-3.0.html
  *
  * @package   FFLCommerce
  * @author    Refactored Group
  * @copyright Copyright (c) 2023, Refactored Group.
- * @license   @TODO: Verify this information
+ * @license   https://www.gnu.org/licenses/gpl-3.0.html GPLv3
  *
  * Woo: 99999:00000000000000000000000000000000 @TODO: update this when the plugin is released
  */
@@ -337,8 +337,6 @@ class WC_FFL_Loader {
     /**
      * Displays any admin notices added with \WC_FFL_Loader::add_admin_notice()
      *
-     * @internal
-     *
      * @since 1.0.0
      */
     public function admin_notices() {
@@ -354,8 +352,6 @@ class WC_FFL_Loader {
     /**
      * Adds the Documentation URI header.
      *
-     * @internal
-     *
      * @since 1.0.0
      *
      * @param string[] $headers original headers
@@ -370,8 +366,7 @@ class WC_FFL_Loader {
 
     /**
      * Determines if the server environment is compatible with this plugin.
-     *
-     * Override this method to add checks for more than just the PHP version.
+     * @TODO: Override this method to add checks for more than just the PHP version.
      *
      * @since 1.0.0
      *
@@ -413,5 +408,5 @@ class WC_FFL_Loader {
     }
 }
 
-// fire it up!
+// Start the plugin
 WC_FFL_Loader::instance();

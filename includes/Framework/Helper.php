@@ -3,7 +3,7 @@
  * FFL for WooCommerce Plugin
  * @author    Refactored Group
  * @copyright Copyright (c) 2023
- * @license   @TODO: Find appropriate license
+ * @license   https://www.gnu.org/licenses/gpl-3.0.html GPLv3
  */
 
 namespace RefactoredGroup\AutomaticFFL\Framework;
@@ -19,13 +19,12 @@ class Helper {
 	/** encoding used for mb_*() string functions */
 	const MB_ENCODING = 'UTF-8';
 
-
 	/**
 	 * Returns true if the haystack string starts with needle
 	 *
 	 * Note: case-sensitive
 	 *
-	 * @since 2.2.0
+	 * @since 1.0.0
 	 * @param string $haystack
 	 * @param string $needle
 	 * @return bool
@@ -51,7 +50,7 @@ class Helper {
 	 *
 	 * Note: case-sensitive
 	 *
-	 * @since 2.2.0
+	 * @since 1.0.0
 	 * @param string $haystack
 	 * @param string $needle
 	 * @return bool
@@ -75,7 +74,7 @@ class Helper {
 	 *
 	 * Note: case-sensitive
 	 *
-	 * @since 2.2.0
+	 * @since 1.0.0
 	 * @param string $haystack
 	 * @param string $needle
 	 * @return bool
@@ -97,43 +96,12 @@ class Helper {
 
 
 	/**
-	 * Truncates a given $string after a given $length if string is longer than
-	 * $length. The last characters will be replaced with the $omission string
-	 * for a total length not exceeding $length
-	 *
-	 * @since 2.2.0
-	 * @param string $string text to truncate
-	 * @param int $length total desired length of string, including omission
-	 * @param string $omission omission text, defaults to '...'
-	 * @return string
-	 */
-	public static function str_truncate( $string, $length, $omission = '...' ) {
-		if ( self::multibyte_loaded() ) {
-			// bail if string doesn't need to be truncated
-			if ( mb_strlen( $string, self::MB_ENCODING ) <= $length ) {
-				return $string;
-			}
-			$length -= mb_strlen( $omission, self::MB_ENCODING );
-			return mb_substr( $string, 0, $length, self::MB_ENCODING ) . $omission;
-		} else {
-			$string = self::str_to_ascii( $string );
-			// bail if string doesn't need to be truncated
-			if ( strlen( $string ) <= $length ) {
-				return $string;
-			}
-			$length -= strlen( $omission );
-			return substr( $string, 0, $length ) . $omission;
-		}
-	}
-
-
-	/**
 	 * Returns a string with all non-ASCII characters removed. This is useful
 	 * for any string functions that expect only ASCII chars and can't
 	 * safely handle UTF-8. Note this only allows ASCII chars in the range
 	 * 33-126 (newlines/carriage returns are stripped)
 	 *
-	 * @since 2.2.0
+	 * @since 1.0.0
 	 * @param string $string string to make ASCII
 	 * @return string
 	 */
@@ -149,7 +117,7 @@ class Helper {
 	 * Helper method to check if the multibyte extension is loaded, which
 	 * indicates it's safe to use the mb_*() string methods
 	 *
-	 * @since 2.2.0
+	 * @since 1.0.0
 	 * @return bool
 	 */
 	protected static function multibyte_loaded() {
@@ -157,71 +125,12 @@ class Helper {
 	}
 
 
-	/** Array functions ***************************************************/
-
-
-	/**
-	 * Insert the given element after the given key in the array
-	 *
-	 * Sample usage:
-	 *
-	 * given
-	 *
-	 * array( 'item_1' => 'foo', 'item_2' => 'bar' )
-	 *
-	 * array_insert_after( $array, 'item_1', array( 'item_1.5' => 'w00t' ) )
-	 *
-	 * becomes
-	 *
-	 * array( 'item_1' => 'foo', 'item_1.5' => 'w00t', 'item_2' => 'bar' )
-	 *
-	 * @since 2.2.0
-	 * @param array $array array to insert the given element into
-	 * @param string $insert_key key to insert given element after
-	 * @param array $element element to insert into array
-	 * @return array
-	 */
-	public static function array_insert_after( Array $array, $insert_key, Array $element ) {
-		$new_array = [];
-		foreach ( $array as $key => $value ) {
-			$new_array[ $key ] = $value;
-			if ( $insert_key == $key ) {
-				foreach ( $element as $k => $v ) {
-					$new_array[ $k ] = $v;
-				}
-			}
-		}
-		return $new_array;
-	}
-
-
-	/** Number helper functions *******************************************/
-
-
-	/**
-	 * Format a number with 2 decimal points, using a period for the decimal
-	 * separator and no thousands separator.
-	 *
-	 * Commonly used for payment gateways which require amounts in this format.
-	 *
-	 * @since 3.0.0
-	 * @param float $number
-	 * @return string
-	 */
-	public static function number_format( $number ) {
-		return number_format( (float) $number, 2, '.', '' );
-	}
-
-
-	/** WooCommerce helper functions **************************************/
-
-
 	/**
 	 * Safely gets a value from $_POST.
 	 *
 	 * If the expected data is a string also trims it.
 	 *
-	 * @since 5.5.0
+	 * @since 1.0.0
 	 *
 	 * @param string $key posted data key
 	 * @param int|float|array|bool|null|string $default default data type to return (default empty string)
@@ -244,7 +153,7 @@ class Helper {
 	 *
 	 * If the expected data is a string also trims it.
 	 *
-	 * @since 5.5.0
+	 * @since 1.0.0
 	 *
 	 * @param string $key posted data key
 	 * @param int|float|array|bool|null|string $default default data type to return (default empty string)
@@ -261,14 +170,13 @@ class Helper {
 		return $value;
 	}
 
-
 	/**
 	 * Get the count of notices added, either for all notices (default) or for one
 	 * particular notice type specified by $notice_type.
 	 *
 	 * WC notice functions are not available in the admin
 	 *
-	 * @since 3.0.2
+	 * @since 1.0.0
 	 * @param string $notice_type The name of the notice type - either error, success or notice. [optional]
 	 * @return int
 	 */
@@ -287,7 +195,7 @@ class Helper {
 	 *
 	 * WC notice functions are not available in the admin
 	 *
-	 * @since 3.0.2
+	 * @since 1.0.0
 	 * @param string $message The text to display in the notice.
 	 * @param string $notice_type The singular name of the notice type - either error, success or notice. [optional]
 	 */
@@ -304,7 +212,7 @@ class Helper {
 	 *
 	 * WC notice functions are not available in the admin
 	 *
-	 * @since 3.0.2
+	 * @since 1.0.0
 	 * @param string $message The text to display in the notice.
 	 * @param string $notice_type The singular name of the notice type - either error, success or notice. [optional]
 	 */
@@ -322,7 +230,7 @@ class Helper {
 	 * This is helpful for retrieving the actual site name instead of the
 	 * network name on multisite installations.
 	 *
-	 * @since 4.6.0
+	 * @since 1.0.0
 	 * @return string
 	 */
 	public static function get_site_name() {
@@ -330,16 +238,12 @@ class Helper {
 		return ( is_multisite() ) ? get_blog_details()->blogname : get_bloginfo( 'name' );
 	}
 
-
-	/** Misc functions ****************************************************/
-
-
 	/**
 	 * Gets the WordPress current screen.
 	 *
 	 * @see get_current_screen() replacement which is always available, unlike the WordPress core function
 	 *
-	 * @since 5.4.2
+	 * @since 1.0.0
 	 *
 	 * @return \WP_Screen|null
 	 */
@@ -356,7 +260,7 @@ class Helper {
 	 * This helps avoiding using the get_current_screen() function which is not always available,
 	 * or setting the substitute global $current_screen every time a check needs to be performed.
 	 *
-	 * @since 5.4.2
+	 * @since 1.0.0
 	 *
 	 * @param string $id id (or property) to compare
 	 * @param string $prop optional property to compare, defaults to screen id
@@ -374,7 +278,7 @@ class Helper {
 	 *
 	 * @see \WooCommerce::is_rest_api_request()
 	 *
-	 * @since 5.9.0
+	 * @since 1.0.0
 	 *
 	 * @return bool
 	 */
@@ -401,7 +305,7 @@ class Helper {
 	 *
 	 * This wrapper method ensures AJAX isn't broken in the process.
 	 *
-	 * @since 4.6.0
+	 * @since 1.0.0
 	 * @param string $message the error message
 	 * @param int $type Optional. The error type. Defaults to E_USER_NOTICE
 	 */
@@ -430,6 +334,4 @@ class Helper {
 			trigger_error( $message, $type );
 		}
 	}
-
-
 }

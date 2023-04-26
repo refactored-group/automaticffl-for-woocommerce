@@ -3,7 +3,7 @@
  * FFL for WooCommerce Plugin
  * @author    Refactored Group
  * @copyright Copyright (c) 2023
- * @license   @TODO: Find appropriate license
+ * @license   https://www.gnu.org/licenses/gpl-3.0.html GPLv3
  */
 
 namespace RefactoredGroup\AutomaticFFL;
@@ -140,7 +140,6 @@ class Plugin {
     }
 
     /**
-     *
      * Ensures only one instance is/can be loaded.
      *
      * @since 1.0.0

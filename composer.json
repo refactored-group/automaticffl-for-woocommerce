@@ -4,14 +4,5 @@
   "version": "1.0.0",
   "minimum-stability": "dev",
   "author": "Refactored Group",
-  "license": "ISC",
-  "repositories": [
-    {
-      "type": "vcs",
-      "url": "https://github.com/skyverge/wc-plugin-framework"
-    }
-  ],
-  "require" : {
-    "htmlburger/carbon-fields": "dev-development"
-  }
+  "license": "ISC"
 }

@@ -12,7 +12,7 @@
  *
  * @author    Refactored Group
  * @copyright Copyright (c) 2023 Refactored Group
- * @license   @TODO: ask William
+ * @license   https://www.gnu.org/licenses/gpl-3.0.html GPLv3
  */
 
 use RefactoredGroup\AutomaticFFL\Plugin;
