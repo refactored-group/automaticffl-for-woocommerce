@@ -49,6 +49,9 @@ class WC_FFL_Loader {
     /** This plugin's name */
     const PLUGIN_NAME = 'FFL for  WooCommerce Plugin';
 
+    /** FFL required Attribute Name */
+    const FFL_ATTRIBUTE_NAME = 'ffl-required';
+
     /** @var array admin notices */
     private $notices = array();
 
@@ -204,8 +207,8 @@ class WC_FFL_Loader {
 
             wp_die( self::PLUGIN_NAME . ' could not be activated. ' . $this->get_environment_message() );
         }
-        $this->createAttribute('FFL Required', 'ffl-required');
-        $this->createTerm('Yes', 'ffl-yes', 'ffl-required', 10);
+        $this->createAttribute('FFL Required', self::FFL_ATTRIBUTE_NAME);
+        $this->createTerm('Yes', 'ffl-yes', self::FFL_ATTRIBUTE_NAME, 10);
     }
 
     /**

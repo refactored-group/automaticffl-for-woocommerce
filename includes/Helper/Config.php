@@ -12,8 +12,7 @@ class Config {
     const FFL_STORE_HASH_CONFIG = 'wc_ffl_store_hash';
     const FFL_SANDBOX_MODE_CONFIG = 'wc_ffl_sandbox_mode';
     const FFL_GOOGLE_MAPS_API_KEY_CONFIG = 'wc_ffl_google_maps_api_key';
-    const FFL_ATTRIBUTE_LABEL = 'FFL Required';
-    const FFL_ATTRIBUTE_NAME= 'ffl_required';
+    const FFL_ATTRIBUTE_NAME = 'pa_ffl-required';
     const FFL_ATTRIBUTE_ENABLED = 'Yes';
     const FFL_ATTRIBUTE_DISABLED = 'No';
 

@@ -10,6 +10,8 @@ namespace RefactoredGroup\AutomaticFFL\Views;
 
 defined( 'ABSPATH' ) or exit;
 
+use RefactoredGroup\AutomaticFFL\Helper\Config;
+
 /**
  * @since 1.0.0
  */
@@ -29,7 +31,7 @@ class Cart {
         $total_ffl = 0;
         foreach ( $cart as $product ) {
             foreach ( $product['data']->get_attributes() as $attribute ) {
-                if ( $attribute['name'] == 'pa_ffl-required') {
+                if ( $attribute['name'] == Config::FFL_ATTRIBUTE_NAME) {
                     $total_ffl++;
                 }
             }

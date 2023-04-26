@@ -32,7 +32,7 @@ class Checkout
         $total_ffl = 0;
         foreach ($cart as $product) {
             foreach ($product['data']->get_attributes() as $attribute) {
-                if ($attribute['name'] == 'pa_ffl-required') {
+                if ($attribute['name'] == Config::FFL_ATTRIBUTE_NAME) {
                     $total_ffl++;
                 }
             }
