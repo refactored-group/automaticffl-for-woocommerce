@@ -1,0 +1,8 @@
+{
+  "name": "refactored-group/automaticffl-for-woocommerce",
+  "description": "The official Automatic FFL for Woocomerce plugin.",
+  "version": "1.0.0",
+  "minimum-stability": "dev",
+  "author": "Refactored Group",
+  "license": "ISC"
+}
