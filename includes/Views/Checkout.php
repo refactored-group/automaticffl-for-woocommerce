@@ -114,6 +114,7 @@ class Checkout
                     <div class="ffl-result-body">
                         <p class="dealer-name">{{dealer-name}}</p>
                         <p class="dealer-address">{{dealer-address}}</p>
+                        <a href="tel:{{dealer-phone}}"><p class="dealer-phone dealer-phone-formatted">{{dealer-phone}}</p></a>
                         <p class="dealer-license">{{dealer-license}}</p>
                     </div>
                     <div class="ffl-result-number">
@@ -126,6 +127,7 @@ class Checkout
                     <h2 class="heading" >{{dealer-name}}</h2>
                     <div class="body-content">
                         <p>{{dealer-address}}</p>
+                        <p><b><?php echo __( 'Phone Number' ); ?>: </b><a href="tel:{{dealer-phone}}"><span class="dealer-phone dealer-phone-formatted">{{dealer-phone}}</span></a></p>
                         <p><b><?php echo __( 'License' ); ?>: </b>{{dealer-license}}</p>
                         <p><a href="#" class="automaticffl-select-dealer-link"><?php echo __( 'Select this dealer' ); ?></a>
                         </p>
@@ -136,6 +138,7 @@ class Checkout
                 <p><?php echo __( 'Your order will be shipped to' ); ?>:</p>
                 <div class="ffl-result-body">
                     <p class="dealer-name">{{dealer-name}}</p>
+                    <p class="dealer-phone dealer-phone-formatted">{{dealer-phone}}</p>
                     <p class="dealer-address">{{dealer-address}}</p>
                     <p class="dealer-license">{{dealer-license}}</p>
                 </div>
@@ -219,6 +222,7 @@ class Checkout
                                     "{{dealer-name}}": dealer.business_name,
                                     "{{dealer-address}}": `${dealer.premise_street}, ${dealer.premise_city}, ${dealer.premise_state}`,
                                     "{{dealer-license}}": dealer.license,
+                                    "{{dealer-phone}}": dealer.phone_number,
                                     "{{result-number}}": index + 1,
                                     "{{dealer-preferred}}": dealer.preferred ? ' preferred' : '',
                                     "{{dealer-index}}": index,
@@ -254,6 +258,11 @@ class Checkout
                     }
 
                     jQuery('#ffl-searching-message').hide();
+
+                    // Format Phone Numbers
+                    jQuery('.dealer-phone-formatted').text(function(dealer_phone, text){
+                        return text.replace(/(\d{3})(\d{3})(\d{4})/, '($1)-$2-$3');
+                    });
 
                 }
                 addPopupToMarker(marker, mappedResult, dealerId) {
