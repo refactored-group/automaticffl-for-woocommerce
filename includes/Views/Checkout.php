@@ -132,13 +132,7 @@ class Checkout
                     </div>
                 </div>
             </div>
-            <div id="automaticffl-dealer-card-template">
-                <p><?php echo __( 'Your order will be shipped to' ); ?>:</p>
-                <div class="ffl-result-body">
-                    <p class="dealer-name">{{dealer-name}}</p>
-                    <p class="dealer-address">{{dealer-address}}</p>
-                    <p class="dealer-license">{{dealer-license}}</p>
-                </div>
+            <div id="automaticffl-popup-container">
             </div>
         </div>
         <?php
@@ -266,7 +260,7 @@ class Checkout
                     jQuery('#automaticffl-marker-modal' + dealerId).remove();
 
                     // Add popup to DOM so we can use later
-                    jQuery('body').append(self.formatTemplate(contentString, mappedResult));
+                    jQuery('#automaticffl-popup-container').append(self.formatTemplate(contentString, mappedResult));
                     var domElement = document.getElementById('automaticffl-marker-modal' + dealerId);
 
                     // Create popup and add to marker
@@ -284,6 +278,7 @@ class Checkout
                     // Select dealer when the link is clicked
                     jQuery('#automaticffl-marker-modal' + dealerId + ' .automaticffl-select-dealer-link').click(() => {
                         self.selectDealer(dealerId);
+                        self.toggleDealers();
                     });
                 }
                 addMarker(dealer, mappedResult) {
@@ -435,12 +430,12 @@ class Checkout
             }
 
             #search-result-list {
-                flex-flow: row wrap;
+                flex-flow: column;
                 width: 100%;
                 padding-right: 4%;
                 margin-right: 1%;
                 overflow-y: scroll;
-                height: 100%;
+                height: inherit;
                 flex-direction: column;
             }
 
@@ -572,7 +567,7 @@ class Checkout
                 display: flex;
                 background-color: transparent;
                 width: 100%;
-                height: 100px;
+                height: 70vh;
                 margin: 0;
                 padding: 0;
                 flex: 1 1 0;
@@ -640,7 +635,7 @@ class Checkout
                 border: 1px solid #f2f2f2;
                 border-right: 3px solid #cccccc;
                 margin-bottom: 20px;
-                height: 100px;
+                height: auto;
                 background: white;
             }
 
@@ -705,7 +700,8 @@ class Checkout
             #automaticffl-dealer-result-template,
             #ffl-searching-message,
             #ffl-results-message,
-            #ffl-searching-error-message {
+            #ffl-searching-error-message,
+            #automaticffl-popup-container {
                 display: none;
             }
         </style>
