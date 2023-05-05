@@ -134,15 +134,18 @@ class Checkout
                     </div>
                 </div>
             </div>
-            <div id="automaticffl-dealer-card-template">
-                <p><?php echo __( 'Your order will be shipped to' ); ?>:</p>
-                <div class="ffl-result-body">
-                    <p class="dealer-name">{{dealer-name}}</p>
-                    <p class="dealer-phone dealer-phone-formatted">{{dealer-phone}}</p>
-                    <p class="dealer-address">{{dealer-address}}</p>
-                    <p class="dealer-license">{{dealer-license}}</p>
-                </div>
+            <div id="automaticffl-popup-container">
             </div>
+        </div>
+        <div id="automaticffl-dealer-card-template">
+            <p><?php echo __( 'Your order will be shipped to' ); ?>:</p>
+            <div id="ffl-selected-dealer" class="ffl-result-body">
+                <p class="dealer-name">{{dealer-name}}</p>
+                <p class="dealer-address">{{dealer-address}}</p>
+                <p class="dealer-license">{{dealer-license}}</p>
+            </div>
+        </div>
+        <div id="automaticffl-dealer-selected">
         </div>
         <?php
     }
@@ -189,7 +192,7 @@ class Checkout
                         self.toggleDealers();
                     });
                 }
-
+                
                 selectDealer(dealer) {
                     var selectedDealer = this.fflResults[dealer];
 
@@ -201,6 +204,7 @@ class Checkout
                     jQuery('#shipping_address_1').val(selectedDealer.premise_street);
                     jQuery('#shipping_city').val(selectedDealer.premise_city);
                     jQuery('#shipping_postcode').val(selectedDealer.premise_zip);
+                    return selectedDealer;
                 }
                 parseDealersResult(dealers) {
                     var self = this;
@@ -213,6 +217,7 @@ class Checkout
 
                     if (dealers.length > 0) {
                         const resultTemplate = document.getElementById('automaticffl-dealer-result-template').innerHTML;
+                        const dealerTemplate = document.getElementById('automaticffl-dealer-card-template').innerHTML;
                         let mappedResult;
 
                         dealers.forEach((dealer, index) => {
@@ -237,6 +242,12 @@ class Checkout
                                 // Select dealer when clicking on th card result
                                 jQuery('#ffl-single-result' + index).click(() => {
                                     self.selectDealer(index);
+                                    jQuery('#automaticffl-dealer-selected').empty();
+                                    jQuery('#automaticffl-dealer-selected').append(self.formatTemplate(dealerTemplate, {
+                                        "{{dealer-name}}": dealer.business_name,
+                                        "{{dealer-address}}": `${dealer.premise_street}, ${dealer.premise_city}, ${dealer.premise_state}`,
+                                        "{{dealer-license}}": dealer.license,
+                                    }));
                                     self.toggleDealers();
                                 });
                             }
@@ -267,6 +278,8 @@ class Checkout
                 }
                 addPopupToMarker(marker, mappedResult, dealerId) {
                     var self = this;
+                    
+                    const dealerTemplate = document.getElementById('automaticffl-dealer-card-template').innerHTML;
 
                     // Get marker popup template
                     const contentString = document.getElementById('automaticffl-popup-template').innerHTML;
@@ -275,7 +288,7 @@ class Checkout
                     jQuery('#automaticffl-marker-modal' + dealerId).remove();
 
                     // Add popup to DOM so we can use later
-                    jQuery('body').append(self.formatTemplate(contentString, mappedResult));
+                    jQuery('#automaticffl-popup-container').append(self.formatTemplate(contentString, mappedResult));
                     var domElement = document.getElementById('automaticffl-marker-modal' + dealerId);
 
                     // Create popup and add to marker
@@ -292,7 +305,14 @@ class Checkout
 
                     // Select dealer when the link is clicked
                     jQuery('#automaticffl-marker-modal' + dealerId + ' .automaticffl-select-dealer-link').click(() => {
-                        self.selectDealer(dealerId);
+                        const selectedDealer = self.selectDealer(dealerId);
+                        jQuery('#automaticffl-dealer-selected').empty();
+                        jQuery('#automaticffl-dealer-selected').append(self.formatTemplate(dealerTemplate, {
+                            "{{dealer-name}}": selectedDealer.business_name,
+                            "{{dealer-address}}": `${selectedDealer.premise_street}, ${selectedDealer.premise_city}, ${selectedDealer.premise_state}`,
+                            "{{dealer-license}}": selectedDealer.license,
+                        }));
+                        self.toggleDealers();
                     });
                 }
                 addMarker(dealer, mappedResult) {
@@ -444,12 +464,12 @@ class Checkout
             }
 
             #search-result-list {
-                flex-flow: row wrap;
+                flex-flow: column;
                 width: 100%;
                 padding-right: 4%;
                 margin-right: 1%;
                 overflow-y: scroll;
-                height: 100%;
+                height: inherit;
                 flex-direction: column;
             }
 
@@ -581,7 +601,7 @@ class Checkout
                 display: flex;
                 background-color: transparent;
                 width: 100%;
-                height: 100px;
+                height: 70vh;
                 margin: 0;
                 padding: 0;
                 flex: 1 1 0;
@@ -649,7 +669,7 @@ class Checkout
                 border: 1px solid #f2f2f2;
                 border-right: 3px solid #cccccc;
                 margin-bottom: 20px;
-                height: 100px;
+                height: auto;
                 background: white;
             }
 
@@ -714,7 +734,9 @@ class Checkout
             #automaticffl-dealer-result-template,
             #ffl-searching-message,
             #ffl-results-message,
-            #ffl-searching-error-message {
+            #ffl-searching-error-message,
+            #automaticffl-popup-container,
+            #automaticffl-dealer-card-template {
                 display: none;
             }
         </style>
