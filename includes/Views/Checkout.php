@@ -57,6 +57,8 @@ class Checkout
                 <?php echo __('You have a firearm in your cart and must choose a Licensed Firearm Dealer (FFL) for the Shipping Address.'); ?>
             </div>
         </div>
+        <div id="automaticffl-dealer-selected">
+        </div>
         <button type="button" id="automaticffl-select-dealer" value="12"
                 class="button alt wp-element-button fa-search ffl-search-button"><?php echo __('Find a Dealer'); ?></button>
         <div id="automaticffl-dealer-card" class="woocomerce" style="background: #f8f8f8; color: #000000; display: none">
@@ -142,10 +144,9 @@ class Checkout
             <div id="ffl-selected-dealer" class="ffl-result-body">
                 <p class="dealer-name">{{dealer-name}}</p>
                 <p class="dealer-address">{{dealer-address}}</p>
+                <a href="tel:{{dealer-phone}}"><p><span class="dealer-phone dealer-phone-formatted">{{dealer-phone}}</span></p></a>
                 <p class="dealer-license">{{dealer-license}}</p>
             </div>
-        </div>
-        <div id="automaticffl-dealer-selected">
         </div>
         <?php
     }
@@ -192,7 +193,11 @@ class Checkout
                         self.toggleDealers();
                     });
                 }
-                
+                formatPhone() {
+                    jQuery('.dealer-phone-formatted').text(function(dealer_phone, text) {
+                        return text.replace(/(\d{3})(\d{3})(\d{4})/, '($1)-$2-$3');
+                    });
+                }
                 selectDealer(dealer) {
                     var selectedDealer = this.fflResults[dealer];
 
@@ -204,6 +209,8 @@ class Checkout
                     jQuery('#shipping_address_1').val(selectedDealer.premise_street);
                     jQuery('#shipping_city').val(selectedDealer.premise_city);
                     jQuery('#shipping_postcode').val(selectedDealer.premise_zip);
+                    jQuery('#automaticffl-select-dealer').html("Change Dealer");
+                    jQuery('#automaticffl-dealer-selected').addClass('woocommerce-message');
                     return selectedDealer;
                 }
                 parseDealersResult(dealers) {
@@ -247,8 +254,10 @@ class Checkout
                                         "{{dealer-name}}": dealer.business_name,
                                         "{{dealer-address}}": `${dealer.premise_street}, ${dealer.premise_city}, ${dealer.premise_state}`,
                                         "{{dealer-license}}": dealer.license,
+                                        "{{dealer-phone}}": dealer.phone_number,
                                     }));
                                     self.toggleDealers();
+                                    self.formatPhone();
                                 });
                             }
                         });
@@ -270,11 +279,8 @@ class Checkout
 
                     jQuery('#ffl-searching-message').hide();
 
-                    // Format Phone Numbers
-                    jQuery('.dealer-phone-formatted').text(function(dealer_phone, text){
-                        return text.replace(/(\d{3})(\d{3})(\d{4})/, '($1)-$2-$3');
-                    });
-
+                    // Format Phone Numbers on Search Results
+                    self.formatPhone();
                 }
                 addPopupToMarker(marker, mappedResult, dealerId) {
                     var self = this;
@@ -311,8 +317,10 @@ class Checkout
                             "{{dealer-name}}": selectedDealer.business_name,
                             "{{dealer-address}}": `${selectedDealer.premise_street}, ${selectedDealer.premise_city}, ${selectedDealer.premise_state}`,
                             "{{dealer-license}}": selectedDealer.license,
+                            "{{dealer-phone}}": selectedDealer.phone_number,
                         }));
                         self.toggleDealers();
+                        self.formatPhone();
                     });
                 }
                 addMarker(dealer, mappedResult) {
