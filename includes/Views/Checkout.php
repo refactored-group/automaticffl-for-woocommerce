@@ -210,7 +210,7 @@ class Checkout
                     jQuery('#shipping_city').val(selectedDealer.premise_city);
                     jQuery('#shipping_postcode').val(selectedDealer.premise_zip);
                     jQuery('#automaticffl-select-dealer').html("Change Dealer");
-                    jQuery('#automaticffl-dealer-selected').addClass('woocommerce-message');
+                    jQuery('#automaticffl-dealer-selected').addClass('automaticffl-dealer-selected');
                     return selectedDealer;
                 }
                 parseDealersResult(dealers) {
@@ -730,6 +730,19 @@ class Checkout
 
             .preferred .ffl-result-count {
                 background: #522a74;
+            }
+
+            .automaticffl-dealer-selected {
+                border: solid 2px #522a74;
+                padding: 20px 20px 0px 20px;
+                margin-bottom: 2.617924em;
+                border-left: 0.6180469716em solid #522a74;
+                color: #333333;
+                border-radius: 2px;
+            }
+
+            .automaticffl-dealer-selected a {
+                color: #333333;
             }
 
             /* Marker popup */
