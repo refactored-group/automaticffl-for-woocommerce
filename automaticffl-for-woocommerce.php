@@ -71,7 +71,7 @@ class WC_FFL_Loader {
         add_action( 'admin_init', array( $this, 'add_plugin_notices' ) );
         add_action( 'admin_notices', array( $this, 'admin_notices' ), 15 );
         add_filter( 'extra_plugin_headers', array( $this, 'add_documentation_header') );
-
+        
         // if the environment check fails, initialize the plugin
         if ( $this->is_environment_compatible() ) {
             add_action( 'plugins_loaded', array( $this, 'init_plugin' ) );
