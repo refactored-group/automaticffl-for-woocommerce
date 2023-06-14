@@ -19,7 +19,7 @@ class Config {
     /** Permanent Settings */
     const SETTING_GOOGLE_MAPS_URL = 'https://maps.googleapis.com/maps/api/js';
     const SETTING_FFL_PRODUCTION_URL = 'https://app.automaticffl.com/store-front/api';
-    const SETTING_FFL_SANDBOX_URL = 'https://sandbox.automaticffl.com/store-front/api';
+    const SETTING_FFL_SANDBOX_URL = 'https://app-stage.automaticffl.com/store-front/api';
     const SETTING_YES = 1;
     const SETTING_NO = 0;
 
