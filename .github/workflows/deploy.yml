@@ -30,17 +30,8 @@ jobs:
           key: ${{ secrets.KEY }}
           script: |
             SERVER = "${{ vars.TEST_ENV }}"
-
-            ssh wp@$SERVER <<EOF
-            cd ./www/wp-content/plugins/automaticffl-for-woocommerce/ \
-            && rm -r * \
-            && wget -O develop.zip https://github.com/refactored-group/automatic-ffl-woo/archive/refs/heads/develop.zip \
-            && unzip develop.zip \
-            && rsync -a  automatic-ffl-woo-develop/* . \
-            && rm -r automatic-ffl-woo-develop/ \
-            && rm develop.zip
-            EOF
-  
+            
+            ./redeploy-woocommerce
 
             # Show success message on console
             echo "WooCommerce Extension deployed!"
