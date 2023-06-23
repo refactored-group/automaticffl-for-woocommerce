@@ -58,9 +58,8 @@ class Plugin {
      */
     private function add_hooks() {
         // Add frontend hooks
-        add_action( 'woocommerce_before_cart', array( Cart::class, 'verify_mixed_cart' ) );
+        add_action( 'woocommerce_before_cart_table', array( Cart::class, 'verify_mixed_cart' ) );
         add_action( 'woocommerce_checkout_init', array( Checkout::class, 'verify_mixed_cart' ) );
-        add_action( 'woocommerce_check_cart_items', array( Checkout::class, 'verify_mixed_cart' ) );
 
         // Load map experience
         add_action( 'woocommerce_before_checkout_shipping_form', array( Checkout::class, 'get_ffl' ) );
