@@ -63,9 +63,7 @@ class Plugin {
         add_action( 'woocommerce_check_cart_items', array( Checkout::class, 'verify_mixed_cart' ) );
 
         // Load map experience
-        add_action( 'woocommerce_before_checkout_shipping_form', array( Checkout::class, 'get_map' ) );
-        add_action( 'woocommerce_before_checkout_shipping_form', array( Checkout::class, 'get_js' ) );
-        add_action( 'woocommerce_before_checkout_shipping_form', array( Checkout::class, 'get_css' ) );
+        add_action( 'woocommerce_before_checkout_shipping_form', array( Checkout::class, 'get_ffl' ) );
 
         // add a 'Configure' link to the plugin action links
         add_filter( 'plugin_action_links_' . plugin_basename( $this->get_plugin_file() ), array( $this, 'plugin_action_links' ) );

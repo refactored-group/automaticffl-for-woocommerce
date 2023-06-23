@@ -17,6 +17,7 @@ use RefactoredGroup\AutomaticFFL\Helper\Config;
  */
 class Checkout
 {
+    private $isFflCart = null;
     /**
      * Verifies if there are FFL products with regular products in the shopping cart.
      * If there are any, redirects customer back to the Cart page.
@@ -44,6 +45,48 @@ class Checkout
         }
     }
 
+    /**
+     * Used by the Hook to return the map when a FFL cart is loaded
+     *
+     * @since 1.0.0
+     *
+     * @return void
+     */
+    public static function get_ffl() {
+        if ( !self::is_ffl_cart() ) {
+            return;
+        }
+
+        self::get_css();
+        self::get_js();
+        self::get_map();
+    }
+
+
+    /**
+     * Returns a bool of whether the current cart has only FFL products or not
+     *
+     * @since 1.0.0
+     * @return bool
+     */
+    public static function is_ffl_cart() {
+        $cart = WC()->cart->get_cart();
+        $total_products = count($cart);
+        $total_ffl = 0;
+        foreach ( $cart as $product ) {
+            foreach ( $product['data']->get_attributes() as $attribute ) {
+                if ( $attribute['name'] == Config::FFL_ATTRIBUTE_NAME) {
+                    $total_ffl++;
+                }
+            }
+        }
+
+        if ($total_products === $total_ffl) {
+            return true;
+        }
+
+        return  false;
+    }
     /**
      *
      * @return void
@@ -113,7 +156,7 @@ class Checkout
                             </div>
                             <div class="automaticffl-map" id="automaticffl-map">
                             </div>
-                        </div>    
+                        </div>
                     </div>
                 </div>
             </div>
@@ -213,7 +256,7 @@ class Checkout
                     jQuery('#toggle-map-text, .inner-toggle').click( function () {
                         self.mapToggle();
                     });
-                }               
+                }
                 formatPhone() {
                     jQuery('.dealer-phone-formatted').text(function(dealer_phone, text) {
                         return text.replace(/(\d{3})(\d{3})(\d{4})/, '($1)-$2-$3');
@@ -223,7 +266,7 @@ class Checkout
                         jQuery("#map-toggle, .inner-toggle").toggleClass("show-map hide-map");
                         jQuery("#toggle-map-text-label").toggleClass("show-text-map-label hide-text-map-label");
                         jQuery("#toggle-map-text").toggleClass("show-text-map hide-text-map");
-                        jQuery(".show-text-map-label, .show-text-map").html("View map"); 
+                        jQuery(".show-text-map-label, .show-text-map").html("View map");
                         jQuery(".hide-text-map-label, .hide-text-map").html("Hide map");
                         jQuery(".fa-icon").toggleClass("fa-angle-double-up fa-angle-double-down");
                         jQuery("#search-result-list").toggleClass("show-list hide-list");
@@ -323,7 +366,7 @@ class Checkout
                 }
                 addPopupToMarker(marker, mappedResult, dealerId) {
                     var self = this;
-                    
+
                     const dealerTemplate = document.getElementById('automaticffl-dealer-card-template').innerHTML;
 
                     // Get marker popup template
