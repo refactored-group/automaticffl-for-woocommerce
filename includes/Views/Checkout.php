@@ -114,7 +114,7 @@ class Checkout
         </script>
         <div class="automaticffl-dealer-layer" id="automaticffl-dealer-layer">
             <div class="dealers-container">
-                <span id="close-modal-button" class="w3-button w3-display-topright">
+                <span id="automaticffl-close-modal-button" class="w3-button w3-display-topright" title="<?php echo __( 'Close' ); ?>">
                     <i class="fas fa-times"></i>
                 </span>
                 <div class="modal-container">
@@ -247,7 +247,7 @@ class Checkout
                     });
 
                     // Close button on mobile modal
-                    jQuery('#close-modal-button').click(() => {
+                    jQuery('#automaticffl-close-modal-button').click(() => {
                         jQuery('body').removeAttr('style');
                         self.toggleDealers();
                     });
@@ -733,7 +733,7 @@ class Checkout
                 width: 90%;
                 height: 100%;
                 background-color: #ffffff;
-                border-radius: 50px 0 0 0;
+                /*border-radius: 50px 0 0 0;*/
                 left: 10%;
                 position: absolute;
                 z-index: 1001;
@@ -844,8 +844,7 @@ class Checkout
             #automaticffl-popup-container,
             #automaticffl-dealer-card-template,
             .hidden,
-            .inner-toggle,
-            #close-modal-button {
+            .inner-toggle {
                 display: none;
             }
             #map-toggle {
@@ -855,6 +854,21 @@ class Checkout
                 height: 100%;
                 width: 70%;
                 position: relative;
+            }
+            #automaticffl-close-modal-button {
+                display: block;
+                position: absolute;
+                margin-left: 15px;
+                margin-top: 15px;
+                color: #8a8a8a;
+                width: 24px;
+                height: 24px;
+                text-align: center;
+                cursor: pointer;
+            }
+            #automaticffl-close-modal-button:hover {
+                background-color: #8a8a8a;
+                color: #ffffff;
             }
             @media screen and (max-width: 800px) {
                 .dealers-container {
@@ -881,9 +895,7 @@ class Checkout
                     height: 30%;
                     flex: 1 1 100%;
                 }
-                .modal-header-logo {
-                    padding-top: 0;
-                }
+
                 .automaticffl-marker-popup .heading {
                     font-size: medium;
                 }
@@ -931,12 +943,6 @@ class Checkout
                 }
                 .inner-toggle .fa-icon {
                     padding-left: 10px;
-                }
-                #close-modal-button {
-                    margin-left: 5%;
-                    padding-top: 5%;
-                    display: block;
-                    color: #767676;
                 }
                 .hide-list {
                     animation: hide-list 1s ease forwards;
