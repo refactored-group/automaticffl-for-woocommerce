@@ -31,7 +31,7 @@ jobs:
           script: |
             SERVER = "${{ vars.TEST_ENV }}"
             
-            ./redeploy-woocommerce -h "${SERVER}"
+            ./redeploy-woocommerce -h "woo74"
 
             # Show success message on console
             echo "WooCommerce Extension deployed!"
