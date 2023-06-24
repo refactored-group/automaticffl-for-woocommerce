@@ -17,7 +17,6 @@ use RefactoredGroup\AutomaticFFL\Helper\Config;
  */
 class Checkout
 {
-    private $isFflCart = null;
     /**
      * Verifies if there are FFL products with regular products in the shopping cart.
      * If there are any, redirects customer back to the Cart page.
@@ -53,7 +52,7 @@ class Checkout
      * @return void
      */
     public static function get_ffl() {
-        if ( !self::is_ffl_cart() ) {
+        if ( !Config::is_ffl_cart() ) {
             return;
         }
 
@@ -62,31 +61,6 @@ class Checkout
         self::get_map();
     }
 
-
-    /**
-     * Returns a bool of whether the current cart has only FFL products or not
-     *
-     * @since 1.0.0
-     * @return bool
-     */
-    public static function is_ffl_cart() {
-        $cart = WC()->cart->get_cart();
-        $total_products = count($cart);
-        $total_ffl = 0;
-        foreach ( $cart as $product ) {
-            foreach ( $product['data']->get_attributes() as $attribute ) {
-                if ( $attribute['name'] == Config::FFL_ATTRIBUTE_NAME) {
-                    $total_ffl++;
-                }
-            }
-        }
-
-        if ($total_products === $total_ffl) {
-            return true;
-        }
-
-        return  false;
-    }
     /**
      *
      * @return void
@@ -279,12 +253,14 @@ class Checkout
                 }
                 selectDealer(dealer) {
                     var selectedDealer = this.fflResults[dealer];
+                    console.log(selectedDealer)
 
                     // Set values to the hidden Shipping address fields
                     // @TODO: Force customer to enter First and Last Name to use here instead of the dealer's business name
                     jQuery('#shipping_first_name').val(selectedDealer.business_name);
                     jQuery('#shipping_last_name').val('.');
                     jQuery('#shipping_country').val('US');
+                    jQuery('#shipping_state').val(selectedDealer.premise_state);
                     jQuery('#shipping_address_1').val(selectedDealer.premise_street);
                     jQuery('#shipping_city').val(selectedDealer.premise_city);
                     jQuery('#shipping_postcode').val(selectedDealer.premise_zip);
