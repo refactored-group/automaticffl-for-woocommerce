@@ -59,6 +59,29 @@ class Checkout
         self::get_css();
         self::get_js();
         self::get_map();
+        self::disable_enter_key();
+    }
+
+    /**
+     * Disable enter key during the checkout to prevent the order
+     * from being submitted before a dealer is selected
+     *
+     * @since 1.0.0
+     * @return void
+     */
+    public static function disable_enter_key() {
+        ?>
+        <script>
+            jQuery(document).ready(function($) {
+                $("form").keypress(function(e) {
+                    //Enter key
+                    if (e.which == 13) {
+                        return false;
+                    }
+                });
+            });
+        </script>
+        <?php
     }
 
     /**
