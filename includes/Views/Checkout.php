@@ -73,7 +73,7 @@ class Checkout
         ?>
         <script>
             jQuery(document).ready(function($) {
-                $("form").keypress(function(e) {
+                $('form').keypress(function(e) {
                     //Enter key
                     if (e.which == 13) {
                         return false;
@@ -235,6 +235,12 @@ class Checkout
                     // Search Button on Dalers modal
                     jQuery('#automaticffl-search-button').click(() => {
                         self.getDealers();
+                    });
+
+                    jQuery('#automaticffl-search-input').keypress(function(e) {
+                        if(e.which == 13) {
+                            self.getDealers();
+                        }
                     });
 
                     // Find a Dealer button on Checkout
