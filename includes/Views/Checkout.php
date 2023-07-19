@@ -45,6 +45,46 @@ class Checkout
     }
 
     /**
+     * Used by the Hook to return the map when a FFL cart is loaded
+     *
+     * @since 1.0.0
+     *
+     * @return void
+     */
+    public static function get_ffl() {
+        if ( !Config::is_ffl_cart() ) {
+            return;
+        }
+
+        self::get_css();
+        self::get_js();
+        self::get_map();
+        self::disable_enter_key();
+    }
+
+    /**
+     * Disable enter key during the checkout to prevent the order
+     * from being submitted before a dealer is selected
+     *
+     * @since 1.0.0
+     * @return void
+     */
+    public static function disable_enter_key() {
+        ?>
+        <script>
+            jQuery(document).ready(function($) {
+                $('form').keypress(function(e) {
+                    //Enter key
+                    if (e.which == 13) {
+                        return false;
+                    }
+                });
+            });
+        </script>
+        <?php
+    }
+
+    /**
      *
      * @return void
      * @since 1.0.0
@@ -56,6 +96,8 @@ class Checkout
             <div class="woocommerce-info" role="alert">
                 <?php echo __('You have a firearm in your cart and must choose a Licensed Firearm Dealer (FFL) for the Shipping Address.'); ?>
             </div>
+        </div>
+        <div id="automaticffl-dealer-selected">
         </div>
         <button type="button" id="automaticffl-select-dealer" value="12"
                 class="button alt wp-element-button fa-search ffl-search-button"><?php echo __('Find a Dealer'); ?></button>
@@ -69,10 +111,13 @@ class Checkout
         </script>
         <div class="automaticffl-dealer-layer" id="automaticffl-dealer-layer">
             <div class="dealers-container">
+                <span id="automaticffl-close-modal-button" class="w3-button w3-display-topright" title="<?php echo __( 'Close' ); ?>">
+                    <i class="fas fa-times"></i>
+                </span>
                 <div class="modal-container">
                     <div class="modal-items">
                         <div class="ffl-search-results">
-                            <div class="modal-header-container">
+                            <div class="modal-header-container show-list">
                                 <div class="modal-header-logo">
                                     <img src="<?php echo esc_url( WCFFL()->get_plugin_url() ); ?>/assets/images/logo-grey.png">
                                 </div>
@@ -87,8 +132,8 @@ class Checkout
                                     <button type="button" id="automaticffl-search-button" value="12" class="button alt ffl-search-button"></button>
                                 </div>
                                 <div class="modal-header-search">
-                                    <p id="ffl-results-message"></p>
                                     <p id="ffl-searching-message"><?php echo __( 'Looking for dealers, please wait...' ); ?></p>
+                                    <p id="ffl-results-message"></p><span id="toggle-map-text" class="hidden show-text-map"><?php echo __( 'View map' ); ?></span>
                                     <div id="ffl-searching-error-message">
                                         <div class="woocommerce">
                                             <div class="woocommerce-error" role="alert">
@@ -97,12 +142,18 @@ class Checkout
                                         </div>
                                     </div>
                                 </div>
-                                <div class="modal-header-search" id="search-result-list">
-
+                                <div class="modal-header-search show-list" id="search-result-list">
                                 </div>
                             </div>
                         </div>
-                        <div class="automaticffl-map" id="automaticffl-map"></div>
+                        <div id="map-toggle" class="hide-map">
+                            <div class="inner-toggle hide-map">
+                                <span id="toggle-map-text-label" class="show-text-map-label"><?php echo __( 'view map' ); ?></span>
+                                <i class="fa-icon fas fa-angle-double-up"></i>
+                            </div>
+                            <div class="automaticffl-map" id="automaticffl-map">
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -129,7 +180,7 @@ class Checkout
                         <p>{{dealer-address}}</p>
                         <p><b><?php echo __( 'Phone Number' ); ?>: </b><a href="tel:{{dealer-phone}}"><span class="dealer-phone dealer-phone-formatted">{{dealer-phone}}</span></a></p>
                         <p><b><?php echo __( 'License' ); ?>: </b>{{dealer-license}}</p>
-                        <p><a href="#" class="automaticffl-select-dealer-link"><?php echo __( 'Select this dealer' ); ?></a>
+                        <p><a id="automaticffl-select-dealer-link" href="#" class="automaticffl-select-dealer-link"><?php echo __( 'Select this dealer' ); ?></a>
                         </p>
                     </div>
                 </div>
@@ -142,10 +193,9 @@ class Checkout
             <div id="ffl-selected-dealer" class="ffl-result-body">
                 <p class="dealer-name">{{dealer-name}}</p>
                 <p class="dealer-address">{{dealer-address}}</p>
+                <a href="tel:{{dealer-phone}}"><p><span class="dealer-phone dealer-phone-formatted">{{dealer-phone}}</span></p></a>
                 <p class="dealer-license">{{dealer-license}}</p>
             </div>
-        </div>
-        <div id="automaticffl-dealer-selected">
         </div>
         <?php
     }
@@ -174,6 +224,7 @@ class Checkout
                     this.fflApiUrl = '<?php echo Config::get_ffl_dealers_url(); ?>';
                     this.fflResultsTemplate = '<?php echo __( '{{results-count}} results have been found for {{search-string}}' ); ?>';
                     this.fflNoResultsTemplate = '<?php echo __( 'No dealers have been found for "{{search-string}}"' ); ?>';
+                    this.currentInfowindow = false;
 
                     this.initMap();
                     this.bindEvents();
@@ -187,23 +238,64 @@ class Checkout
                         self.getDealers();
                     });
 
+                    jQuery('#automaticffl-search-input').keypress(function(e) {
+                        if(e.which == 13) {
+                            self.getDealers();
+                        }
+                    });
+
                     // Find a Dealer button on Checkout
                     jQuery('#automaticffl-select-dealer').click(() => {
+                        jQuery('body').attr('style', 'overflow-y: hidden;');
                         self.toggleDealers();
                     });
+
+                    // Close button on mobile modal
+                    jQuery('#automaticffl-close-modal-button').click(() => {
+                        jQuery('body').removeAttr('style');
+                        self.toggleDealers();
+                    });
+
+                    // Toggle map on text or bottom bar
+                    jQuery('#toggle-map-text, .inner-toggle').click( function () {
+                        self.mapToggle();
+                    });
                 }
-                
+                formatPhone() {
+                    jQuery('.dealer-phone-formatted').text(function(dealer_phone, text) {
+                        return text.replace(/(\d{3})(\d{3})(\d{4})/, '($1)-$2-$3');
+                    });
+                }
+                mapToggle() {
+                        jQuery("#map-toggle, .inner-toggle").toggleClass("show-map hide-map");
+                        jQuery("#toggle-map-text-label").toggleClass("show-text-map-label hide-text-map-label");
+                        jQuery("#toggle-map-text").toggleClass("show-text-map hide-text-map");
+                        jQuery(".show-text-map-label, .show-text-map").html("View map");
+                        jQuery(".hide-text-map-label, .hide-text-map").html("Hide map");
+                        jQuery(".fa-icon").toggleClass("fa-angle-double-up fa-angle-double-down");
+                        jQuery("#search-result-list").toggleClass("show-list hide-list");
+                }
+                closeMap() {
+                    var map = jQuery('#map-toggle');
+                    if (map.hasClass('show-map')) {
+                        self.mapToggle();
+                    }
+                }
                 selectDealer(dealer) {
                     var selectedDealer = this.fflResults[dealer];
+                    console.log(selectedDealer)
 
                     // Set values to the hidden Shipping address fields
                     // @TODO: Force customer to enter First and Last Name to use here instead of the dealer's business name
                     jQuery('#shipping_first_name').val(selectedDealer.business_name);
                     jQuery('#shipping_last_name').val('.');
                     jQuery('#shipping_country').val('US');
+                    jQuery('#shipping_state').val(selectedDealer.premise_state);
                     jQuery('#shipping_address_1').val(selectedDealer.premise_street);
                     jQuery('#shipping_city').val(selectedDealer.premise_city);
                     jQuery('#shipping_postcode').val(selectedDealer.premise_zip);
+                    jQuery('#automaticffl-select-dealer').html("Change Dealer");
+                    jQuery('#automaticffl-dealer-selected').addClass('automaticffl-dealer-selected');
                     return selectedDealer;
                 }
                 parseDealersResult(dealers) {
@@ -237,7 +329,7 @@ class Checkout
                                 dealer.id = index;
                                 dealer.icon_url = dealer.preferred ? self.preferredMarker : self.purpleMarker;
 
-                                self.addMarker(dealer, mappedResult);
+                                self.addMarker(dealer, mappedResult, index);
 
                                 // Select dealer when clicking on th card result
                                 jQuery('#ffl-single-result' + index).click(() => {
@@ -247,8 +339,11 @@ class Checkout
                                         "{{dealer-name}}": dealer.business_name,
                                         "{{dealer-address}}": `${dealer.premise_street}, ${dealer.premise_city}, ${dealer.premise_state}`,
                                         "{{dealer-license}}": dealer.license,
+                                        "{{dealer-phone}}": dealer.phone_number,
                                     }));
+                                    jQuery('body').removeAttr("style");
                                     self.toggleDealers();
+                                    self.formatPhone();
                                 });
                             }
                         });
@@ -258,7 +353,9 @@ class Checkout
                             '{{results-count}}': dealers.length,
                             '{{search-string}}': jQuery('#automaticffl-search-input').val()
                         })).show();
-
+                        if(window.outerWidth < 800) {
+                            jQuery("#toggle-map-text").removeClass("hidden");
+                        }
                         self.fflResults = dealers;
                         self.centerMap();
                     } else {
@@ -270,15 +367,12 @@ class Checkout
 
                     jQuery('#ffl-searching-message').hide();
 
-                    // Format Phone Numbers
-                    jQuery('.dealer-phone-formatted').text(function(dealer_phone, text){
-                        return text.replace(/(\d{3})(\d{3})(\d{4})/, '($1)-$2-$3');
-                    });
-
+                    // Format Phone Numbers on Search Results
+                    self.formatPhone();
                 }
                 addPopupToMarker(marker, mappedResult, dealerId) {
                     var self = this;
-                    
+
                     const dealerTemplate = document.getElementById('automaticffl-dealer-card-template').innerHTML;
 
                     // Get marker popup template
@@ -296,6 +390,10 @@ class Checkout
                         content: domElement,
                     });
                     marker.addListener('click', () => {
+                        if (self.currentInfowindow) {
+                            self.currentInfowindow.close();
+                        }
+                        self.currentInfowindow = infowindow;
                         infowindow.open({
                             anchor: marker,
                             map: self.googleMap,
@@ -311,14 +409,18 @@ class Checkout
                             "{{dealer-name}}": selectedDealer.business_name,
                             "{{dealer-address}}": `${selectedDealer.premise_street}, ${selectedDealer.premise_city}, ${selectedDealer.premise_state}`,
                             "{{dealer-license}}": selectedDealer.license,
+                            "{{dealer-phone}}": selectedDealer.phone_number,
                         }));
+                        jQuery('body').removeAttr("style");
                         self.toggleDealers();
+                        self.formatPhone();
                     });
                 }
-                addMarker(dealer, mappedResult) {
+                addMarker(dealer, mappedResult, zIndex) {
                     var self = this;
                     var marker = new google.maps.Marker({
                         position: {lat: dealer.lat, lng: dealer.lng},
+                        zIndex,
                         map: self.googleMap,
                         label: {
                             text: (dealer.id + 1).toString(),
@@ -409,6 +511,7 @@ class Checkout
                     self.mapPositionsList = [];
                 }
                 toggleDealers() {
+                    self.closeMap();
                     var hidden = jQuery('.automaticffl-dealer-layer');
                     if (hidden.hasClass('visible')) {
                         hidden.animate({"left": "100%"}, "slow").removeClass('visible');
@@ -471,11 +574,11 @@ class Checkout
                 overflow-y: scroll;
                 height: inherit;
                 flex-direction: column;
+                padding-left: 4%;
             }
 
             #search-result-list::-webkit-scrollbar {
                 width: 10px;
-                margin;
                 right: 5px;
             }
 
@@ -499,7 +602,7 @@ class Checkout
                 display: flex;
                 background-color: transparent;
                 width: 80%;
-                margin-left: 10%;
+                margin: auto;
             }
 
             .modal-header-search p {
@@ -572,7 +675,7 @@ class Checkout
                 display: flex;
                 justify-content: center;
                 background-color: #ffffff;
-                width: 70%;
+                width: 100%;
                 height: 100%;
                 flex-grow: 1;
                 margin: 0;
@@ -601,18 +704,19 @@ class Checkout
                 display: flex;
                 background-color: transparent;
                 width: 100%;
-                height: 70vh;
+                height: 70%;
                 margin: 0;
                 padding: 0;
                 flex: 1 1 0;
                 flex-flow: row wrap;
                 place-content: flex-start;
                 align-items: flex-start;
+                overflow-y: hidden;
             }
 
             #automaticffl-dealer-layer .modal-container {
                 display: flex;
-                height: 100vh;
+                height: 100%;
                 border-radius: 50px 0 0 0;
             }
 
@@ -640,13 +744,13 @@ class Checkout
                 width: 90%;
                 height: 100%;
                 background-color: #ffffff;
-                border-radius: 50px 0 0 0;
+                /*border-radius: 50px 0 0 0;*/
                 left: 10%;
                 position: absolute;
                 z-index: 1001;
                 display: block;
                 box-shadow: rgba(0, 0, 0, 0.4) 0px 30px 90px;
-                margin-top: 1%;
+                margin-top: 0%;
             }
 
             .automaticffl-dealer-layer {
@@ -680,7 +784,7 @@ class Checkout
                 cursor: pointer;
             }
 
-            ffl-single-result:hover .ffl-result-count {
+            .ffl-single-result:hover .ffl-result-count {
                 background-color: #512a74;
             }
 
@@ -724,6 +828,19 @@ class Checkout
                 background: #522a74;
             }
 
+            .automaticffl-dealer-selected {
+                border: solid 2px #522a74;
+                padding: 20px 20px 0px 20px;
+                margin-bottom: 2.617924em;
+                border-left: 0.6180469716em solid #522a74;
+                color: #333333;
+                border-radius: 2px;
+            }
+
+            .automaticffl-dealer-selected a {
+                color: #333333;
+            }
+
             /* Marker popup */
             .automaticffl-marker-popup p {
                 color: #000000;
@@ -736,8 +853,149 @@ class Checkout
             #ffl-results-message,
             #ffl-searching-error-message,
             #automaticffl-popup-container,
-            #automaticffl-dealer-card-template {
+            #automaticffl-dealer-card-template,
+            .hidden,
+            .inner-toggle {
                 display: none;
+            }
+            #map-toggle {
+                bottom: 0;
+                margin: 0;
+                padding: 0;
+                height: 100%;
+                width: 70%;
+                position: relative;
+            }
+            #automaticffl-close-modal-button {
+                display: block;
+                position: absolute;
+                margin-left: 15px;
+                margin-top: 15px;
+                color: #8a8a8a;
+                width: 24px;
+                height: 24px;
+                text-align: center;
+                cursor: pointer;
+            }
+            #automaticffl-close-modal-button:hover {
+                background-color: #8a8a8a;
+                color: #ffffff;
+            }
+            @media screen and (max-width: 800px) {
+                .dealers-container {
+                    width: 100%;
+                    left: 0;
+                    margin-top: 0;
+                    z-index: 10000;
+                }
+                .automaticffl-dealer-layer {
+                    z-index: 10000;
+                }
+                #automaticffl-dealer-layer .modal-items {
+                    flex: 1 1 100%;
+                }
+                .ffl-search-results {
+                    width: 100%;
+                    height: 90%;
+                }
+                .automaticffl-map {
+                    height: 102%;
+                    width: 100%;
+                }
+                #automaticffl-dealer-layer .modal-header-container {
+                    height: 30%;
+                    flex: 1 1 100%;
+                }
+
+                .automaticffl-marker-popup .heading {
+                    font-size: medium;
+                }
+                #search-result-list {
+                    height: 50%;
+                    padding-left: 5%;
+                    padding-bottom: 5%;
+                }
+                .toggle-map-text {
+                    display: flex;
+                }
+                span#toggle-map-text {
+                    font-size: 13px;
+                    width: 20%;
+                }
+                p#ffl-results-message, p#ffl-searching-message {
+                    width: 75%;
+                    margin-right: 5%;
+                }
+                .show-map {
+                    animation: show-map 1s ease forwards;
+                }
+                .hide-map {
+                    animation: hide-map 1s ease forwards;
+                }
+                #map-toggle {
+                    bottom: -25%;
+                    margin: 0;
+                    padding: 0;
+                    height: 80%;
+                    width: 100%;
+                    position: relative;
+                    background-color: #512a74;
+                }
+                .inner-toggle {
+                    height: 6%;
+                    color: #ffffff;
+                    text-align: center;
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                }
+                .inner-toggle #toggle-map-text-label {
+                    text-transform: lowercase;
+                }
+                .inner-toggle .fa-icon {
+                    padding-left: 10px;
+                }
+                .hide-list {
+                    animation: hide-list 1s ease forwards;
+                }
+                .show-list {
+                    animation: show-list 1s ease forwards;
+                }
+                #automaticffl-search-input, #automaticffl-search-miles{
+                    border-radius: 0;
+                }
+                @keyframes hide-map {
+                    from {
+                        bottom: 82%;
+                    }
+                    to {
+                        bottom: 0;
+                    }
+                }
+                @keyframes show-map {
+                    from {
+                        bottom: 0;
+                    }
+                    to {
+                        bottom: 82%;
+                    }
+                }
+                @keyframes hide-list {
+                    from {
+                        height: 75%;
+                    }
+                    to {
+                        height: 30%;
+                    }
+                }
+                @keyframes show-list {
+                    from {
+                        height: 30%;
+                    }
+                    to {
+                        height: 75%;
+                    }
+                }
             }
         </style>
         <?php

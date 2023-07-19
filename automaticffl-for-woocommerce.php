@@ -2,7 +2,7 @@
 /**
  * Plugin Name: Automatic FFL for WooCommerce
  * Plugin URI: http://refactored.group/ffl/woocommerce/ @TODO: Verify if this URL exists in the website
- * Description: The official Automatic FFL for WooCommerce plugin 2
+ * Description: The official Automatic FFL for WooCommerce plugin
  * Author: Refactored Group
  * Author URI: http://refactored.group
  * Version: 1.0.0
@@ -26,6 +26,30 @@ defined( 'ABSPATH' ) or exit;
 ini_set('display_errors', 'On');
 
 define( '_FFL_LOADER_', __FILE__);
+
+spl_autoload_register(function ($class) {
+    $namespace = 'RefactoredGroup\AutomaticFFL';
+
+    // Does the class use the namespace prefix?
+    $len = strlen($namespace);
+    if (strncmp($namespace, $class, $len) !== 0) {
+        // no, move to the next registered autoloader
+        return false;
+    }
+
+    // Get the relative class name
+    $relative_class = str_replace("\\", '/', substr($class, $len + 1));
+
+    // Get the class file path
+    $file = dirname(__FILE__) . '/includes/' . $relative_class . '.php';
+
+    // if the file exists, require it
+    if (file_exists($file)) {
+        require_once $file;
+        return true;
+    }
+    return false;
+});
 
 // Plugin updates @TODO: Update when available
 #woothemes_queue_update( plugin_basename( __FILE__ ), '00000000000000000000000000000000', '99999' ); //
@@ -184,9 +208,6 @@ class WC_FFL_Loader {
             return;
         }
 
-        // autoload plugin and vendor files
-        $loader = require_once( plugin_dir_path( __FILE__ ) . 'vendor/autoload.php' );
-        $loader->addPsr4( 'RefactoredGroup\\AutomaticFFL\\', __DIR__ . '/includes' );
         require_once( plugin_dir_path( __FILE__ ) . 'includes/Functions.php' );
 
         WCFFL();

@@ -1,0 +1,59 @@
+name: Deploy release or pre-release that has just been published or edited
+
+on:
+  push:
+    branches:
+      - develop
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    environment: 'Proxy Server'
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v2
+
+      - name: Connect to VPN
+        run: |
+          echo "${{ secrets.OPENVPN_CONFIG }}" | base64 -d > config.ovpn
+          docker run -v $PWD:/vpn -d --cap-add=NET_ADMIN --device /dev/net/tun --name vpn dperson/openvpn-client -f "" -r 192.168.1.0/24
+          sleep 10
+          echo "VPN connection successful"
+
+      - name: Execute commands over ssh
+        id: executessh
+        uses: appleboy/ssh-action@master
+        with:
+          host: ${{ secrets.HOST }}
+          username: ${{ secrets.USERNAME }}
+          key: ${{ secrets.KEY }}
+          script: |
+            SERVER = "${{ vars.TEST_ENV }}"
+            
+            ./redeploy-woocommerce -h "woo74"
+
+            # Show success message on console
+            echo "WooCommerce Extension deployed!"
+
+      - name: Success deployment — Notify Slack
+        if: success()
+        uses: 8398a7/action-slack@v3
+        with:
+          status: ${{ job.status }}
+          fields: repo,message,commit,author,workflow,took
+          text: 'WooCommerce extension version has been successfully deployed to `${{ vars.TEST_ENV }}`!'
+          author_name: GitHub Actions
+        env:
+          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
+
+      - name: Failed deployment — Notify Slack
+        if: failure()
+        uses: 8398a7/action-slack@v3
+        with:
+          status: ${{ job.status }}
+          fields: repo,message,commit,author,workflow,took
+          text: 'A WooCommerce deployment has failed! See Github Actions for more details.'
+          author_name: GitHub Actions
+        env:
+          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}

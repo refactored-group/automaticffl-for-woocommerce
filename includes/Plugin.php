@@ -10,6 +10,7 @@ namespace RefactoredGroup\AutomaticFFL;
 
 use RefactoredGroup\AutomaticFFL\Views\Cart;
 use RefactoredGroup\AutomaticFFL\Views\Checkout;
+use RefactoredGroup\AutomaticFFL\Helper\Config;
 
 defined( 'ABSPATH' ) or exit;
 
@@ -34,6 +35,7 @@ class Plugin {
      */
     public function __construct() {
         $this->add_hooks();
+        $this->add_filters();
 
         if ( is_admin() ) {
             $this->admin_settings = new \RefactoredGroup\AutomaticFFL\Admin\Settings;
@@ -58,17 +60,61 @@ class Plugin {
      */
     private function add_hooks() {
         // Add frontend hooks
-        add_action( 'woocommerce_before_cart', array( Cart::class, 'verify_mixed_cart' ) );
+        add_action( 'woocommerce_before_cart_table', array( Cart::class, 'verify_mixed_cart' ) );
         add_action( 'woocommerce_checkout_init', array( Checkout::class, 'verify_mixed_cart' ) );
-        add_action( 'woocommerce_check_cart_items', array( Checkout::class, 'verify_mixed_cart' ) );
 
         // Load map experience
-        add_action( 'woocommerce_before_checkout_shipping_form', array( Checkout::class, 'get_map' ) );
-        add_action( 'woocommerce_before_checkout_shipping_form', array( Checkout::class, 'get_js' ) );
-        add_action( 'woocommerce_before_checkout_shipping_form', array( Checkout::class, 'get_css' ) );
+        add_action( 'woocommerce_before_checkout_shipping_form', array( Checkout::class, 'get_ffl' ) );
+    }
 
+    /**
+     * @since 1.0.0
+     *
+     * @return void
+     */
+    private function add_filters() {
         // add a 'Configure' link to the plugin action links
         add_filter( 'plugin_action_links_' . plugin_basename( $this->get_plugin_file() ), array( $this, 'plugin_action_links' ) );
+
+        // Clear shipping address fields in the form
+        add_filter( 'woocommerce_checkout_get_value', array( $this, 'clear_shipping_address_fields' ), 10, 2);
+
+        // Do not save shipping address
+        add_filter( 'woocommerce_checkout_update_customer_data', array( $this, 'maybe_update_customer_data' ), 10, 2 );
+    }
+
+    /**
+     * If this is a FFL cart, do not update customer account data.
+     * This prevents the dealer shipping address from being saved.
+     *
+     * @TODO: Find a way of preventing only the shipping address from being saved
+     *
+     * @since 1.0.0
+     *
+     * @param $boolean
+     * @param $checkout
+     *
+     * @return boolean
+     */
+    public function maybe_update_customer_data( $boolean, $checkout  ) {
+        if ( Config::is_ffl_cart() ) {
+            $boolean = false;
+        }
+        return $boolean;
+    }
+
+    /**
+     * @since 1.0.0
+     *
+     * @return void
+     */
+    public function clear_shipping_address_fields( $value, $input ) {
+
+        if ( strpos( $input, 'shipping_' ) !== FALSE ) {
+            $value = '';
+        }
+
+        return $value;
     }
 
     /**

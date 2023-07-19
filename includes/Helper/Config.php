@@ -19,7 +19,7 @@ class Config {
     /** Permanent Settings */
     const SETTING_GOOGLE_MAPS_URL = 'https://maps.googleapis.com/maps/api/js';
     const SETTING_FFL_PRODUCTION_URL = 'https://app.automaticffl.com/store-front/api';
-    const SETTING_FFL_SANDBOX_URL = 'https://sandbox.automaticffl.com/store-front/api';
+    const SETTING_FFL_SANDBOX_URL = 'https://app-stage.automaticffl.com/store-front/api';
     const SETTING_YES = 1;
     const SETTING_NO = 0;
 
@@ -35,6 +35,31 @@ class Config {
             return self::SETTING_FFL_SANDBOX_URL;
         }
         return self::SETTING_FFL_PRODUCTION_URL;
+    }
+
+    /**
+     * Returns a bool of whether the current cart has only FFL products or not
+     *
+     * @since 1.0.0
+     * @return bool
+     */
+    public static function is_ffl_cart() {
+        $cart = WC()->cart->get_cart();
+        $total_products = count($cart);
+        $total_ffl = 0;
+        foreach ( $cart as $product ) {
+            foreach ( $product['data']->get_attributes() as $attribute ) {
+                if ( $attribute['name'] == Config::FFL_ATTRIBUTE_NAME) {
+                    $total_ffl++;
+                }
+            }
+        }
+
+        if ($total_products === $total_ffl) {
+            return true;
+        }
+
+        return  false;
     }
 
     /**
@@ -93,5 +118,32 @@ class Config {
      */
     public static function get_google_maps_api_url() {
         return self::SETTING_GOOGLE_MAPS_URL;
+    }
+
+    /**
+     * Verifies if there are FFL products with regular products in the shopping cart.
+     * If there are any, redirects customer back to the Cart page.
+     *
+     * @return void
+     * @since 1.0.0
+     *
+     */
+    public static function verify_mixed_cart()
+    {
+        $cart = WC()->cart->get_cart();
+        $total_products = count($cart);
+        $total_ffl = 0;
+        foreach ($cart as $product) {
+            foreach ($product['data']->get_attributes() as $attribute) {
+                if ($attribute['name'] == Config::FFL_ATTRIBUTE_NAME) {
+                    $total_ffl++;
+                }
+            }
+        }
+
+        if ($total_ffl > 0 && $total_ffl < $total_products) {
+            // Redirect back to the cart where the error message will be displayed
+            wp_redirect(wc_get_cart_url());
+        }
     }
 }
