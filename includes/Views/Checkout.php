@@ -329,7 +329,7 @@ class Checkout
                                 dealer.id = index;
                                 dealer.icon_url = dealer.preferred ? self.preferredMarker : self.purpleMarker;
 
-                                self.addMarker(dealer, mappedResult);
+                                self.addMarker(dealer, mappedResult, index);
 
                                 // Select dealer when clicking on th card result
                                 jQuery('#ffl-single-result' + index).click(() => {
@@ -416,10 +416,11 @@ class Checkout
                         self.formatPhone();
                     });
                 }
-                addMarker(dealer, mappedResult) {
+                addMarker(dealer, mappedResult, zIndex) {
                     var self = this;
                     var marker = new google.maps.Marker({
                         position: {lat: dealer.lat, lng: dealer.lng},
+                        zIndex,
                         map: self.googleMap,
                         label: {
                             text: (dealer.id + 1).toString(),
