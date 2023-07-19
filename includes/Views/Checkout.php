@@ -224,6 +224,7 @@ class Checkout
                     this.fflApiUrl = '<?php echo Config::get_ffl_dealers_url(); ?>';
                     this.fflResultsTemplate = '<?php echo __( '{{results-count}} results have been found for {{search-string}}' ); ?>';
                     this.fflNoResultsTemplate = '<?php echo __( 'No dealers have been found for "{{search-string}}"' ); ?>';
+                    this.currentInfowindow = false;
 
                     this.initMap();
                     this.bindEvents();
@@ -394,6 +395,11 @@ class Checkout
                             map: self.googleMap,
                             shouldFocus: false,
                         });
+
+                        if (self.currentInfowindow) {
+                            self.currentInfowindow.close();
+                        }
+                        self.currentInfowindow = infowindow;
                     });
 
                     // Select dealer when the link is clicked
