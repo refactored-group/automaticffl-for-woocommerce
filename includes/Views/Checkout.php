@@ -390,16 +390,15 @@ class Checkout
                         content: domElement,
                     });
                     marker.addListener('click', () => {
+                        if (self.currentInfowindow) {
+                            self.currentInfowindow.close();
+                        }
+                        self.currentInfowindow = infowindow;
                         infowindow.open({
                             anchor: marker,
                             map: self.googleMap,
                             shouldFocus: false,
                         });
-
-                        if (self.currentInfowindow) {
-                            self.currentInfowindow.close();
-                        }
-                        self.currentInfowindow = infowindow;
                     });
 
                     // Select dealer when the link is clicked
