@@ -38,9 +38,13 @@ Automatic FFL for WooCommerce is a powerful extension designed to simplify the p
 ## Configuration
 
 1. After activation, go to "WooCommerce" > "Automatic FFL" to access the extension's settings.
+
 2. Check the option "Enable Automatic FFL" to enable the extension on your store frontend
+
 3. Enter your Store Hash for the FFL dealer database service (you'll receive this upon purchasing a subscription).
+
 4. Enter your Google Maps API key. If you still do not have one, [click here](https://console.cloud.google.com/projectselector2/google/maps-apis/credentials) to create it for free.
+
 5. Save your settings.
 
 ## Usage
