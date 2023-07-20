@@ -1,6 +1,6 @@
 # Automatic FFL for WooCommerce
 
-![Automatic FFL for WooCommerce](https://www.automaticffl.com/img/logos/logo.png)
+[![Automatic FFL for WooCommerce](https://www.automaticffl.com/img/logos/logo.png)](https://www.automaticffl.com/)
 
 ## Overview
 
