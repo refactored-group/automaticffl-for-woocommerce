@@ -6,19 +6,21 @@
 
 Automatic FFL™ for WooCommerce is a powerful extension designed to simplify the process of shipping firearms to Federal Firearms License (FFL) dealers when customers place orders containing firearm products. The extension seamlessly integrates with WooCommerce, adding a user-friendly interface that allows customers to select an FFL dealer near them for order pickup. With this extension, you can ensure compliance with firearm shipping regulations while providing a convenient experience for your customers.
 
-## Features
+## Features Include
 
-- Automatic detection of firearm products: When a product with the attribute "ffl-required" is added to the cart, the extension will automatically recognize it as a firearm product, prompting the FFL selection process.
+- **Simplified Firearms Shipping:** With Automatic FFL™ for WooCommerce, you can streamline the complex process of shipping firearms to FFL dealers, making it easy to comply with federal regulations.
 
-- FFL Dealer Map: A map will be displayed to customers at the checkout, showing nearby FFL dealers based on the customer's address or zipcode.
+- **Automatic Detection of Firearm Products:** When a product with the attribute "ffl-required" is added to the cart, the extension will automatically recognize it as a firearm product, prompting the FFL selection process.
 
-- Easy FFL selection: Customers can search for FFL dealers by address or zipcode, and a list of available dealers will be presented, along with a map for visual reference.
+- **FFL Dealer Map:** A map, along with a list, will be displayed to customers at the checkout, showing nearby FFL dealers based on the customer's address, zipcode, or other search criteria.
 
-- Seamless checkout integration: Once a customer selects an FFL dealer, the extension will update the shipping address with the dealer's address, ensuring a smooth and compliant checkout process.
+- **Seamless Checkout Integration:** Once a customer selects an FFL dealer, the extension will update the shipping address with the dealer's address, ensuring a smooth and compliant checkout process.
 
-- Simplified compliance: With Automatic FFL™ for WooCommerce, you can streamline the complex process of shipping firearms to FFL dealers, making it easy to comply with federal regulations.
+- **Validated by the ATF:** Our dealers database updates directly from the Bureau of Alcohol, Tobacco, Firearms and Explosives, commonly reffered to as the ATF.
 
-- Dealer's database automatically updated.
+- **Customization:** We automatically display common FFL dealers, but you have full control over which dealers show to your customers. You can also promote dealers by marking them as preferred or add information to them such as store hours or transfer fees.
+
+- **Same Day Customer Support:** If you need any assistance or have any questions, we are always here to help.
 
 ## Demo
 
@@ -26,40 +28,29 @@ Automatic FFL™ for WooCommerce is a powerful extension designed to simplify th
 
 ## Installation
 
-1. Purchase a subscription or start your 30-day free trial at [automaticffl.com/pricing](https://www.automaticffl.com/pricing/index.html).
-2. Download the latest **`automaticffl-for-woocommerce.zip`** [here](https://github.com/refactored-group/automaticffl-for-woocommerce/releases).
+For installation and setup, please follow the instructions [here](https://www.automaticffl.com/installation/woocommerce/). For manually uploading the extension, follow the instructions below.
 
-3. In your WordPress Admin Dashboard, navigate to "Plugins" and click on "Add New".
+### Manual Upload
 
-4. Click on "Upload Plugin," choose the downloaded zip file, and click "Install Now".
+1. Download the latest **`automaticffl-for-woocommerce.zip`** [here](https://github.com/refactored-group/automaticffl-for-woocommerce/releases).
 
-5. Once the installation is complete, click "Activate" to enable the extension.
+1. In your WordPress Admin Dashboard, navigate to "Plugins" and click on "Add New".
 
-## Configuration
+1. Click on "Upload Plugin," choose the downloaded zip file, and click "Install Now".
 
-1. After activation, go to "WooCommerce" > "Automatic FFL™" to access the extension's settings.
-
-2. Check the option "Enable Automatic FFL™" to enable the extension on your store frontend
-
-3. Enter your Store Hash for the FFL dealer database service (you'll receive this upon purchasing a subscription).
-
-4. Enter your Google Maps API key. If you still do not have one, [click here](https://console.cloud.google.com/projectselector2/google/maps-apis/credentials) to create it for free.
-
-5. Save your settings.
+1. Once the installation is complete, click "Activate" to enable the extension.
 
 ## Usage
 
-1. Ensure that your WooCommerce products have the attribute "ffl-required" assigned to firearm products that require shipment to an FFL dealer.
+1. When a customer adds a firearm product to their cart, the "Find a Dealer" button will automatically appear on the cart and checkout pages.
 
-2. When a customer adds a firearm product to their cart, the "Find a Dealer" button will automatically appear on the cart and checkout pages.
+1. Upon clicking the "Find a Dealer" button, a map will open, allowing the customer to search for FFL dealers by entering their address or zipcode.
 
-3. Upon clicking the "Find a Dealer" button, a map will open, allowing the customer to search for FFL dealers by entering their address or zipcode.
+1. A list of available dealers will be displayed, along with their locations on the map. The customer can select a dealer from the list or from the map.
 
-4. A list of available dealers will be displayed, along with their locations on the map. The customer can select a dealer from the list or from the map.
+1. Once the customer selects an FFL dealer, the extension will update the shipping address to the dealer's address.
 
-5. Once the customer selects an FFL dealer, the extension will update the shipping address to the dealer's address.
-
-6. The customer can proceed to complete the checkout, and the order will be shipped to the selected FFL dealer for pickup.
+1. The customer can proceed to complete the checkout, and the order will be shipped to the selected FFL dealer for pickup.
 
 ## Support and Documentation
 
@@ -68,5 +59,4 @@ For support, inquiries, or documentation, please visit [https://support.automati
 ## Changelog
 
 - **Version 1.0.0**
-    - Initial release.
-    
+  - Initial release.
