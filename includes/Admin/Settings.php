@@ -63,8 +63,8 @@ class Settings {
 	public function add_menu_item() {
 		add_submenu_page(
 			'woocommerce',
-			__( 'FFL for WooCommerce', 'automaticffl-for-woocommerce' ),
-			__( 'AutomaticFFL', 'automaticffl-for-woocommerce' ),
+			__( 'Automatic FFL™ for WooCommerce', 'automaticffl-for-woocommerce' ),
+			__( 'Automatic FFL™', 'automaticffl-for-woocommerce' ),
 			'manage_woocommerce',
 			self::PAGE_ID,
 			[ $this, 'render' ]
@@ -82,7 +82,7 @@ class Settings {
 	private function connect_to_enhanced_admin( $screen_id ) {
 		if ( is_callable( 'wc_admin_connect_page' ) ) {
             $crumbs = array(
-                __( 'Automatic FFL for WooCommerce', 'automaticffl-for-woocommerce' ),
+                __( 'Automatic FFL™ for WooCommerce', 'automaticffl-for-woocommerce' ),
             );
 			wc_admin_connect_page(
 				array(

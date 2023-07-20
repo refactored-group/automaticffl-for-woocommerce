@@ -1,10 +1,10 @@
-# Automatic FFL for WooCommerce
+# Automatic FFL™ for WooCommerce
 
 [![Automatic FFL for WooCommerce](https://www.automaticffl.com/img/logos/logo.png)](https://www.automaticffl.com/)
 
 ## Overview
 
-Automatic FFL for WooCommerce is a powerful extension designed to simplify the process of shipping firearms to Federal Firearms License (FFL) dealers when customers place orders containing firearm products. The extension seamlessly integrates with WooCommerce, adding a user-friendly interface that allows customers to select an FFL dealer near them for order pickup. With this extension, you can ensure compliance with firearm shipping regulations while providing a convenient experience for your customers.
+Automatic FFL™ for WooCommerce is a powerful extension designed to simplify the process of shipping firearms to Federal Firearms License (FFL) dealers when customers place orders containing firearm products. The extension seamlessly integrates with WooCommerce, adding a user-friendly interface that allows customers to select an FFL dealer near them for order pickup. With this extension, you can ensure compliance with firearm shipping regulations while providing a convenient experience for your customers.
 
 ## Features
 
@@ -16,7 +16,7 @@ Automatic FFL for WooCommerce is a powerful extension designed to simplify the p
 
 - Seamless checkout integration: Once a customer selects an FFL dealer, the extension will update the shipping address with the dealer's address, ensuring a smooth and compliant checkout process.
 
-- Simplified compliance: With AutomaticFFL for WooCommerce, you can streamline the complex process of shipping firearms to FFL dealers, making it easy to comply with federal regulations.
+- Simplified compliance: With Automatic FFL™ for WooCommerce, you can streamline the complex process of shipping firearms to FFL dealers, making it easy to comply with federal regulations.
 
 - Dealer's database automatically updated.
 
@@ -37,9 +37,9 @@ Automatic FFL for WooCommerce is a powerful extension designed to simplify the p
 
 ## Configuration
 
-1. After activation, go to "WooCommerce" > "Automatic FFL" to access the extension's settings.
+1. After activation, go to "WooCommerce" > "Automatic FFL™" to access the extension's settings.
 
-2. Check the option "Enable Automatic FFL" to enable the extension on your store frontend
+2. Check the option "Enable Automatic FFL™" to enable the extension on your store frontend
 
 3. Enter your Store Hash for the FFL dealer database service (you'll receive this upon purchasing a subscription).
 
