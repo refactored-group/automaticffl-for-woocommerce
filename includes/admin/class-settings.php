@@ -1,23 +1,34 @@
 <?php
 /**
  * FFL for WooCommerce Plugin
- * @author    Refactored Group
- * @copyright Copyright (c) 2023
- * @license   https://www.gnu.org/licenses/gpl-3.0.html GPLv3
+ *
+ * @package AutomaticFFL
  */
+
 namespace RefactoredGroup\AutomaticFFL\Admin;
 
-use RefactoredGroup\AutomaticFFL\Admin\Settings_Screens;
+use RefactoredGroup\AutomaticFFL\Admin\Screens;
 use RefactoredGroup\AutomaticFFL\Framework\Helper;
 
 defined( 'ABSPATH' ) || exit;
 
+/**
+ * Class Settings.
+ */
 class Settings {
 
-	/** @var string base settings page ID */
+	/**
+	 * Base settings page ID
+	 *
+	 * @var string
+	 */
 	const PAGE_ID = 'wc-ffl';
 
-	/** @var Abstract_Settings_Screen[] */
+	/**
+	 * Abstract Screens
+	 *
+	 * @var Abstract_Settings_Screen[]
+	 */
 	private $screens;
 
 	/**
@@ -38,8 +49,8 @@ class Settings {
 		add_action( 'admin_menu', array( $this, 'add_menu_item' ) );
 		add_action( 'wp_loaded', array( $this, 'save' ) );
 
-        wp_insert_term( 'red', 'pa_colors' );
-    }
+		wp_insert_term( 'red', 'pa_colors' );
+	}
 
 	/**
 	 * Collection of all screens to be displayed in the Settings page.
@@ -49,7 +60,7 @@ class Settings {
 	private function build_menu_item_array(): array {
 
 		$screens = array(
-			Settings_Screens\General::ID => new Settings_Screens\General,
+			Screens\General::ID => new Screens\General(),
 		);
 
 		return $screens;
@@ -67,7 +78,7 @@ class Settings {
 			__( 'Automatic FFL™', 'automaticffl-for-woocommerce' ),
 			'manage_woocommerce',
 			self::PAGE_ID,
-			[ $this, 'render' ]
+			array( $this, 'render' )
 		);
 		$this->connect_to_enhanced_admin( 'woocommerce_page_wc-ffl' );
 	}
@@ -77,13 +88,13 @@ class Settings {
 	 *
 	 * @since 1.0.0
 	 *
-	 * @param string $screen_id the ID to connect to
+	 * @param string $screen_id the ID to connect to.
 	 */
 	private function connect_to_enhanced_admin( $screen_id ) {
 		if ( is_callable( 'wc_admin_connect_page' ) ) {
-            $crumbs = array(
-                __( 'Automatic FFL™ for WooCommerce', 'automaticffl-for-woocommerce' ),
-            );
+			$crumbs = array(
+				__( 'Automatic FFL™ for WooCommerce', 'automaticffl-for-woocommerce' ),
+			);
 			wc_admin_connect_page(
 				array(
 					'id'        => self::PAGE_ID,
@@ -125,17 +136,19 @@ class Settings {
 		<?php
 	}
 
-
 	/**
 	 * Saves the settings page.
 	 *
 	 * @since 1.0.0
 	 */
 	public function save() {
+
 		if ( ! is_admin() || Helper::get_requested_value( 'page' ) !== self::PAGE_ID ) {
 			return;
 		}
-		$screen = $this->get_screen( Helper::get_posted_value( 'screen_id' ) );
+
+		$screen = $_POST ? $this->get_screen( Helper::get_posted_value( 'screen_id' ) ) : false; // @codingStandardsIgnoreLine
+
 		if ( ! $screen ) {
 			return;
 		}
@@ -148,10 +161,11 @@ class Settings {
 		check_admin_referer( 'wc_ffl_admin_save_' . $screen->get_id() . '_settings' );
 		try {
 			$screen->save();
-            // @TODO: Implement message handler
-            // WCFFL()->get_message_handler()->add_message( __( 'Your settings have been saved.', 'automaticffl-for-woocommerce' ) );
+			// @TODO: Implement message handler
 		} catch ( Exception $exception ) {
-            // @TODO: Implement message handler and show error message
+			// @TODO: Implement message handler and show error message
+			echo esc_html( $exception->getMessage() );
+			exit();
 		}
 	}
 
@@ -160,7 +174,7 @@ class Settings {
 	 *
 	 * @since 1.0.0
 	 *
-	 * @param string $screen_id desired screen ID
+	 * @param string $screen_id desired screen ID.
 	 * @return Abstract_Settings_Screen|null
 	 */
 	public function get_screen( $screen_id ) {
@@ -184,7 +198,7 @@ class Settings {
 		 * @param array $screens available screen objects
 		 */
 		$screens = (array) apply_filters( 'wc_ffl_admin_settings_screens', $this->screens, $this );
-		// ensure no bogus values are added via filter
+		// ensure no bogus values are added via filter.
 		$screens = array_filter(
 			$screens,
 			function( $value ) {
@@ -202,7 +216,7 @@ class Settings {
 	 * @return array
 	 */
 	public function get_tabs() {
-		$tabs = [];
+		$tabs = array();
 		foreach ( $this->get_screens() as $screen_id => $screen ) {
 			$tabs[ $screen_id ] = $screen->get_label();
 		}
