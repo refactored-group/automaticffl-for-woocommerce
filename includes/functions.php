@@ -21,7 +21,7 @@ ini_set('display_errors', 'On');
 /**
  * @since 1.0.0
  */
-function WCFFL()
+function wcffl()
 {
     return Plugin::instance();
 }
