@@ -1,0 +1,4 @@
+*** Automatic FFL for WooCommerce ***
+
+2023-07-24 - version 1.0.0
+* Initial Release.
