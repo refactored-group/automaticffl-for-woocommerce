@@ -57,7 +57,7 @@ class Settings {
 	 *
 	 * @since 1.0.0
 	 */
-	private function build_menu_item_array(): array {
+	private function build_menu_item_array() {
 
 		$screens = array(
 			Screens\General::ID => new Screens\General(),
@@ -146,8 +146,8 @@ class Settings {
 		if ( ! is_admin() || Helper::get_requested_value( 'page' ) !== self::PAGE_ID ) {
 			return;
 		}
-
-		$screen = $_POST ? $this->get_screen( Helper::get_posted_value( 'screen_id' ) ) : false; // @codingStandardsIgnoreLine
+        // phpcs:ignore
+		$screen = $_POST ? $this->get_screen( Helper::get_posted_value( 'screen_id' ) ) : false;
 
 		if ( ! $screen ) {
 			return;
