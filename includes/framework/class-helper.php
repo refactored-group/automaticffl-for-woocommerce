@@ -54,16 +54,16 @@ class Helper {
 	 * @return int|float|array|bool|null|string posted data value if key found, or default.
 	 */
 	public static function get_requested_value( $key, $default = '' ) {
-        // phpcs:disable WordPress.Security.NonceVerification.Recommended
+		// phpcs:disable WordPress.Security.NonceVerification.Recommended
 		$value = $default;
 
-        // phpcs:ignore
-        $requested_value = ! empty($_GET[ $key ]) ? wp_kses( wp_unslash( $_GET[ $key ] ), array() ) : $value;
+		// phpcs:ignore
+		$requested_value = ! empty( $_GET[ $key ] ) ? wp_kses( wp_unslash( $_GET[ $key ] ), array() ) : $value;
 
 		if ( isset( $requested_value ) ) {
 			$value = is_string( $requested_value ) ? trim( $requested_value ) : $requested_value;
 		}
-        // phpcs:enable WordPress.Security.NonceVerification.Recommended
+		// phpcs:enable WordPress.Security.NonceVerification.Recommended
 		return $value;
 	}
 

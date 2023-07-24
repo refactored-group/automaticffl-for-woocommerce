@@ -73,7 +73,7 @@ class WC_FFL_Loader {
 	 *
 	 * @return stdClass|null
 	 */
-	public function create_attribute( string $attribute_name, string $attribute_slug ) {
+	public function create_attribute( $attribute_name, $attribute_slug ) {
 		delete_transient( 'wc_attribute_taxonomies' );
 		\WC_Cache_Helper::invalidate_cache_group( 'woocommerce-attributes' );
 
@@ -149,7 +149,7 @@ class WC_FFL_Loader {
 	 *
 	 * @return WP_Term|null
 	 */
-	public function create_term( string $term_name, string $term_slug, string $taxonomy, int $order = 0 ): ?\WP_Term {
+	public function create_term( $term_name, $term_slug, $taxonomy, $order = 0 ) {
 		$taxonomy = wc_attribute_taxonomy_name( $taxonomy );
 		$term     = get_term_by( 'slug', $term_slug, $taxonomy );
 

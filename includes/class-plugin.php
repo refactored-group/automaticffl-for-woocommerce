@@ -230,7 +230,7 @@ class Plugin {
 	 * @return string|void
 	 */
 	public function get_plugin_name() {
-		return __( 'Automatic FFL™ for WooCommerce', 'automaticffl-for-woocommerce' );
+		return __( 'Automatic FFL for WooCommerce', 'automaticffl-for-woocommerce' );
 	}
 
 	/**

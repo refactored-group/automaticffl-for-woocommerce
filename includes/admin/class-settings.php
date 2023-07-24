@@ -57,7 +57,7 @@ class Settings {
 	 *
 	 * @since 1.0.0
 	 */
-	private function build_menu_item_array(): array {
+	private function build_menu_item_array() {
 
 		$screens = array(
 			Screens\General::ID => new Screens\General(),
@@ -74,8 +74,8 @@ class Settings {
 	public function add_menu_item() {
 		add_submenu_page(
 			'woocommerce',
-			__( 'Automatic FFL™ for WooCommerce', 'automaticffl-for-woocommerce' ),
-			__( 'Automatic FFL™', 'automaticffl-for-woocommerce' ),
+			__( 'Automatic FFL for WooCommerce', 'automaticffl-for-woocommerce' ),
+			__( 'Automatic FFL', 'automaticffl-for-woocommerce' ),
 			'manage_woocommerce',
 			self::PAGE_ID,
 			array( $this, 'render' )
@@ -93,7 +93,7 @@ class Settings {
 	private function connect_to_enhanced_admin( $screen_id ) {
 		if ( is_callable( 'wc_admin_connect_page' ) ) {
 			$crumbs = array(
-				__( 'Automatic FFL™ for WooCommerce', 'automaticffl-for-woocommerce' ),
+				__( 'Automatic FFL for WooCommerce', 'automaticffl-for-woocommerce' ),
 			);
 			wc_admin_connect_page(
 				array(
@@ -147,7 +147,12 @@ class Settings {
 			return;
 		}
 
-		$screen = $_POST ? $this->get_screen( Helper::get_posted_value( 'screen_id' ) ) : false; // @codingStandardsIgnoreLine
+		$screen = false;
+
+		if ( ! empty( wp_kses_post( wp_unslash( $_POST['admin_nonce'] ) ) )
+			&& wp_verify_nonce( wp_kses_post( wp_unslash( $_POST['admin_nonce'] ) ), 'admin_nonce' ) ) {
+			$screen = $_POST ? $this->get_screen( Helper::get_posted_value( 'screen_id' ) ) : false;
+		}
 
 		if ( ! $screen ) {
 			return;
