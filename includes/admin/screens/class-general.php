@@ -44,11 +44,11 @@ class General extends Abstract_Settings_Screen {
 			),
 			array(
 				'id'      => Config::FFL_STATUS,
-				'title'   => __( 'Enable Automatic FFL™', 'automaticffl-for-woocommerce' ),
+				'title'   => __( 'Enable Automatic FFL', 'automaticffl-for-woocommerce' ),
 				'type'    => 'checkbox',
 				'label'   => 'Label',
 				'default' => 'no',
-				'desc'    => __( 'Enable or disable Automatic FFL™ on your store.', 'automaticffl-for-woocommerce' ),
+				'desc'    => __( 'Enable or disable Automatic FFL on your store.', 'automaticffl-for-woocommerce' ),
 			),
 			array(
 				'id'      => Config::FFL_SANDBOX_MODE_CONFIG,
