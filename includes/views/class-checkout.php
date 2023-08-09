@@ -314,7 +314,6 @@ class Checkout {
 
 						dealers.forEach((dealer, index) => {
 
-							if (dealer.enabled === true) {
 								mappedResult = {
 									"{{dealer-name}}": dealer.business_name,
 									"{{dealer-address}}": `${dealer.premise_street}, ${dealer.premise_city}, ${dealer.premise_state}`,
@@ -345,7 +344,6 @@ class Checkout {
 									self.toggleDealers();
 									self.formatPhone();
 								});
-							}
 						});
 
 						// Show results message
