@@ -26,6 +26,9 @@ class Checkout {
 	 * @since 1.0.0
 	 */
 	public static function verify_mixed_cart() {
+		
+		if (is_admin()) return false;
+		
 		$cart           = WC()->cart->get_cart();
 		$total_products = count( $cart );
 		$total_ffl      = 0;
