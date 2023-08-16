@@ -33,10 +33,11 @@ class Checkout {
 		$total_products = count( $cart );
 		$total_ffl      = 0;
 		foreach ( $cart as $product ) {
-			foreach ( $product['data']->get_attributes() as $attribute ) {
-				if ( Config::FFL_ATTRIBUTE_NAME === $attribute['name'] ) {
-					$total_ffl++;
-				}
+			$product_id = $product['product_id'];
+			$ffl_required = get_post_meta($product_id, '_ffl_required', true);
+			
+			if ( $ffl_required === 'yes' ) {
+				$total_ffl++;
 			}
 		}
 

@@ -26,9 +26,6 @@ class WC_FFL_Loader {
 	/** This plugin's name */
 	const PLUGIN_NAME = 'FFL for WooCommerce Plugin';
 
-	/** FFL required Attribute Name */
-	const FFL_ATTRIBUTE_NAME = 'ffl-required';
-
 	/**
 	 * Admin notices
 	 *
@@ -61,113 +58,6 @@ class WC_FFL_Loader {
 		if ( $this->is_environment_compatible() ) {
 			add_action( 'plugins_loaded', array( $this, 'init_plugin' ) );
 		}
-	}
-
-	/**
-	 * Creates a product attribute. Inspired by WC_Helper_Product
-	 *
-	 * @since 1.0.0
-	 *
-	 * @param string $attribute_name Attribute Name.
-	 * @param string $attribute_slug Attribute Slug.
-	 *
-	 * @return stdClass|null
-	 */
-	public function create_attribute( $attribute_name, $attribute_slug ) {
-		delete_transient( 'wc_attribute_taxonomies' );
-		\WC_Cache_Helper::invalidate_cache_group( 'woocommerce-attributes' );
-
-		$attribute_labels  = wp_list_pluck( wc_get_attribute_taxonomies(), 'attribute_label', 'attribute_name' );
-		$attribute_wc_name = array_search( $attribute_slug, $attribute_labels, true );
-
-		if ( ! $attribute_wc_name ) {
-			$attribute_wc_name = wc_sanitize_taxonomy_name( $attribute_slug );
-		}
-
-		$attribute_id = wc_attribute_taxonomy_id_by_name( $attribute_wc_name );
-		if ( ! $attribute_id ) {
-			$taxonomy_name = wc_attribute_taxonomy_name( $attribute_wc_name );
-			unregister_taxonomy( $taxonomy_name );
-			$attribute_id = wc_create_attribute(
-				array(
-					'name'         => $attribute_name,
-					'slug'         => $attribute_slug,
-					'type'         => 'select',
-					'order_by'     => 'menu_order',
-					'has_archives' => 0,
-				)
-			);
-
-			register_taxonomy(
-				$taxonomy_name,
-				/**
-				 * Create a new taxonomy object.
-				 *
-				 * @since 1.0.0
-				 */
-				apply_filters(
-					'woocommerce_taxonomy_objects_' . $taxonomy_name,
-					array(
-						'product',
-					)
-				),
-				/**
-				 * Filter to create a new attribute
-				 *
-				 * @since 1.0.0
-				 *
-				 * @param string  $hook_name Hook name.
-				 * @param array   $arguments Hook arguments.
-				 */
-				apply_filters(
-					'woocommerce_taxonomy_args_' . $taxonomy_name,
-					array(
-						'labels'       => array(
-							'name' => $attribute_slug,
-						),
-						'hierarchical' => false,
-						'show_ui'      => false,
-						'query_var'    => true,
-						'rewrite'      => false,
-					)
-				)
-			);
-		}
-
-		return wc_get_attribute( $attribute_id );
-	}
-
-	/**
-	 * Create a new Term. Inspired by WC_Helper_Product
-	 *
-	 * @since 1.0.0
-	 *
-	 * @param string $term_name Term name.
-	 * @param string $term_slug Term slug.
-	 * @param string $taxonomy Taxonomy.
-	 * @param int    $order Order.
-	 *
-	 * @return WP_Term|null
-	 */
-	public function create_term( $term_name, $term_slug, $taxonomy, $order = 0 ) {
-		$taxonomy = wc_attribute_taxonomy_name( $taxonomy );
-		$term     = get_term_by( 'slug', $term_slug, $taxonomy );
-
-		if ( ! $term ) {
-			$term = wp_insert_term(
-				$term_name,
-				$taxonomy,
-				array(
-					'slug' => $term_slug,
-				)
-			);
-			$term = get_term_by( 'id', $term['term_id'], $taxonomy );
-			if ( $term ) {
-				update_term_meta( $term->term_id, 'order', $order );
-			}
-		}
-
-		return $term;
 	}
 
 	/**
@@ -221,8 +111,6 @@ class WC_FFL_Loader {
 
 			wp_die( esc_html( self::PLUGIN_NAME . ' could not be activated. ' . $this->get_environment_message() ) );
 		}
-		$this->create_attribute( 'FFL Required', self::FFL_ATTRIBUTE_NAME );
-		$this->create_term( 'Yes', 'ffl-yes', self::FFL_ATTRIBUTE_NAME, 10 );
 	}
 
 	/**
