@@ -47,6 +47,66 @@ class Checkout {
 		}
 	}
 
+	public static function add_automaticffl_checkout_field($checkout) {
+		if( Config::is_ffl_cart() ){
+			woocommerce_form_field('ffl_license_field', array(
+				'type' => 'text',
+				'class' => array('hidden'),
+				'label' => __('FFL License'),
+				'placeholder' => __('FFL License'),
+				'required' => true,
+			), $checkout->get_value('ffl_license_field'));
+		}
+	}
+
+	public static function save_automaticffl_checkout_field_value($order_id) {
+		if (!empty($_POST['ffl_license_field'])) {
+			update_post_meta($order_id, '_ffl_license_field', sanitize_text_field($_POST['ffl_license_field']));
+		}
+	}
+
+	public static function after_checkout_create_order($order_id) {
+		if( Config::is_ffl_cart() ){
+			$ffl_license = get_post_meta($order_id, '_ffl_license_field', true);
+
+			$order = wc_get_order($order_id);
+
+			$order->add_order_note('FFL License: ' . $ffl_license);
+			$order->save();
+		}
+	}
+
+	public static function automaticffl_custom_fields( $fields ) {
+		if( Config::is_ffl_cart() ){
+				$fields['shipping']['shipping_phone'] = array(
+				'label'		=>	__('Dealer Phone', 'automaticffl-for-woocommerce'),
+				'placeholder'   => _x('Dealer Phone', 'placeholder', 'automaticffl-for-woocommerce'),
+				'required'  => true,
+				'class'     => array('hidden'),
+				'clear'     => true
+			);
+		}
+		return $fields;
+	}
+
+	/**
+	 * Check if there's a logged-in user and returns it's First and Last name.
+	 * @return array
+	 * @since 1.0.0
+	 */
+	public static function get_user_name() {
+		if(is_user_logged_in()){
+			$current_user = wp_get_current_user();
+			$first_name = $current_user->first_name;
+			$last_name = $current_user->last_name;
+
+			if( ! empty($first_name) && ! empty($last_name)){
+				return array('first_name' => $first_name, 'last_name' => $last_name);
+			}
+		}
+		return array( 'first_name' => 'FFL', 'last_name' => 'Dealer');
+	}
+
 	/**
 	 * Used by the Hook to return the map when a FFL cart is loaded.
 	 *
@@ -94,6 +154,7 @@ class Checkout {
 	 * @since 1.0.0
 	 */
 	public static function get_map() {
+		$user_name = self::get_user_name();
 		?>
 		<div class="woocommerce">
 			<div class="woocommerce-info" role="alert">
@@ -194,6 +255,7 @@ class Checkout {
 		<div id="automaticffl-dealer-card-template">
 			<p><?php echo esc_html( 'Your order will be shipped to' ); ?>:</p>
 			<div id="ffl-selected-dealer" class="ffl-result-body">
+				<p class="customer-name"><?php echo $user_name['first_name'] . ' ' . $user_name['last_name'] ?></p>
 				<p class="dealer-name">{{dealer-name}}</p>
 				<p class="dealer-address">{{dealer-address}}</p>
 				<a href="tel:{{dealer-phone}}"><p><span class="dealer-phone dealer-phone-formatted">{{dealer-phone}}</span></p></a>
@@ -210,6 +272,7 @@ class Checkout {
 	 * @since 1.0.0
 	 */
 	public static function get_js() {
+		$user_name = self::get_user_name();
 		?>
 		<script>
 			// Set Google Maps API Key
@@ -290,8 +353,12 @@ class Checkout {
 
 					// Set values to the hidden Shipping address fields
 					// @TODO: Force customer to enter First and Last Name to use here instead of the dealer's business name
-					jQuery('#shipping_first_name').val(selectedDealer.business_name);
-					jQuery('#shipping_last_name').val('.');
+					jQuery('#shipping_first_name').val('<?php echo $user_name['first_name'] ?>');
+					jQuery('#shipping_last_name').val('<?php echo $user_name['last_name'] ?>');
+					jQuery('#shipping_company').val(selectedDealer.business_name);
+					jQuery('#shipping_company').val(selectedDealer.business_name);
+					jQuery('#ffl_license_field').val(selectedDealer.license);
+					jQuery('#shipping_phone').val(selectedDealer.phone_number);
 					jQuery('#shipping_country').val('US');
 					jQuery('#shipping_state').val(selectedDealer.premise_state);
 					jQuery('#shipping_address_1').val(selectedDealer.premise_street);
