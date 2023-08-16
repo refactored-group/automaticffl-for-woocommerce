@@ -10,7 +10,7 @@ Automatic FFL for WooCommerce is a powerful extension designed to simplify the p
 
 - **Simplified Firearms Shipping:** With Automatic FFL for WooCommerce, you can streamline the complex process of shipping firearms to FFL dealers, making it easy to comply with federal regulations.
 
-- **Automatic Detection of Firearm Products:** When a product with the attribute "ffl-required" is added to the cart, the extension will automatically recognize it as a firearm product, prompting the FFL selection process.
+- **Automatic Detection of Firearm Products:** When a product is selected on the product page as _FFL Required_ and is added to the cart, the extension will automatically recognize it as a firearm product, prompting the FFL selection process.
 
 - **FFL Dealer Map:** A map, along with a list, will be displayed to customers at the checkout, showing nearby FFL dealers based on the customer's address, zipcode, or other search criteria.
 

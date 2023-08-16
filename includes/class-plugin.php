@@ -76,6 +76,7 @@ class Plugin {
 		add_action('woocommerce_after_order_notes', array(Checkout::class, 'add_automaticffl_checkout_field'));
 		add_action('woocommerce_checkout_update_order_meta', array(Checkout::class, 'after_checkout_create_order'), 20, 2);
 		add_action('woocommerce_checkout_update_order_meta', array(Checkout::class, 'save_automaticffl_checkout_field_value'));
+		add_action( 'woocommerce_process_product_meta', array($this, 'save_ffl_required'), 10, 3  );
 	}
 
 	/**
@@ -95,6 +96,7 @@ class Plugin {
 		// Do not save shipping address.
 		add_filter( 'woocommerce_checkout_update_customer_data', array( $this, 'maybe_update_customer_data' ), 10, 2 );
 		add_filter( 'woocommerce_checkout_fields', array(Checkout::class, 'automaticffl_custom_fields') );
+		add_filter( 'product_type_options', array($this, 'ffl_required'), 100, 1 );
 	}
 
 	/**
@@ -114,6 +116,24 @@ class Plugin {
 			$boolean = false;
 		}
 		return $boolean;
+	}
+
+	public function ffl_required($product_type_options) {
+		$product_type_options['ffl_required'] = [
+			'id'            => '_ffl_required',
+			'value'			=> get_post_meta( get_the_ID(), 'ffl_required', true),
+			'wrapper_class' => 'show_if_simple show_if_variable show_if_grouped',
+			'label'         => 'FFL Required',
+			'description'   => 'Check this box if the product requires shipment to an FFL dealer',
+			'default'       => 'no',
+		];
+	
+		return $product_type_options;
+	}
+
+	public function save_ffl_required( $id ) {
+		$is_ffl = isset ($_POST['_ffl_required']) && 'on' === $_POST['_ffl_required'] ? 'yes' : 'no';
+		update_post_meta( $id, '_ffl_required', $is_ffl);
 	}
 
 	/**

@@ -15,7 +15,6 @@ class Config {
 	const FFL_STORE_HASH_CONFIG          = 'wc_ffl_store_hash';
 	const FFL_SANDBOX_MODE_CONFIG        = 'wc_ffl_sandbox_mode';
 	const FFL_GOOGLE_MAPS_API_KEY_CONFIG = 'wc_ffl_google_maps_api_key';
-	const FFL_ATTRIBUTE_NAME             = 'pa_ffl-required';
 
 	/** Permanent Settings */
 	const SETTING_GOOGLE_MAPS_URL    = 'https://maps.googleapis.com/maps/api/js';
@@ -49,10 +48,11 @@ class Config {
 		$total_products = count( $cart );
 		$total_ffl      = 0;
 		foreach ( $cart as $product ) {
-			foreach ( $product['data']->get_attributes() as $attribute ) {
-				if ( self::FFL_ATTRIBUTE_NAME === $attribute['name'] ) {
-					$total_ffl++;
-				}
+			$product_id = $product['product_id'];
+			$ffl_required = get_post_meta($product_id, '_ffl_required', true);
+			
+			if ( $ffl_required === 'yes' ) {
+				$total_ffl++;
 			}
 		}
 
@@ -133,10 +133,11 @@ class Config {
 		$total_products = count( $cart );
 		$total_ffl      = 0;
 		foreach ( $cart as $product ) {
-			foreach ( $product['data']->get_attributes() as $attribute ) {
-				if ( self::FFL_ATTRIBUTE_NAME === $attribute['name'] ) {
-					$total_ffl++;
-				}
+			$product_id = $product['product_id'];
+			$ffl_required = get_post_meta($product_id, '_ffl_required', true);
+			
+			if ( $ffl_required === 'yes' ) {
+				$total_ffl++;
 			}
 		}
 
