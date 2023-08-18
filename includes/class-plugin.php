@@ -77,6 +77,10 @@ class Plugin {
 		add_action('woocommerce_checkout_update_order_meta', array(Checkout::class, 'after_checkout_create_order'), 20, 2);
 		add_action('woocommerce_checkout_update_order_meta', array(Checkout::class, 'save_automaticffl_checkout_field_value'));
 		add_action( 'woocommerce_process_product_meta', array($this, 'save_ffl_required'), 10, 3  );
+		add_action('woocommerce_product_bulk_edit_start', array($this, 'ffl_required_add_admin_edit_checkbox'));
+		add_action('woocommerce_product_bulk_edit_save', array($this, 'ffl_required_save_admin_edit_checkbox'));
+		add_action('woocommerce_product_quick_edit_start', array($this, 'ffl_required_add_admin_edit_checkbox'));
+		add_action('woocommerce_product_quick_edit_save', array($this, 'ffl_required_save_admin_edit_checkbox'));
 	}
 
 	/**
@@ -97,6 +101,12 @@ class Plugin {
 		add_filter( 'woocommerce_checkout_update_customer_data', array( $this, 'maybe_update_customer_data' ), 10, 2 );
 		add_filter( 'woocommerce_checkout_fields', array(Checkout::class, 'automaticffl_custom_fields') );
 		add_filter( 'product_type_options', array($this, 'ffl_required'), 100, 1 );
+		add_filter( 'woocommerce_product_export_column_names', array($this, 'add_ffl_required_export_column') );
+		add_filter( 'woocommerce_product_export_product_default_columns', array($this, 'add_ffl_required_export_column') );
+		add_filter( 'woocommerce_product_export_product_column_ffl_required', array($this, 'add_ffl_required_export_data'), 10, 2 );
+		add_filter( 'woocommerce_csv_product_import_mapping_options', array($this, 'add_ffl_required_to_importer') );
+		add_filter( 'woocommerce_csv_product_import_mapping_default_columns', array($this, 'add_ffl_required_to_mapping_screen') );
+		add_filter( 'woocommerce_product_import_pre_insert_product_object', array($this, 'process_ffl_required_import'), 10, 2 );
 	}
 
 	/**
@@ -107,7 +117,7 @@ class Plugin {
 	 *
 	 * @since 1.0.0
 	 *
-	 * @param bool $boolean Yes/No to wther the customer are will be updated.
+	 * @param bool $boolean Yes/No to whether the customer will be updated.
 	 *
 	 * @return boolean
 	 */
@@ -134,6 +144,115 @@ class Plugin {
 	public function save_ffl_required( $id ) {
 		$is_ffl = isset ($_POST['_ffl_required']) && 'on' === $_POST['_ffl_required'] ? 'yes' : 'no';
 		update_post_meta( $id, '_ffl_required', $is_ffl);
+	}
+
+	/**
+	 * Add the FFL Required to the exporter and the exporter column menu.
+	 *
+	 * @param array $fields
+	 * @return array $fields
+	 */
+	function add_ffl_required_export_column( $fields ) {
+
+		$fields['ffl_required'] = 'FFL Required';
+
+		return $fields;
+	}
+
+	/**
+	 * Provide the FFL Required data to be exported the column.
+	 *
+	 * @param mixed $value (default: '')
+	 * @param WC_Product $product
+	 * @return mixed $value - Should be in a format that can be output into a text file (string - 'yes' or 'no').
+	 */
+	function add_ffl_required_export_data( $value, $product ) {
+		$value = $product->get_meta( '_ffl_required' , true, 'edit' );
+		return $value;
+	}
+
+	/**
+	 * Register the FFL Required column in the importer.
+	 *
+	 * @param array $fields
+	 * @return array $fields
+	 */
+	function add_ffl_required_to_importer( $fields ) {
+
+		$fields['ffl_required'] = 'FFL Required';
+
+		return $fields;
+	}
+
+	/**
+	 * Add automatic mapping support for FFL Required. 
+	 * This will automatically select the correct mapping for columns named 'FFL Required' or 'ffl required'.
+	 *
+	 * @param array $fields
+	 * @return array $fields
+	 */
+	function add_ffl_required_to_mapping_screen( $fields ) {
+		
+		$fields['FFL Required'] = 'ffl_required';
+		$fields['ffl required'] = 'ffl_required';
+
+		return $fields;
+	}
+
+	/**
+	 * Process the data read from the CSV file and update the FFL Required field.
+	 *
+	 * @param WC_Product $object - Product being imported or updated.
+	 * @param array $data - CSV data read for the product.
+	 * @return WC_Product $object
+	 */
+	function process_ffl_required_import( $object, $data ) {
+		
+		if ( ! empty( $data['ffl_required'] ) ) {
+			$object->update_meta_data( '_ffl_required', $data['ffl_required'] );
+		}
+
+		return $object;
+	}
+	
+	/**
+	 * Add the FFL Required field to Bulk Edit or Quick Edit on Admin Panel.
+	 * 
+	 */
+	function ffl_required_add_admin_edit_checkbox(){
+		?>
+		<div class="inline-edit-group">
+			<label class="alignleft ffl_required" style="width: 100%">
+				<span class="title" style="width: fit-content;"><?php _e('FFL Required', 'automaticffl-for-woocommerce'); ?></span>
+				<span class="input-text-wrap" >
+					<select class="ffl_required change_to" name="_ffl_required" style="margin-left: 10px">
+						<option value=""><?php _e('— No Change —', 'automaticffl-for-woocommerce'); ?></option>
+						<option value="1"><?php _e('Yes', 'automaticffl-for-woocommerce'); ?></option>
+						<option value="0"><?php _e('No', 'automaticffl-for-woocommerce'); ?></option>
+					</select>
+				</span>
+			</label>
+		</div>
+	</br></br>
+		<?php
+	}
+
+	/**
+	 * Save the FFL Required field from Bulk Edit or Quick Edit on Admin Panel.
+	 *
+	 * @param WC_Product $product
+	 * @return void
+	 */
+	function ffl_required_save_admin_edit_checkbox($product){
+		$product_id = method_exists($product, 'get_id') ? $product->get_id() : $product->id;
+	
+		if(isset($_REQUEST['_ffl_required'])){
+			if($_REQUEST['_ffl_required'] == '1'){
+				update_post_meta($product_id, '_ffl_required', 'yes');
+			} else if($_REQUEST['_ffl_required'] == '0'){
+				update_post_meta($product_id, '_ffl_required', 'no');
+			}
+		}
 	}
 
 	/**

@@ -16,7 +16,9 @@ Automatic FFL for WooCommerce is a powerful extension designed to simplify the p
 
 - **Seamless Checkout Integration:** Once a customer selects an FFL dealer, the extension will update the shipping address with the dealer's address, ensuring a smooth and compliant checkout process.
 
-- **Validated by the ATF:** Our dealers database updates directly from the Bureau of Alcohol, Tobacco, Firearms and Explosives, commonly reffered to as the ATF.
+- **Validated by the ATF:** Our dealers database updates directly from the Bureau of Alcohol, Tobacco, Firearms and Explosives, commonly referred to as the ATF.
+
+- **Full Support to Bulk and Quick Edit** With ***Automatic FFL for WooCommerce*** you are able to Import, Export and Edit via CSV with full compatibility. You also have the option to Bulk Edit on WooCommerce Admin Products Panel. Additionally you can set a product as FFL Required using Quick Edit WooCommerce feature.
 
 - **Customization:** We automatically display common FFL dealers, but you have full control over which dealers show to your customers. You can also promote dealers by marking them as preferred or add information to them such as store hours or transfer fees.
 
