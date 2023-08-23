@@ -1,0 +1,518 @@
+/* 
+*   Styles for AutomaticFFL Checkout
+*/
+
+/* Search Results */
+.ffl-single-result .dealer-name {
+    color: #000;
+    margin-bottom: 0;
+}
+
+.ffl-single-result .dealer-address {
+    color: #000;
+    font-size: 12px;
+    margin-bottom: 0;
+}
+
+.ffl-single-result .dealer-license {
+    margin: 0 0 10px;
+    color: #000;
+}
+
+#search-result-list {
+    flex-flow: column;
+    width: 100%;
+    padding-right: 4%;
+    margin-right: 1%;
+    overflow-y: scroll;
+    height: inherit;
+    flex-direction: column;
+    padding-left: 4%;
+}
+
+#search-result-list::-webkit-scrollbar {
+    width: 10px;
+    right: 5px;
+}
+
+/* Custom sidebar */
+#search-result-list::-webkit-scrollbar-track {
+    background: #ccc;
+    border: 4px solid transparent;
+    background-clip: content-box;
+}
+
+/* Handle */
+#search-result-list::-webkit-scrollbar-thumb {
+    background: #ccc;
+    border: 1px solid #ccc;
+    height: 50px;
+}
+
+/* Search Header and form */
+.modal-header-search {
+    align-items: flex-start;
+    display: flex;
+    background-color: transparent;
+    width: 80%;
+    margin: auto;
+}
+
+.modal-header-search p {
+    font-size: 13px;
+    color: #000;
+}
+
+#ffl-search-form {
+    padding-bottom: 1%;
+}
+
+.modal-header-logo {
+    align-items: center;
+    display: flex;
+    justify-content: center;
+    background-color: transparent;
+    flex-grow: 1;
+    width: 100%;
+    padding-top: 30px;
+    padding-bottom: 1%;
+    flex-flow: column;
+}
+
+.modal-header-logo img {
+    max-width: 80%;
+    max-height: 60px;
+}
+
+.ffl-search-button::before {
+    content: "\f002";
+    font-family: "Font Awesome 5 Free";
+    font-weight: 900;
+    color: white;
+    padding-right: 10px;
+
+}
+
+#automaticffl-search-button {
+    padding-top: 7px;
+    border-radius: 0 10px 10px 0;
+    background-color: #512a74;
+    height: 40px;
+}
+
+#automaticffl-search-input, #automaticffl-search-miles {
+    padding: 0.6180469716em;
+    background-color: #f2f2f2;
+    border: 0;
+    height: 40px;
+    box-sizing: border-box;
+    font-weight: 400;
+    box-shadow: inset 0 1px 1px rgb(0 0 0 / 13%);
+    text-transform: uppercase;
+    font-size: 12px;
+    color: #000;
+    width: 30%;
+}
+
+#automaticffl-search-input {
+    border-radius: 10px 0 0 10px;
+    width: 60%;
+}
+
+#automaticffl-search-input::placeholder {
+    font-size: 12px;
+    text-transform: uppercase;
+    color:#000;
+}
+
+.automaticffl-map {
+    align-items: center;
+    color: rgb(255, 255, 255);
+    display: flex;
+    justify-content: center;
+    background-color: #ffffff;
+    width: 100%;
+    height: 100%;
+    flex-grow: 1;
+    margin: 0;
+    padding: 0;
+}
+
+.ffl-search-results {
+    align-items: flex-start;
+    display: flex;
+    justify-content: center;
+    background-color: transparent;
+    width: 30%;
+    height: 100%;
+    flex-grow: 1;
+    margin: 0;
+    padding: 0;
+    flex-direction: column;
+}
+
+#automaticffl-search-input:focus, #automaticffl-search-miles:focus {
+    outline: 0 !important;
+    border: 2px solid #7f54b3 !important;
+}
+
+#automaticffl-dealer-layer .modal-header-container {
+    display: flex;
+    background-color: transparent;
+    width: 100%;
+    height: 70%;
+    margin: 0;
+    padding: 0;
+    flex: 1 1 0;
+    flex-flow: row wrap;
+    place-content: flex-start;
+    align-items: flex-start;
+    overflow-y: hidden;
+}
+
+#automaticffl-dealer-layer .modal-container {
+    display: flex;
+    height: 100%;
+    border-radius: 50px 0 0 0;
+}
+
+#automaticffl-dealer-layer .modal-items {
+    display: flex;
+    flex: 1 1 0%;
+    flex-flow: row wrap;
+    place-content: stretch flex-start;
+    align-items: stretch;
+}
+
+#ship-to-different-address-checkbox {
+    display: none;
+}
+
+.shipping_address .woocommerce-shipping-fields__field-wrapper {
+    display: none;
+}
+
+.automaticffl-dealer-layer {
+    height: 100%;
+}
+
+.dealers-container {
+    width: 90%;
+    height: 100%;
+    background-color: #ffffff;
+    /*border-radius: 50px 0 0 0;*/
+    left: 10%;
+    position: absolute;
+    z-index: 1001;
+    display: block;
+    box-shadow: rgba(0, 0, 0, 0.4) 0px 30px 90px;
+    margin-top: 0%;
+}
+
+.automaticffl-dealer-layer {
+    width: 100%;
+    z-index: 1000;
+    position: fixed;
+    left: 100%;
+    background: transparent;
+    color: #000;
+    height: 100%;
+    top: 0;
+    bottom: 0;
+}
+
+/** Results list **/
+.ffl-single-result {
+    border-radius: 4px;
+    width: 100%;
+    padding: 10px 0 10px 20px;
+    border: 1px solid #f2f2f2;
+    border-right: 3px solid #cccccc;
+    margin-bottom: 20px;
+    height: auto;
+    background: white;
+}
+
+.ffl-single-result:hover, .preferred {
+    box-shadow: rgba(50, 50, 93, 0.25) 0px 50px 100px -20px, rgba(0, 0, 0, 0.3) 0px 30px 60px -30px;
+    border-right: 3px solid #522a74;
+    padding-right: 0;
+    cursor: pointer;
+}
+
+.ffl-single-result:hover .ffl-result-count {
+    background-color: #512a74;
+}
+
+.ffl-single-result .ffl-preferred-header {
+    width: 20%;
+    background-color: transparent;
+    float: left;
+}
+
+.ffl-preferred-header img {
+    display: none;
+}
+
+.preferred .ffl-preferred-header img {
+    display: block;
+}
+
+.ffl-single-result .ffl-result-body {
+    width: 70%;
+    background-color: transparent;
+    float: left;
+    padding-left: 20px
+}
+
+.ffl-single-result .ffl-result-number {
+    width: 10%;
+    background-color: transparent;
+    float: right;
+}
+
+.ffl-single-result .ffl-result-count {
+    background: #767676;
+    color: white;
+    text-align: center;
+    width: 100%;
+    font-size: 20px;
+    border-radius: 15px 0 0 15px;
+}
+
+.preferred .ffl-result-count {
+    background: #522a74;
+}
+
+.automaticffl-dealer-selected {
+    border: solid 2px #522a74;
+    padding: 20px 20px 0px 20px;
+    margin-bottom: 2.617924em;
+    border-left: 0.6180469716em solid #522a74;
+    color: #333333;
+    border-radius: 2px;
+}
+
+.automaticffl-dealer-selected a {
+    color: #333333;
+}
+
+/* Marker popup */
+.automaticffl-marker-popup p {
+    color: #000000;
+}
+
+/* Hide templates and messages*/
+#automaticffl-popup-template,
+#automaticffl-dealer-result-template,
+#ffl-searching-message,
+#ffl-results-message,
+#ffl-searching-error-message,
+#automaticffl-popup-container,
+#automaticffl-dealer-card-template,
+.hidden,
+.inner-toggle {
+    display: none;
+}
+#map-toggle {
+    bottom: 0;
+    margin: 0;
+    padding: 0;
+    height: 100%;
+    width: 70%;
+    position: relative;
+}
+#automaticffl-close-modal-button {
+    display: block;
+    position: absolute;
+    margin-left: 15px;
+    margin-top: 15px;
+    color: #8a8a8a;
+    width: 24px;
+    height: 24px;
+    text-align: center;
+    cursor: pointer;
+}
+#automaticffl-close-modal-button:hover {
+    background-color: #8a8a8a;
+    color: #ffffff;
+}
+.dealer-phone, .automaticffl-select-dealer-link {
+    color: #512A74;
+    margin: 0;
+}
+.automaticffl-marker-popup .heading {
+    color: #000;
+}
+.automaticffl-select-button {
+    padding-top: 7px;
+    border-radius: 10px;
+    background-color: #767676;
+    height: 40px;
+    width: 80%;
+    color: #FFF;
+    margin: 0 10%;
+}
+.automaticffl-select-button:hover {
+    background-color: #512a74;
+    color: #FFF;
+}
+@font-face {
+    font-family: Mulish;
+    src: url('../fonts/Mulish-Regular.ttf');
+    font-weight: 400;
+}
+@font-face {
+    font-family: Mulish;
+    src: url('../fonts/Mulish-Light.ttf');
+    font-weight: 300;
+}
+.logo-header {
+    font-family: "Mulish";
+    font-weight: 300;
+    margin: auto;
+}
+.logo-sub {
+    font-family: "Mulish";
+    font-weight: 300;
+    margin: auto;
+    font-size: 12px;
+    text-align: center;
+    max-width: 80%;
+}
+@media screen and (max-width: 800px) {
+    .dealers-container {
+        width: 100%;
+        left: 0;
+        margin-top: 0;
+        z-index: 10000;
+    }
+    .automaticffl-dealer-layer {
+        z-index: 10000;
+    }
+    #automaticffl-dealer-layer .modal-items {
+        flex: 1 1 100%;
+    }
+    .ffl-search-results {
+        width: 100%;
+        height: 90%;
+    }
+    .automaticffl-map {
+        height: 102%;
+        width: 100%;
+    }
+    #automaticffl-dealer-layer .modal-header-container {
+        height: 30%;
+        flex: 1 1 100%;
+    }
+
+    .automaticffl-marker-popup .heading {
+        font-size: medium;
+    }
+    #search-result-list {
+        height: 50%;
+        padding-left: 5%;
+        padding-bottom: 5%;
+    }
+    .toggle-map-text {
+        display: flex;
+    }
+    span#toggle-map-text {
+        font-size: 13px;
+        width: 20%;
+    }
+    p#ffl-results-message, p#ffl-searching-message {
+        width: 75%;
+        margin-right: 5%;
+    }
+    .show-map {
+        animation: show-map 1s ease forwards;
+    }
+    .hide-map {
+        animation: hide-map 1s ease forwards;
+    }
+    #map-toggle {
+        bottom: -25%;
+        margin: 0;
+        padding: 0;
+        height: 80%;
+        width: 100%;
+        position: relative;
+        background-color: #512a74;
+    }
+    .inner-toggle {
+        height: 6%;
+        color: #ffffff;
+        text-align: center;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+    .inner-toggle #toggle-map-text-label {
+        text-transform: lowercase;
+    }
+    .inner-toggle .fa-icon {
+        padding-left: 10px;
+    }
+    .hide-list {
+        animation: hide-list 1s ease forwards;
+    }
+    .show-list {
+        animation: show-list 1s ease forwards;
+    }
+    #automaticffl-search-input, #automaticffl-search-miles{
+        border-radius: 0;
+    }
+    @keyframes hide-map {
+        from {
+            bottom: 82%;
+        }
+        to {
+            bottom: 0;
+        }
+    }
+    @keyframes show-map {
+        from {
+            bottom: 0;
+        }
+        to {
+            bottom: 82%;
+        }
+    }
+    @keyframes hide-list {
+        from {
+            height: 75%;
+        }
+        to {
+            height: 30%;
+        }
+    }
+    @keyframes show-list {
+        from {
+            height: 30%;
+        }
+        to {
+            height: 75%;
+        }
+    }
+}
+@media only screen and (-webkit-min-device-pixel-ratio: 2) and (orientation: portrait),
+    only screen and (min--moz-device-pixel-ratio: 2) and (orientation: portrait),
+    only screen and (-o-min-device-pixel-ratio: 2/1) and (orientation: portrait),
+    only screen and (min-device-pixel-ratio: 2) and (orientation: portrait),
+    only screen and (device-width: 1024px) and (orientation: portrait) {
+        .modal-header-search{
+            flex-direction: column;
+        }
+        .modal-header-search #automaticffl-search-input, .modal-header-search #automaticffl-search-miles, .modal-header-search #automaticffl-search-button {
+            width: 100%;
+            border-radius: 10px;
+            margin-bottom: 5px;
+        }
+        .logo-header {
+            font-size: medium;
+        }
+        .automaticffl-select-button {
+            font-size: small;
+        }
+}
