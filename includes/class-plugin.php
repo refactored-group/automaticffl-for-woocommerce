@@ -81,6 +81,7 @@ class Plugin {
 		add_action('woocommerce_product_bulk_edit_save', array($this, 'ffl_required_save_admin_edit_checkbox'));
 		add_action('woocommerce_product_quick_edit_start', array($this, 'ffl_required_add_admin_edit_checkbox'));
 		add_action('woocommerce_product_quick_edit_save', array($this, 'ffl_required_save_admin_edit_checkbox'));
+		add_action('wp_enqueue_scripts', array($this, 'automaticffl_enqueue'));
 	}
 
 	/**
@@ -270,6 +271,15 @@ class Plugin {
 		}
 
 		return $value;
+	}
+
+	/**
+	 * Enqueue Styles and Scripts for Automatic FFL Plugin
+	 *
+	 * @return void
+	 */
+	function automaticffl_enqueue() {
+		wp_enqueue_style('main', self::get_plugin_url('/') . '/assets/css/main.css');
 	}
 
 	/**
