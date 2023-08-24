@@ -232,7 +232,6 @@ class Checkout {
 						<p class="dealer-name">{{dealer-name}}</p>
 						<p class="dealer-address">{{dealer-address}}</p>
 						<a href="tel:{{dealer-phone}}"><p class="dealer-phone dealer-phone-formatted">{{dealer-phone}}</p></a>
-						<p class="dealer-license">{{dealer-license}}</p>
 					</div>
 					<div class="ffl-result-number">
 						<div class="ffl-result-count">{{result-number}}</div>
@@ -246,7 +245,6 @@ class Checkout {
 					<div class="body-content">
 						<p>{{dealer-address}}</p>
 						<p><b><?php echo esc_html( 'Phone Number' ); ?>: </b><a href="tel:{{dealer-phone}}"><span class="dealer-phone dealer-phone-formatted">{{dealer-phone}}</span></a></p>
-						<p><b><?php echo esc_html( 'License' ); ?>: </b>{{dealer-license}}</p>
 						<p><a id="automaticffl-select-dealer-link" href="#" class="automaticffl-select-dealer-link"><?php echo esc_html( 'Select this dealer' ); ?></a>
 						</p>
 					</div>
@@ -262,7 +260,6 @@ class Checkout {
 				<p class="dealer-name">{{dealer-name}}</p>
 				<p class="dealer-address">{{dealer-address}}</p>
 				<a href="tel:{{dealer-phone}}"><p><span class="dealer-phone dealer-phone-formatted">{{dealer-phone}}</span></p></a>
-				<p class="dealer-license">{{dealer-license}}</p>
 			</div>
 		</div>
 		<?php
