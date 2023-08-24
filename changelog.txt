@@ -1,5 +1,10 @@
 *** Automatic FFL for WooCommerce ***
 
+2023-08-24 - Version 1.0.2
+* Style fixes for checkout
+* Added Import/Export/Quick and Bulk Edit features to the Products
+* 'FFL Required' field is now a checkbox instead of a product attribute to improve product management
+
 2023-08-16 - version 1.0.1
 * Bug Fixes
 
