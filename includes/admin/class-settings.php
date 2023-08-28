@@ -49,7 +49,6 @@ class Settings {
 		add_action( 'admin_menu', array( $this, 'add_menu_item' ) );
 		add_action( 'wp_loaded', array( $this, 'save' ) );
 
-		wp_insert_term( 'red', 'pa_colors' );
 	}
 
 	/**

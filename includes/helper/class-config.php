@@ -11,7 +11,6 @@ namespace RefactoredGroup\AutomaticFFL\Helper;
  * Config class
  */
 class Config {
-	const FFL_STATUS                     = 'wc_ffl_status';
 	const FFL_STORE_HASH_CONFIG          = 'wc_ffl_store_hash';
 	const FFL_SANDBOX_MODE_CONFIG        = 'wc_ffl_sandbox_mode';
 	const FFL_GOOGLE_MAPS_API_KEY_CONFIG = 'wc_ffl_google_maps_api_key';
@@ -31,7 +30,7 @@ class Config {
 	 * @return string
 	 */
 	public static function get_ffl_api_url() {
-		if ( get_option( self::FFL_SANDBOX_MODE_CONFIG, true ) === 1 ) {
+		if ( get_option( self::FFL_SANDBOX_MODE_CONFIG, true ) === "1" ) {
 			return self::SETTING_FFL_SANDBOX_URL;
 		}
 		return self::SETTING_FFL_PRODUCTION_URL;
