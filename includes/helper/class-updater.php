@@ -48,20 +48,20 @@ class Updater {
 		$is_outdated = '<b>New version available for Automatic FFL</b> &#x2757' . $new_version_available . $latest_text_link;
 		$is_updated = 'Plugin is up to date. &#x2705 <p>Automatic FFL for WooCommerce <span style="color:green;">'. $plugin_data['Version'] .'</span>.</p>';
 
-		$unknown_version = '<b><p>ATTENTION! You may using a non-official Version of Automatic FFL for WooCommerce.</p>
-		<p>Please visit <a href="https://automaticffl.com/">our website</a> to get more information.</p></b>';
+		$development_version = '<p>Plugin is on a development version.</p>
+		<p>Automatic FFL for WooCommerce '. $plugin_data['Version'] . '.</p></b>';
 
 		if ($latest_version) {
 			if ($plugin_data && isset($plugin_data['Version'])) {
 				if (version_compare($plugin_data['Version'], $latest_version, '<')) {
 					return $is_outdated;
 				} else if (version_compare($plugin_data['Version'], $latest_version, '>')) {
-					return $unknown_version;
+					return $development_version;
 				} else {
 					return $is_updated;
 				}
 			} else {
-				return "Unable to retrieve plugin data or version.";
+				return '<p><b>Unable to retrieve the version of Automatic FFL</b> &#x2757</p>' . $latest_text_link;
 			}
 		} else {
 			return "Unable to retrieve latest release version. Please try again later or contact our support.";
