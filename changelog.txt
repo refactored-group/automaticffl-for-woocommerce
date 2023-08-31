@@ -1,5 +1,8 @@
 *** Automatic FFL for WooCommerce ***
 
+2023-08-31 - Version 1.0.3
+* Adds the Version Information to the Settings Plugin Screen
+
 2023-08-24 - Version 1.0.2
 * Style fixes for checkout
 * Added Import/Export/Quick and Bulk Edit features to the Products
