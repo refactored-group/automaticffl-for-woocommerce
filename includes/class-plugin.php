@@ -10,7 +10,7 @@ namespace RefactoredGroup\AutomaticFFL;
 use RefactoredGroup\AutomaticFFL\Views\Cart;
 use RefactoredGroup\AutomaticFFL\Views\Checkout;
 use RefactoredGroup\AutomaticFFL\Helper\Config;
-use RefactoredGroup\AutomaticFFL\Admin\Settings;
+use RefactoredGroup\AutomaticFFL\Helper\Updater;
 
 defined( 'ABSPATH' ) || exit;
 
@@ -35,13 +35,22 @@ class Plugin {
 	protected static $instance;
 
 	/**
+	 * Instance of Updater
+	 *
+	 * @var Updater
+	 */
+	protected $updater;
+
+	/**
 	 * Constructor
 	 *
 	 * @since 1.0.0
 	 */
 	public function __construct() {
-		$this->add_hooks();
-		$this->add_filters();
+		$this->updater = new Updater();
+
+		$this->add_hooks($this->updater);
+		$this->add_filters($this->updater);
 
 		if ( is_admin() ) {
 			$this->admin_settings = new \RefactoredGroup\AutomaticFFL\Admin\Settings();
@@ -66,7 +75,8 @@ class Plugin {
 	 *
 	 * @return void
 	 */
-	private function add_hooks() {
+	private function add_hooks($updater) {
+
 		// Add frontend hooks.
 		add_action( 'woocommerce_before_cart_table', array( Cart::class, 'verify_mixed_cart' ) );
 		add_action( 'woocommerce_checkout_init', array( Checkout::class, 'verify_mixed_cart' ) );
@@ -82,6 +92,7 @@ class Plugin {
 		add_action('woocommerce_product_quick_edit_start', array($this, 'ffl_required_add_admin_edit_checkbox'));
 		add_action('woocommerce_product_quick_edit_save', array($this, 'ffl_required_save_admin_edit_checkbox'));
 		add_action('wp_enqueue_scripts', array($this, 'automaticffl_enqueue'));
+		add_action( 'upgrader_process_complete', array($this->updater, 'purge'), 10, 2 );
 	}
 
 	/**
@@ -91,7 +102,9 @@ class Plugin {
 	 *
 	 * @return void
 	 */
-	private function add_filters() {
+	private function add_filters($updater) {
+		$updater = new \RefactoredGroup\AutomaticFFL\Helper\Updater();
+
 		// add a 'Configure' link to the plugin action links.
 		add_filter( 'plugin_action_links_' . plugin_basename( $this->get_plugin_file() ), array( $this, 'plugin_action_links' ) );
 
@@ -108,6 +121,8 @@ class Plugin {
 		add_filter( 'woocommerce_csv_product_import_mapping_options', array($this, 'add_ffl_required_to_importer') );
 		add_filter( 'woocommerce_csv_product_import_mapping_default_columns', array($this, 'add_ffl_required_to_mapping_screen') );
 		add_filter( 'woocommerce_product_import_pre_insert_product_object', array($this, 'process_ffl_required_import'), 10, 2 );
+		add_filter( 'plugins_api', [ $this->updater, 'info' ], 20, 3 );
+        add_filter( 'site_transient_update_plugins', array($this->updater, 'update') );
 	}
 
 	/**
