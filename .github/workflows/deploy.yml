@@ -3,7 +3,7 @@ name: Deploy release or pre-release that has just been published or edited
 on:
   push:
     branches:
-      - develop
+      - dev
 
 jobs:
   build:
