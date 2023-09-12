@@ -353,6 +353,10 @@ class Checkout {
 					jQuery('#toggle-map-text, .inner-toggle').click( function () {
 						self.mapToggle();
 					});
+
+					// Add styles so the Shipping Fields will not be displayed for the customer when is FFL checkout
+					jQuery('#ship-to-different-address-checkbox').css('display', 'none');
+					jQuery('.shipping_address .woocommerce-shipping-fields__field-wrapper').css('display', 'none');
 				}
 				formatPhone() {
 					jQuery('.dealer-phone-formatted').text(function(dealer_phone, text) {

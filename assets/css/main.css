@@ -184,14 +184,6 @@
     align-items: stretch;
 }
 
-#ship-to-different-address-checkbox {
-    display: none;
-}
-
-.shipping_address .woocommerce-shipping-fields__field-wrapper {
-    display: none;
-}
-
 .automaticffl-dealer-layer {
     height: 100%;
 }
