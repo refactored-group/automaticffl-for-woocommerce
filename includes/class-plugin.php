@@ -224,12 +224,12 @@ class Plugin {
 		?>
 		<div class="inline-edit-group">
 			<label class="alignleft ffl_required" style="width: 100%">
-				<span class="title" style="width: fit-content;"><?php _e('FFL Required', 'automaticffl-for-woocommerce'); ?></span>
+				<span class="title" style="width: fit-content;"><?php esc_html_e('FFL Required', 'automaticffl-for-woocommerce'); ?></span>
 				<span class="input-text-wrap" >
 					<select class="ffl_required change_to" name="_ffl_required" style="margin-left: 10px">
-						<option value=""><?php _e('— No Change —', 'automaticffl-for-woocommerce'); ?></option>
-						<option value="1"><?php _e('Yes', 'automaticffl-for-woocommerce'); ?></option>
-						<option value="0"><?php _e('No', 'automaticffl-for-woocommerce'); ?></option>
+						<option value=""><?php esc_html_e('— No Change —', 'automaticffl-for-woocommerce'); ?></option>
+						<option value="1"><?php esc_html_e('Yes', 'automaticffl-for-woocommerce'); ?></option>
+						<option value="0"><?php esc_html_e('No', 'automaticffl-for-woocommerce'); ?></option>
 					</select>
 				</span>
 			</label>
@@ -290,7 +290,7 @@ class Plugin {
 	 * @return string
 	 */
 	public function get_plugin_url() {
-		return untrailingslashit( plugins_url( '/', _FFL_LOADER_ ) );
+		return untrailingslashit( plugins_url( '/', _AFFL_LOADER_ ) );
 	}
 
 	/**
@@ -301,7 +301,7 @@ class Plugin {
 	 * @return string
 	 */
 	public function get_plugin_file() {
-		$slug = dirname( plugin_basename( _FFL_LOADER_ ) );
+		$slug = dirname( plugin_basename( _AFFL_LOADER_ ) );
 		return trailingslashit( $slug ) . $slug . '.php';
 	}
 

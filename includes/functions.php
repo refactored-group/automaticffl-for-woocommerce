@@ -16,6 +16,6 @@ use RefactoredGroup\AutomaticFFL\Plugin;
  *
  * @since 1.0.0
  */
-function wcffl() {
+function affl() {
 	return Plugin::instance();
 }

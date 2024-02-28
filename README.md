@@ -63,6 +63,18 @@ For installation and setup, please follow the instructions [here](https://www.au
 
 1. The customer can proceed to complete the checkout, and the order will be shipped to the selected FFL dealer for pickup.
 
+## Screenshots
+
+- TODO: ADD SCREENSHOTS HERE!
+
+## External services
+
+Google Maps is used to create the map experience during the checkout
+
+- [Google Maps](https://developers.google.com/maps/)
+- [Terms of service](https://cloud.google.com/maps-platform/terms)
+
+
 ## Support and Documentation
 
 For support, inquiries, or documentation, please visit [https://support.automaticffl.com/](https://support.automaticffl.com/).

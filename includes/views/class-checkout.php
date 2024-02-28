@@ -183,7 +183,7 @@ class Checkout {
 						<div class="ffl-search-results">
 							<div class="modal-header-container show-list">
 								<div class="modal-header-logo">
-									<img src="<?php echo esc_url( wcffl()->get_plugin_url() ); ?>/assets/images/logo-automaticffl.png">
+									<img src="<?php echo esc_url( affl()->get_plugin_url() ); ?>/assets/images/logo-automaticffl.png">
 									<h4 class="logo-header"><?php echo esc_html( 'FIND YOUR DEALER' ) ?></h4>
 									<p class="logo-sub"><?php echo esc_html( 'Use the options below to search for a dealer near you.' ) ?></p>
 								</div>
@@ -226,7 +226,7 @@ class Checkout {
 			<div id="automaticffl-dealer-result-template">
 				<div class="ffl-single-result{{dealer-preferred}}" id="ffl-single-result{{dealer-index}}">
 					<div class="ffl-preferred-header">
-						<img  alt="<?php echo esc_html( 'Preferred Dealer' ); ?>" src="<?php echo esc_url( wcffl()->get_plugin_url() ); ?>/assets/images/icons/preferred.png">
+						<img  alt="<?php echo esc_html( 'Preferred Dealer' ); ?>" src="<?php echo esc_url( affl()->get_plugin_url() ); ?>/assets/images/icons/preferred.png">
 					</div>
 					<div class="ffl-result-body">
 						<p class="dealer-name">{{dealer-name}}</p>
@@ -285,8 +285,8 @@ class Checkout {
 					this.currentFflItemId = null;
 					this.googleMap = null;
 					this.storeHash = '<?php echo esc_js( Config::get_store_hash() ); ?>';
-					this.purpleMarker = '<?php echo esc_url( wcffl()->get_plugin_url() ); ?>/assets/images/icons/purple-marker.png';
-					this.preferredMarker = '<?php echo esc_url( wcffl()->get_plugin_url() ); ?>/assets/images/icons/preferred-marker.png';
+					this.purpleMarker = '<?php echo esc_url( affl()->get_plugin_url() ); ?>/assets/images/icons/purple-marker.png';
+					this.preferredMarker = '<?php echo esc_url( affl()->get_plugin_url() ); ?>/assets/images/icons/preferred-marker.png';
 					this.fflApiUrl = '<?php echo esc_js( Config::get_ffl_dealers_url() ); ?>';
 					this.fflResultsTemplate = '<?php echo esc_html( '{{results-count}} results have been found for {{search-string}}' ); ?>';
 					this.fflNoResultsTemplate = '<?php echo esc_html( 'No dealers have been found for "{{search-string}}"' ); ?>';
@@ -384,8 +384,8 @@ class Checkout {
 
 					// Set values to the hidden Shipping address fields
 					// @TODO: Force customer to enter First and Last Name to use here instead of the dealer's business name
-					jQuery('#shipping_first_name').val('<?php echo $user_name['first_name'] ?>');
-					jQuery('#shipping_last_name').val('<?php echo $user_name['last_name'] ?>');
+					jQuery('#shipping_first_name').val('<?php echo esc_html( $user_name['first_name'] ) ?>');
+					jQuery('#shipping_last_name').val('<?php echo esc_html( $user_name['last_name'] ) ?>');
 					jQuery('#shipping_company').val(selectedDealer.business_name);
 					jQuery('#shipping_company').val(selectedDealer.business_name);
 					jQuery('#ffl_license_field').val(selectedDealer.license);

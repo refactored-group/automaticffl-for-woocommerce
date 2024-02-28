@@ -12,7 +12,7 @@ defined( 'ABSPATH' ) || exit;
  *
  * @since 1.0.0
  */
-class WC_FFL_Loader {
+class AFFL_Loader {
 
 	/** Minimum PHP version required */
 	const MINIMUM_PHP_VERSION = '7.0';
@@ -36,7 +36,7 @@ class WC_FFL_Loader {
 	/**
 	 * Instance of this class
 	 *
-	 * @var WC_FFL_Loader instance of this class.
+	 * @var AFFL_Loader instance of this class.
 	 */
 	protected static $instance;
 
@@ -93,7 +93,7 @@ class WC_FFL_Loader {
 
 		require_once plugin_dir_path( __FILE__ ) . 'functions.php';
 
-		wcffl();
+		affl();
 	}
 
 	/**
@@ -246,7 +246,7 @@ class WC_FFL_Loader {
 	}
 
 	/**
-	 * Displays any admin notices added with \WC_FFL_Loader::add_admin_notice()
+	 * Displays any admin notices added with \AFFL_Loader::add_admin_notice()
 	 *
 	 * @since 1.0.0
 	 */
@@ -303,13 +303,13 @@ class WC_FFL_Loader {
 	}
 
 	/**
-	 * Gets the main \WC_FFL_Loader instance.
+	 * Gets the main \AFFL_Loader instance.
 	 *
 	 * Ensures only one instance can be loaded.
 	 *
 	 * @since 1.0.0
 	 *
-	 * @return \WC_FFL_Loader
+	 * @return \AFFL_Loader
 	 */
 	public static function instance() {
 
@@ -322,4 +322,4 @@ class WC_FFL_Loader {
 }
 
 // Start the plugin.
-WC_FFL_Loader::instance();
+AFFL_Loader::instance();

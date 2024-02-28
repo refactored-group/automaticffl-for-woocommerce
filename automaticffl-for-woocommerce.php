@@ -20,7 +20,7 @@
  */
 
 defined( 'ABSPATH' ) || exit;
-define( '_FFL_LOADER_', __FILE__ );
+define( '_AFFL_LOADER_', __FILE__ );
 
 require_once 'includes/class-wc-ffl-loader.php';
 
@@ -57,4 +57,4 @@ spl_autoload_register(
 );
 
 // Start the plugin.
-WC_FFL_Loader::instance();
+AFFL_Loader::instance();
