@@ -1,5 +1,8 @@
 *** Automatic FFL for WooCommerce ***
 
+2024-03-07 - Version 1.0.5
+* Updates for Wordpress standards
+
 2023-09-12 - Version 1.0.4
 * Fix the Checkout Shipping Address not being displayed for non-FFL Checkout
 * Minor changes to the Version Information on the Plugin Settings
