@@ -150,7 +150,7 @@ class Settings {
 
 		if ( ! empty( wp_kses_post( wp_unslash( $_POST['admin_nonce'] ) ) )
 			&& wp_verify_nonce( wp_kses_post( wp_unslash( $_POST['admin_nonce'] ) ), 'admin_nonce' ) ) {
-			$screen = $_POST ? $this->get_screen( Helper::get_posted_value( 'screen_id' ) ) : false;
+			$screen = $this->get_screen( Helper::get_posted_value( 'screen_id' ) );
 		}
 
 		if ( ! $screen ) {

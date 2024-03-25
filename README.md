@@ -4,7 +4,7 @@ Contributors: refactoredgroup
 License: GPLv3
 License URI: http://www.gnu.org/licenses/gpl.html
 Tags: FFL Locator, Firearms, FFL Finder, FFL Search, Guns, Firearm Retailer Locator, Gun Shop Locator, Firearm Retailers, Federal Firearms License
-Tested up to: 6.2
+Tested up to: 6.4.3
 Requires PHP: 5.6
 
 [![Automatic FFL for WooCommerce](https://www.automaticffl.com/img/logos/logo.png)](https://www.automaticffl.com/)
@@ -69,10 +69,15 @@ For installation and setup, please follow the instructions [here](https://www.au
 
 ## External services
 
-Google Maps is used to create the map experience during the checkout
+**Google Maps:** used to create the map experience during the checkout
 
 - [Google Maps](https://developers.google.com/maps/)
 - [Terms of service](https://cloud.google.com/maps-platform/terms)
+
+**AutomaticFFL:** provides map coordinates of FFL dealers that will be used for the map experience
+
+- [AutomaticFFL](https://www.automaticffl.com/)
+- [Privacy Policy](https://www.automaticffl.com/privacy-policy/)
 
 
 ## Support and Documentation

@@ -14,7 +14,8 @@
  * @package   AutomaticFFL
  * Author    Refactored Group
  * Copyright Copyright (c) 2023, Refactored Group.
- * License   https://www.gnu.org/licenses/gpl-3.0.html GPLv3
+ * License: GPLv3
+ * License URI: https://www.gnu.org/licenses/gpl-3.0.html GPLv3
  *
  * Woo: 99999:00000000000000000000000000000000 @TODO: update this when the plugin is released
  */

@@ -25,7 +25,7 @@ class Compatibility {
 	 * @return string[] array of semver strings.
 	 */
 	public static function get_latest_wc_versions() {
-		$latest_wc_versions = get_transient( 'sv_wc_plugin_wc_versions' );
+		$latest_wc_versions = get_transient( 'affl_wc_versions' );
 		if ( ! is_array( $latest_wc_versions ) ) {
 			$wp_org_request = wp_remote_get( 'https://api.wordpress.org/plugins/info/1.0/woocommerce.json', array( 'timeout' => 1 ) );
 			if ( is_array( $wp_org_request ) && isset( $wp_org_request['body'] ) ) {
@@ -44,7 +44,7 @@ class Compatibility {
 							$latest_wc_versions[] = $wc_version;
 						}
 					}
-					set_transient( 'sv_wc_plugin_wc_versions', $latest_wc_versions, WEEK_IN_SECONDS );
+					set_transient( 'affl_wc_versions', $latest_wc_versions, WEEK_IN_SECONDS );
 				}
 			}
 		}

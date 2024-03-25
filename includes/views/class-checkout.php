@@ -256,7 +256,7 @@ class Checkout {
 		<div id="automaticffl-dealer-card-template">
 			<p><?php echo esc_html( 'Your order will be shipped to' ); ?>:</p>
 			<div id="ffl-selected-dealer" class="ffl-result-body">
-				<p class="customer-name"><?php echo $user_name['first_name'] . ' ' . $user_name['last_name'] ?></p>
+				<p class="customer-name"><?php echo esc_html( $user_name['first_name'] ) . ' ' . esc_html( $user_name['last_name'] ) ?></p>
 				<p class="dealer-name">{{dealer-name}}</p>
 				<p class="dealer-address">{{dealer-address}}</p>
 				<a href="tel:{{dealer-phone}}"><p><span class="dealer-phone dealer-phone-formatted">{{dealer-phone}}</span></p></a>

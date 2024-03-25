@@ -9,8 +9,6 @@ namespace RefactoredGroup\AutomaticFFL\Admin;
 
 defined( 'ABSPATH' ) || exit;
 
-use RefactoredGroup\AutomaticFFL\Helper\Updater;
-
 /**
  * Class Abstract_Settings_Screen.
  */
@@ -70,7 +68,6 @@ abstract class Abstract_Settings_Screen {
 			<?php wp_nonce_field( 'wc_ffl_admin_save_' . $this->get_id() . '_settings' ); ?>
 			<?php submit_button( __( 'Save changes', 'automaticffl-for-woocommerce' ), 'primary', 'save_' . $this->get_id() . '_settings' ); ?>
 		</form>
-		<?php echo wp_kses( Updater::get_ffl_version(), array( 'p' => array(), 'a' => array(), 'span' => array( 'style' => array() ), 'b' => array() ) ); ?>
 		<?php
 	}
 
