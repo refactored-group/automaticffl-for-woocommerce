@@ -73,8 +73,8 @@ class Settings {
 	public function add_menu_item() {
 		add_submenu_page(
 			'woocommerce',
-			__( 'Automatic FFL for WooCommerce', 'automaticffl-for-woocommerce' ),
-			__( 'Automatic FFL', 'automaticffl-for-woocommerce' ),
+			__( 'Automatic FFL for WooCommerce', 'automaticffl-for-wc' ),
+			__( 'Automatic FFL', 'automaticffl-for-wc' ),
 			'manage_woocommerce',
 			self::PAGE_ID,
 			array( $this, 'render' )
@@ -92,7 +92,7 @@ class Settings {
 	private function connect_to_enhanced_admin( $screen_id ) {
 		if ( is_callable( 'wc_admin_connect_page' ) ) {
 			$crumbs = array(
-				__( 'Automatic FFL for WooCommerce', 'automaticffl-for-woocommerce' ),
+				__( 'Automatic FFL for WooCommerce', 'automaticffl-for-wc' ),
 			);
 			wc_admin_connect_page(
 				array(
@@ -160,7 +160,7 @@ class Settings {
 			return;
 		}
 		if ( ! current_user_can( 'manage_woocommerce' ) ) {
-			wp_die( esc_html__( 'You do not have permission to save these settings.', 'automaticffl-for-woocommerce' ) );
+			wp_die( esc_html__( 'You do not have permission to save these settings.', 'automaticffl-for-wc' ) );
 		}
 		check_admin_referer( 'wc_ffl_admin_save_' . $screen->get_id() . '_settings' );
 		try {

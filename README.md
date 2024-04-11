@@ -4,6 +4,7 @@ Contributors: refactoredgroup
 License: GPLv3
 License URI: http://www.gnu.org/licenses/gpl.html
 Tags: FFL Locator, Firearms, FFL Finder, FFL Search, Guns, Firearm Retailer Locator, Gun Shop Locator, Firearm Retailers, Federal Firearms License
+Stable tag: 1.0.5
 Tested up to: 6.4.3
 Requires PHP: 5.6
 
@@ -43,7 +44,7 @@ For installation and setup, please follow the instructions [here](https://www.au
 
 ### Manual Upload
 
-1. Download the latest **`automaticffl-for-woocommerce.zip`** [here](https://github.com/refactored-group/automaticffl-for-woocommerce/releases).
+1. Download the latest **`automaticffl-for-wc.zip`** [here](https://github.com/refactored-group/automaticffl-for-woocommerce/releases).
 
 1. In your WordPress Admin Dashboard, navigate to "Plugins" and click on "Add New".
 
@@ -78,7 +79,6 @@ For installation and setup, please follow the instructions [here](https://www.au
 
 - [AutomaticFFL](https://www.automaticffl.com/)
 - [Privacy Policy](https://www.automaticffl.com/privacy-policy/)
-
 
 ## Support and Documentation
 

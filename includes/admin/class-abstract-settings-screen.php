@@ -66,7 +66,7 @@ abstract class Abstract_Settings_Screen {
 			<input type="hidden" name="admin_nonce" value="<?php echo esc_attr( wp_create_nonce( 'admin_nonce' ) ); ?>" />
 			<input type="hidden" name="screen_id" value="<?php echo esc_attr( $this->get_id() ); ?>">
 			<?php wp_nonce_field( 'wc_ffl_admin_save_' . $this->get_id() . '_settings' ); ?>
-			<?php submit_button( __( 'Save changes', 'automaticffl-for-woocommerce' ), 'primary', 'save_' . $this->get_id() . '_settings' ); ?>
+			<?php submit_button( __( 'Save changes', 'automaticffl-for-wc' ), 'primary', 'save_' . $this->get_id() . '_settings' ); ?>
 		</form>
 		<?php
 	}

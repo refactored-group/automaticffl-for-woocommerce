@@ -53,8 +53,8 @@ class Checkout {
 			woocommerce_form_field('ffl_license_field', array(
 				'type' => 'text',
 				'class' => array('hidden'),
-				'label' => __('FFL License'),
-				'placeholder' => __('FFL License'),
+				'label' => __('FFL License', 'automaticffl-for-wc'),
+				'placeholder' => __('FFL License', 'automaticffl-for-wc'),
 				'required' => true,
 			), $checkout->get_value('ffl_license_field'));
 		}
@@ -80,8 +80,8 @@ class Checkout {
 	public static function automaticffl_custom_fields( $fields ) {
 		if( Config::is_ffl_cart() ){
 				$fields['shipping']['shipping_phone'] = array(
-				'label'		=>	__('Dealer Phone', 'automaticffl-for-woocommerce'),
-				'placeholder'   => _x('Dealer Phone', 'placeholder', 'automaticffl-for-woocommerce'),
+				'label'		=>	__('Dealer Phone', 'automaticffl-for-wc'),
+				'placeholder'   => _x('Dealer Phone', 'placeholder', 'automaticffl-for-wc'),
 				'required'  => true,
 				'class'     => array('hidden'),
 				'clear'     => true

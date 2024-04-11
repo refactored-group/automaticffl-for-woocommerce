@@ -25,7 +25,7 @@ class Plugin {
 	const VERSION = '1.0.0';
 
 	/** Plugin ID */
-	const PLUGIN_ID = 'automaticffl-for-woocommerce';
+	const PLUGIN_ID = 'automaticffl-for-wc';
 
 	/**
 	 * Instance of Plugin
@@ -224,12 +224,12 @@ class Plugin {
 		?>
 		<div class="inline-edit-group">
 			<label class="alignleft ffl_required" style="width: 100%">
-				<span class="title" style="width: fit-content;"><?php esc_html_e('FFL Required', 'automaticffl-for-woocommerce'); ?></span>
+				<span class="title" style="width: fit-content;"><?php esc_html_e('FFL Required', 'automaticffl-for-wc'); ?></span>
 				<span class="input-text-wrap" >
 					<select class="ffl_required change_to" name="_ffl_required" style="margin-left: 10px">
-						<option value=""><?php esc_html_e('— No Change —', 'automaticffl-for-woocommerce'); ?></option>
-						<option value="1"><?php esc_html_e('Yes', 'automaticffl-for-woocommerce'); ?></option>
-						<option value="0"><?php esc_html_e('No', 'automaticffl-for-woocommerce'); ?></option>
+						<option value=""><?php esc_html_e('— No Change —', 'automaticffl-for-wc'); ?></option>
+						<option value="1"><?php esc_html_e('Yes', 'automaticffl-for-wc'); ?></option>
+						<option value="0"><?php esc_html_e('No', 'automaticffl-for-wc'); ?></option>
 					</select>
 				</span>
 			</label>
@@ -340,7 +340,7 @@ class Plugin {
 	public function get_settings_link( $plugin_id = null ) {
 		$settings_url = $this->get_settings_url( $plugin_id );
 		if ( $settings_url ) {
-			return sprintf( '<a href="%s">%s</a>', $settings_url, esc_html__( 'Configure', 'automaticffl-for-woocommerce' ) );
+			return sprintf( '<a href="%s">%s</a>', $settings_url, esc_html__( 'Configure', 'automaticffl-for-wc' ) );
 		}
 
 		return '';
@@ -383,7 +383,7 @@ class Plugin {
 	 * @return string|void
 	 */
 	public function get_plugin_name() {
-		return __( 'Automatic FFL for WooCommerce', 'automaticffl-for-woocommerce' );
+		return __( 'Automatic FFL for WooCommerce', 'automaticffl-for-wc' );
 	}
 
 	/**

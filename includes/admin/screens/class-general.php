@@ -25,8 +25,8 @@ class General extends Abstract_Settings_Screen {
 	public function __construct() {
 
 		$this->id    = self::ID;
-		$this->label = __( 'General', 'automaticffl-for-woocommerce' );
-		$this->title = __( 'General', 'automaticffl-for-woocommerce' );
+		$this->label = __( 'General', 'automaticffl-for-wc' );
+		$this->title = __( 'General', 'automaticffl-for-wc' );
 	}
 
 	/**
@@ -44,35 +44,35 @@ class General extends Abstract_Settings_Screen {
 			),
 			array(
 				'id'      => Config::FFL_SANDBOX_MODE_CONFIG,
-				'title'   => __( 'Sandbox Mode', 'automaticffl-for-woocommerce' ),
+				'title'   => __( 'Sandbox Mode', 'automaticffl-for-wc' ),
 				'type'    => 'select',
-				'desc'    => __( 'Enable the sandbox mode if you are testing or debugging this extension.', 'automaticffl-for-woocommerce' ),
+				'desc'    => __( 'Enable the sandbox mode if you are testing or debugging this extension.', 'automaticffl-for-wc' ),
 				'default' => Config::SETTING_NO,
 				'options' => array(
-					Config::SETTING_YES => __( 'Yes', 'automaticffl-for-woocommerce' ),
-					Config::SETTING_NO  => __( 'No', 'automaticffl-for-woocommerce' ),
+					Config::SETTING_YES => __( 'Yes', 'automaticffl-for-wc' ),
+					Config::SETTING_NO  => __( 'No', 'automaticffl-for-wc' ),
 				),
 			),
 			array(
 				'id'    => Config::FFL_STORE_HASH_CONFIG,
-				'title' => __( 'Store Hash', 'automaticffl-for-woocommerce' ),
+				'title' => __( 'Store Hash', 'automaticffl-for-wc' ),
 				'type'  => 'text',
 				'label' => 'Label',
-				'desc'  => __( "Your subscription's store hash. If you still do not have one, <a href='https://www.automaticffl.com/' target='_blank'>click here</a>.", 'automaticffl-for-woocommerce' ),
+				'desc'  => __( "Your subscription's store hash. If you still do not have one, <a href='https://www.automaticffl.com/' target='_blank'>click here</a>.", 'automaticffl-for-wc' ),
 			),
 			array( 'type' => 'sectionend' ),
 			array(
 				'type'  => 'title',
-				'title' => __( 'Google Maps', 'automaticffl-for-woocommerce' ),
-				'desc'  => __( 'Google Maps is used to create the map experience during the checkout. It is mandatory to have an API Key in order for this plugin to work.</br>If you do not have one yet, <a href="https://console.cloud.google.com/projectselector2/google/maps-apis/credentials" target="_blank">click here</a>.', 'automaticffl-for-woocommerce' ),
+				'title' => __( 'Google Maps', 'automaticffl-for-wc' ),
+				'desc'  => __( 'Google Maps is used to create the map experience during the checkout. It is mandatory to have an API Key in order for this plugin to work.</br>If you do not have one yet, <a href="https://console.cloud.google.com/projectselector2/google/maps-apis/credentials" target="_blank">click here</a>.', 'automaticffl-for-wc' ),
 			),
 			array(
 				'id'    => Config::FFL_GOOGLE_MAPS_API_KEY_CONFIG,
-				'title' => __( 'API Key', 'automaticffl-for-woocommerce' ),
+				'title' => __( 'API Key', 'automaticffl-for-wc' ),
 				'type'  => 'text',
 				'label' => 'Label',
 				'css'   => 'width: 250px;',
-				'desc'  => __( 'Your Google Maps API Key.', 'automaticffl-for-woocommerce' ),
+				'desc'  => __( 'Your Google Maps API Key.', 'automaticffl-for-wc' ),
 			),
 			array( 'type' => 'sectionend' ),
 		);
