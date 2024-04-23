@@ -36,7 +36,7 @@ Automatic FFL for WooCommerce is a powerful extension designed to simplify the p
 
 ## Demo
 
-- [https://woo74.demos.automaticffl.com/shop/](https://woo74.demos.automaticffl.com/shop/)
+- [https://woo80.demos.automaticffl.com/shop/](https://woo80.demos.automaticffl.com/shop/)
 
 ## Installation
 
