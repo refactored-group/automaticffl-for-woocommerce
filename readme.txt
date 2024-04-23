@@ -44,8 +44,16 @@ For installation and setup, please follow the instructions [here](https://www.au
 
 == Screenshots ==
 
-1. This screen shot description corresponds to screenshot-1.(png|jpg|jpeg|gif). Screenshots are stored in the /assets directory.
-2. This is the second screen shot
+1. Customers with a firearm in their cart must choose an FFL location for shipment. 
+2. Automatic FFL Locator map.
+3. Automatic FFL address selected.
+4. Automatic FFL admin homepage.
+5. Automatic FFL Dealer Management Page.
+6. FFL Fees and Business Hours config.
+7. Bulk enable/prefer FFL locations.
+8. Allow us to automatically enable new Type 1 & 2 FFL dealers or take full control.
+9. Automatic FFL WooCommerce Settings.
+10. Marking products as FFL-required.
 
 == Changelog ==
 
