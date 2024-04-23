@@ -12,27 +12,25 @@ Automatic FFL is a powerful extension designed to simplify the process of shippi
 
 == Description ==
 
-[![Automatic FFL for WooCommerce](https://www.automaticffl.com/img/logos/logo.png)](https://www.automaticffl.com/)
-
 Automatic FFL for WooCommerce is a powerful extension designed to simplify the process of shipping firearms to Federal Firearms License (FFL) dealers when customers place orders containing firearm products. The extension seamlessly integrates with WooCommerce, adding a user-friendly interface that allows customers to select an FFL dealer near them for order pickup. With this extension, you can ensure compliance with firearm shipping regulations while providing a convenient experience for your customers.
 
 Features:
 
-* Simplified Firearms Shipping: With Automatic FFL for WooCommerce, you can streamline the complex process of shipping firearms to FFL dealers, making it easy to comply with federal regulations.
+* **Simplified Firearms Shipping:** With Automatic FFL for WooCommerce, you can streamline the complex process of shipping firearms to FFL dealers, making it easy to comply with federal regulations.
 
-* Automatic Detection of Firearm Products: When a product is selected on the product page as _FFL Required_ and is added to the cart, the extension will automatically recognize it as a firearm product, prompting the FFL selection process.
+* **Automatic Detection of Firearm Products:** When a product is selected on the product page as _FFL Required_ and is added to the cart, the extension will automatically recognize it as a firearm product, prompting the FFL selection process.
 
-* FFL Dealer Map: A map, along with a list, will be displayed to customers at the checkout, showing nearby FFL dealers based on the customer's address, zipcode, or other search criteria.
+* **FFL Dealer Map:** A map, along with a list, will be displayed to customers at the checkout, showing nearby FFL dealers based on the customer's address, zipcode, or other search criteria.
 
-* Seamless Checkout Integration: Once a customer selects an FFL dealer, the extension will update the shipping address with the dealer's address, ensuring a smooth and compliant checkout process.
+* **Seamless Checkout Integration:** Once a customer selects an FFL dealer, the extension will update the shipping address with the dealer's address, ensuring a smooth and compliant checkout process.
 
-* Validated by the ATF: Our dealers database updates directly from the Bureau of Alcohol, Tobacco, Firearms and Explosives, commonly referred to as the ATF.
+* **Validated by the ATF:** Our dealers database updates directly from the Bureau of Alcohol, Tobacco, Firearms and Explosives, commonly referred to as the ATF.
 
-* Full Support to Bulk and Quick Edit With Automatic FFL for WooCommerce you are able to Import, Export and Edit via CSV with full compatibility. You also have the option to Bulk Edit on WooCommerce Admin Products Panel. Additionally you can set a product as FFL Required using Quick Edit WooCommerce feature.
+* **Full Support to Bulk and Quick Edit:** With Automatic FFL for WooCommerce you are able to Import, Export and Edit via CSV with full compatibility. You also have the option to Bulk Edit on WooCommerce Admin Products Panel. Additionally you can set a product as FFL Required using Quick Edit WooCommerce feature.
 
-* Customization: We automatically display common FFL dealers, but you have full control over which dealers show to your customers. You can also promote dealers by marking them as preferred or add information to them such as store hours or transfer fees.
+* **Customization:** We automatically display common FFL dealers, but you have full control over which dealers show to your customers. You can also promote dealers by marking them as preferred or add information to them such as store hours or transfer fees.
 
-* Same Day Customer Support: If you need any assistance or have any questions, we are always here to help.
+* **Same Day Customer Support:** If you need any assistance or have any questions, we are always here to help.
 
 == Demo ==
 
