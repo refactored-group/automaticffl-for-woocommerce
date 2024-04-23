@@ -3,7 +3,7 @@
 Contributors: refactoredgroup
 License: GPLv3
 License URI: http://www.gnu.org/licenses/gpl.html
-Tags: FFL Locator, Firearms, FFL Finder, FFL Search, Guns, Firearm Retailer Locator, Gun Shop Locator, Firearm Retailers, Federal Firearms License
+Tags: FFL Locator, Firearms, Search, FFL, Guns
 Stable tag: 1.0.5
 Tested up to: 6.4.3
 Requires PHP: 5.6
@@ -28,7 +28,7 @@ Automatic FFL for WooCommerce is a powerful extension designed to simplify the p
 
 - **Validated by the ATF:** Our dealers database updates directly from the Bureau of Alcohol, Tobacco, Firearms and Explosives, commonly referred to as the ATF.
 
-- **Full Support to Bulk and Quick Edit** With ***Automatic FFL for WooCommerce*** you are able to Import, Export and Edit via CSV with full compatibility. You also have the option to Bulk Edit on WooCommerce Admin Products Panel. Additionally you can set a product as FFL Required using Quick Edit WooCommerce feature.
+- **Full Support to Bulk and Quick Edit** With **_Automatic FFL for WooCommerce_** you are able to Import, Export and Edit via CSV with full compatibility. You also have the option to Bulk Edit on WooCommerce Admin Products Panel. Additionally you can set a product as FFL Required using Quick Edit WooCommerce feature.
 
 - **Customization:** We automatically display common FFL dealers, but you have full control over which dealers show to your customers. You can also promote dealers by marking them as preferred or add information to them such as store hours or transfer fees.
 
@@ -63,10 +63,6 @@ For installation and setup, please follow the instructions [here](https://www.au
 1. Once the customer selects an FFL dealer, the extension will update the shipping address to the dealer's address.
 
 1. The customer can proceed to complete the checkout, and the order will be shipped to the selected FFL dealer for pickup.
-
-## Screenshots
-
-- TODO: ADD SCREENSHOTS HERE!
 
 ## External services
 
