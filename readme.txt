@@ -1,7 +1,7 @@
 === Automatic FFL ===
 Contributors: refactoredgroup
 Tags: FFL Locator, Firearms, Search, FFL, Guns
-Tested up to: 6.4.3
+Tested up to: 6.5.2
 Stable tag: 1.0.5
 Requires PHP: 5.6
 Requires at least: 4.7
