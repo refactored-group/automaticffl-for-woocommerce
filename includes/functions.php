@@ -19,3 +19,11 @@ use RefactoredGroup\AutomaticFFL\Plugin;
 function affl() {
 	return Plugin::instance();
 }
+
+function ts_hide_ship_to_different_address() {
+    if (is_checkout()) {
+        echo '<style>#ship-to-different-address { display: none; }</style>';
+    }
+}
+
+add_action('wp_head', 'ts_hide_ship_to_different_address');
