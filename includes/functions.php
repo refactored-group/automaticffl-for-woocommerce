@@ -22,7 +22,12 @@ function affl() {
 
 function ts_hide_ship_to_different_address() {
     if (is_checkout()) {
-        echo '<style>#ship-to-different-address { display: none; }</style>';
+        echo '
+            <style>
+                #ship-to-different-address, .woocommerce-shipping-fields__field-wrapper {
+                    display: none !important;
+                }
+            </style>';
     }
 }
 

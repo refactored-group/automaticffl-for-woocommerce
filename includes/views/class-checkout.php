@@ -156,6 +156,11 @@ class Checkout {
 	public static function get_map() {
 		$user_name = self::get_user_name();
 		?>
+		<h3>
+			<label style="font-weight: 100">
+				<span>Ship to a different address?</span>
+			</label>
+		</h3>
 		<div class="woocommerce">
 			<div class="woocommerce-info" role="alert">
 				<?php echo esc_html( 'You have a firearm in your cart and must choose a Licensed Firearm Dealer (FFL) for the Shipping Address.' ); ?>
