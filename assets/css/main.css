@@ -489,6 +489,7 @@
         }
     }
 }
+
 @media only screen and (-webkit-min-device-pixel-ratio: 2) and (orientation: portrait),
     only screen and (min--moz-device-pixel-ratio: 2) and (orientation: portrait),
     only screen and (-o-min-device-pixel-ratio: 2/1) and (orientation: portrait),
@@ -508,4 +509,13 @@
         .automaticffl-select-button {
             font-size: small;
         }
+}
+
+#automaticffl-select-dealer {
+    margin-bottom: 15px;
+}
+
+/* FFL-298 this prevents the scroll bar from taking up space inside the html */
+body {
+    margin-right: calc(-1 * (100vw - 100%)) !important;
 }
