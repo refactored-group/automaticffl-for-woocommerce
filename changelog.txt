@@ -1,5 +1,8 @@
 *** Automatic FFL for WooCommerce ***
 
+2024-09-23 - Version 1.0.6
+* CSS updates for checkout
+
 2024-03-07 - Version 1.0.5
 * Updates for Wordpress standards
 
