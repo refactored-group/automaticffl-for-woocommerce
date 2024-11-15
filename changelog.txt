@@ -1,5 +1,8 @@
 *** Automatic FFL for WooCommerce ***
 
+2024-11-15 - Version 1.0.7
+* Adds shipping calculation trigger upon dealer selection
+
 2024-09-23 - Version 1.0.6
 * CSS updates for checkout
 

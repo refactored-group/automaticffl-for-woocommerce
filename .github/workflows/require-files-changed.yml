@@ -1,0 +1,38 @@
+name: Check PR for Required File Updates
+
+on:
+  pull_request:
+    types: [opened, edited, synchronize]
+
+jobs:
+  validate-versioning-and-changelog:
+    runs-on: ubuntu-latest
+    name: Ensure Versioning and Changelog Updates in PR
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+        with:
+          fetch-depth: 2 # Fetch the previous commit to allow comparisons
+
+      - name: Verify Required File Changes
+        run: |
+          # List the required files
+          REQUIRED_FILES=(
+            "automaticffl-for-woocommerce.php"
+            "changelog.txt"
+            "readme.txt"
+            "README.md"
+          )
+
+          # Get the list of modified files
+          MODIFIED_FILES=$(git diff --name-only HEAD HEAD~1)
+
+          # Check if required files are modified
+          for FILE in "${REQUIRED_FILES[@]}"; do
+            if ! echo "$MODIFIED_FILES" | grep -q "$FILE"; then
+              echo "❌ Error: $FILE must be modified in the PR to update versioning or changelogs."
+              exit 1
+            fi
+          done
+
+          echo "✅ All required files for versioning and changelogs are modified."

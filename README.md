@@ -4,7 +4,7 @@ Contributors: refactoredgroup
 License: GPLv3
 License URI: http://www.gnu.org/licenses/gpl.html
 Tags: FFL Locator, Firearms, Search, FFL, Guns
-Stable tag: 1.0.5
+Stable tag: 1.0.7
 Tested up to: 6.5.2
 Requires PHP: 5.6
 
