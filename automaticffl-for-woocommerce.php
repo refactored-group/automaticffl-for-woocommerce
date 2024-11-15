@@ -18,6 +18,7 @@
  * License URI: https://www.gnu.org/licenses/gpl-3.0.html GPLv3
  *
  * Woo: 99999:00000000000000000000000000000000 @TODO: update this when the plugin is released
+ * 
  */
 
 defined( 'ABSPATH' ) || exit;
