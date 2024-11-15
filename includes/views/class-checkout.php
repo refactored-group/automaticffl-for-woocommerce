@@ -398,6 +398,7 @@ class Checkout {
 					jQuery('#shipping_postcode').val(selectedDealer.premise_zip);
 					jQuery('#automaticffl-select-dealer').html("Change Dealer");
 					jQuery('#automaticffl-dealer-selected').addClass('automaticffl-dealer-selected');
+					jQuery('body').trigger('update_checkout');
 					return selectedDealer;
 				}
 				parseDealersResult(dealers) {
