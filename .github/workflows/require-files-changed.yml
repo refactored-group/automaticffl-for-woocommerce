@@ -10,6 +10,8 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v3
+        with:
+          fetch-depth: 2 # Fetch the previous commit to allow comparisons
 
       - name: Check for required file changes
         run: |
@@ -21,7 +23,7 @@ jobs:
           )
 
           # Get the list of modified files
-          MODIFIED_FILES=$(git diff --name-only HEAD^ HEAD)
+          MODIFIED_FILES=$(git diff --name-only HEAD HEAD~1)
 
           # Check if required files are modified
           for FILE in "${REQUIRED_FILES[@]}"; do
