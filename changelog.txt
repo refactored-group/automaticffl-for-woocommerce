@@ -1,5 +1,8 @@
 *** Automatic FFL for WooCommerce ***
 
+2024-11-19 - Version 1.0.8
+* Fixes bug where customers couldn't ship normal products to a different place than the billing address
+
 2024-11-15 - Version 1.0.7
 * Adds shipping calculation trigger upon dealer selection
 

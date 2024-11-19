@@ -2,7 +2,7 @@
 Contributors: refactoredgroup
 Tags: FFL Locator, Firearms, Search, FFL, Guns
 Tested up to: 6.5.2
-Stable tag: 1.0.7
+Stable tag: 1.0.8
 Requires PHP: 5.6
 Requires at least: 4.7
 License: GPLv3
@@ -54,6 +54,9 @@ For installation and setup, please follow the instructions [here](https://www.au
 10. Marking products as FFL-required.
 
 == Changelog ==
+
+= 1.0.8 =
+* Fixes bug where customers couldn't ship normal products to a different place than the billing address
 
 = 1.0.7 =
 * Adds shipping calculation trigger upon dealer selection

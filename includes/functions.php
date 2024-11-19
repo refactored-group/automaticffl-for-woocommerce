@@ -10,6 +10,7 @@
  */
 
 use RefactoredGroup\AutomaticFFL\Plugin;
+use RefactoredGroup\AutomaticFFL\Helper\Config;
 
 /**
  * Create a new instance for this plugin
@@ -21,7 +22,7 @@ function affl() {
 }
 
 function ts_hide_ship_to_different_address() {
-    if (is_checkout()) {
+    if (is_checkout() && Config::is_ffl_cart()) {
         echo '
             <style>
                 #ship-to-different-address, .woocommerce-shipping-fields__field-wrapper {
