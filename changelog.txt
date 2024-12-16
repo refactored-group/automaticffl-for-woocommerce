@@ -1,5 +1,8 @@
 *** Automatic FFL for WooCommerce ***
 
+2024-12-16 - Version 1.0.9
+* Updated tested up to version
+
 2024-11-19 - Version 1.0.8
 * Fixes bug where customers couldn't ship normal products to a different place than the billing address
 

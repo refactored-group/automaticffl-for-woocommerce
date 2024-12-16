@@ -5,7 +5,8 @@
  * Description: The official Automatic FFL for WooCommerce plugin
  * Author: Refactored Group
  * Author URI: http://refactored.group
- * Version: 1.0.8
+ * Version: 1.0.9
+ * Tested up to: 6.7.1 
  * Text Domain: automaticffl-for-wc
  * Domain Path: /i18n/languages/
  *
