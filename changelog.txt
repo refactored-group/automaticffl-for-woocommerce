@@ -1,5 +1,8 @@
 *** Automatic FFL for WooCommerce ***
 
+2025-04-15 - Version 1.0.10
+* Tested with latest WordPress
+
 2024-12-16 - Version 1.0.9
 * Updated tested up to version
 
