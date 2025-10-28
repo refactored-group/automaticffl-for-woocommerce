@@ -49,7 +49,7 @@ class Config {
 		foreach ( $cart as $product ) {
 			$product_id = $product['product_id'];
 			$ffl_required = get_post_meta($product_id, '_ffl_required', true);
-			
+
 			if ( $ffl_required === 'yes' ) {
 				$total_ffl++;
 			}
@@ -134,13 +134,13 @@ class Config {
 		foreach ( $cart as $product ) {
 			$product_id = $product['product_id'];
 			$ffl_required = get_post_meta($product_id, '_ffl_required', true);
-			
+
 			if ( $ffl_required === 'yes' ) {
 				$total_ffl++;
 			}
 		}
 
-		if ( $total_ffl > 0 && $total_ffl < $total_products ) {
+		if ( $total_ffl > 0 && $total_ffl < $total_products && ! is_cart() ) {
 			// Redirect back to the cart where the error message will be displayed.
 			wp_safe_redirect( wc_get_cart_url() );
 		}

@@ -82,6 +82,22 @@ class Plugin {
 		add_action('woocommerce_product_quick_edit_start', array($this, 'ffl_required_add_admin_edit_checkbox'));
 		add_action('woocommerce_product_quick_edit_save', array($this, 'ffl_required_save_admin_edit_checkbox'));
 		add_action('wp_enqueue_scripts', array($this, 'automaticffl_enqueue'));
+
+		// Override the shippining fields since some themes copies the billing address to the shipping address
+		add_action('woocommerce_checkout_create_order', function($order, $data) {
+			if (isset($data['ship_to_different_address']) && $data['ship_to_different_address']) {
+				$order->set_shipping_first_name($data['shipping_first_name'] ?? '');
+				$order->set_shipping_last_name($data['shipping_last_name'] ?? '');
+				$order->set_shipping_company($data['shipping_company'] ?? '');
+				$order->set_shipping_country($data['shipping_country'] ?? '');
+				$order->set_shipping_address_1($data['shipping_address_1'] ?? '');
+				$order->set_shipping_address_2($data['shipping_address_2'] ?? '');
+				$order->set_shipping_city($data['shipping_city'] ?? '');
+				$order->set_shipping_state($data['shipping_state'] ?? '');
+				$order->set_shipping_postcode($data['shipping_postcode'] ?? '');
+				$order->set_shipping_phone($data['shipping_phone'] ?? '');
+			}
+		}, 99, 2);
 	}
 
 	/**
@@ -138,7 +154,7 @@ class Plugin {
 			'description'   => 'Check this box if the product requires shipment to an FFL dealer',
 			'default'       => 'no',
 		];
-	
+
 		return $product_type_options;
 	}
 
@@ -186,14 +202,14 @@ class Plugin {
 	}
 
 	/**
-	 * Add automatic mapping support for FFL Required. 
+	 * Add automatic mapping support for FFL Required.
 	 * This will automatically select the correct mapping for columns named 'FFL Required' or 'ffl required'.
 	 *
 	 * @param array $fields
 	 * @return array $fields
 	 */
 	function add_ffl_required_to_mapping_screen( $fields ) {
-		
+
 		$fields['FFL Required'] = 'ffl_required';
 		$fields['ffl required'] = 'ffl_required';
 
@@ -208,17 +224,17 @@ class Plugin {
 	 * @return WC_Product $object
 	 */
 	function process_ffl_required_import( $object, $data ) {
-		
+
 		if ( ! empty( $data['ffl_required'] ) ) {
 			$object->update_meta_data( '_ffl_required', $data['ffl_required'] );
 		}
 
 		return $object;
 	}
-	
+
 	/**
 	 * Add the FFL Required field to Bulk Edit or Quick Edit on Admin Panel.
-	 * 
+	 *
 	 */
 	function ffl_required_add_admin_edit_checkbox(){
 		?>
@@ -246,7 +262,7 @@ class Plugin {
 	 */
 	function ffl_required_save_admin_edit_checkbox($product){
 		$product_id = method_exists($product, 'get_id') ? $product->get_id() : $product->id;
-	
+
 		if(isset($_REQUEST['_ffl_required'])){
 			if($_REQUEST['_ffl_required'] == '1'){
 				update_post_meta($product_id, '_ffl_required', 'yes');
