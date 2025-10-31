@@ -1,5 +1,8 @@
 *** Automatic FFL for WooCommerce ***
 
+2025-04-15 - Version 1.0.11
+* Fixes redirect loop on cart page when WooCommerce payments is also installed
+
 2025-04-15 - Version 1.0.10
 * Tested with latest WordPress
 

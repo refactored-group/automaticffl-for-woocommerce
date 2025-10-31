@@ -2,7 +2,7 @@
 Contributors: refactoredgroup
 Tags: FFL Locator, Firearms, Search, FFL, Guns
 Tested up to: 6.8
-Stable tag: 1.0.10
+Stable tag: 1.0.11
 Requires PHP: 5.6
 Requires at least: 4.7
 License: GPLv3
@@ -38,11 +38,11 @@ Features:
 
 == Installation ==
 
-For installation and setup, please follow the instructions [here](https://www.automaticffl.com/installation/woocommerce/). 
+For installation and setup, please follow the instructions [here](https://www.automaticffl.com/installation/woocommerce/).
 
 == Screenshots ==
 
-1. Customers with a firearm in their cart must choose an FFL location for shipment. 
+1. Customers with a firearm in their cart must choose an FFL location for shipment.
 2. Automatic FFL Locator map.
 3. Automatic FFL address selected.
 4. Automatic FFL admin homepage.
