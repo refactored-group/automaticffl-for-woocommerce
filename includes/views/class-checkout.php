@@ -169,7 +169,10 @@ class Checkout {
 		<div id="automaticffl-dealer-selected">
 		</div>
 		<button type="button" id="automaticffl-select-dealer" value="12"
-				class="button alt wp-element-button fa-search ffl-search-button"><?php echo esc_html( 'Find a Dealer' ); ?></button>
+				class="button alt wp-element-button ffl-search-button">
+				<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="16" height="16" fill="currentColor" aria-hidden="true" style="vertical-align: middle; margin-right: 8px;">
+					<path d="M416 208c0 45.9-14.9 88.3-40 122.7L502.6 457.4c12.5 12.5 12.5 32.8 0 45.3s-32.8 12.5-45.3 0L330.7 376c-34.4 25.2-76.8 40-122.7 40C93.1 416 0 322.9 0 208S93.1 0 208 0S416 93.1 416 208zM208 352a144 144 0 1 0 0-288 144 144 0 1 0 0 288z"/>
+				</svg><?php echo esc_html( 'Find a Dealer' ); ?></button>
 		<div id="automaticffl-dealer-card" class="woocomerce" style="background: #f8f8f8; color: #000000; display: none">
 			<div class="woocommerce-info" role="alert">
 			</div>
@@ -181,7 +184,9 @@ class Checkout {
 		<div class="automaticffl-dealer-layer" id="automaticffl-dealer-layer">
 			<div class="dealers-container">
 				<span id="automaticffl-close-modal-button" class="w3-button w3-display-topright" title="<?php echo esc_html( 'Close' ); ?>">
-					<i class="fas fa-times"></i>
+					<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 384 512" width="16" height="16" fill="currentColor" aria-hidden="true">
+						<path d="M342.6 150.6c12.5-12.5 12.5-32.8 0-45.3s-32.8-12.5-45.3 0L192 210.7 86.6 105.4c-12.5-12.5-32.8-12.5-45.3 0s-12.5 32.8 0 45.3L146.7 256 41.4 361.4c-12.5 12.5-12.5 32.8 0 45.3s32.8 12.5 45.3 0L192 301.3 297.4 406.6c12.5 12.5 32.8 12.5 45.3 0s12.5-32.8 0-45.3L237.3 256 342.6 150.6z"/>
+					</svg>
 				</span>
 				<div class="modal-container">
 					<div class="modal-items">
@@ -192,7 +197,7 @@ class Checkout {
 									<h4 class="logo-header"><?php echo esc_html( 'FIND YOUR DEALER' ) ?></h4>
 									<p class="logo-sub"><?php echo esc_html( 'Use the options below to search for a dealer near you.' ) ?></p>
 								</div>
-								<div class="modal-header-search" style="border-top: 1px solid #f2f2f2" id="ffl-search-form">
+								<div class="modal-header-search" id="ffl-search-form">
 									<input type="text" name="search" id="automaticffl-search-input" value="" placeholder="<?php echo esc_html( 'Zip Code, City or FFL' ); ?>">
 									<select name="ffl_miles_search" id="automaticffl-search-miles" class="select-ffl dealers-modal-button">
 										<option value="5"><?php echo esc_html( '5 Miles' ); ?></option>
@@ -200,7 +205,11 @@ class Checkout {
 										<option value="30"><?php echo esc_html( '30 Miles' ); ?></option>
 										<option value="75"><?php echo esc_html( '75 Miles' ); ?></option>
 									</select>
-									<button type="button" id="automaticffl-search-button" value="12" class="button alt ffl-search-button"></button>
+									<button type="button" id="automaticffl-search-button" value="12" class="button alt ffl-search-button">
+										<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="16" height="16" fill="currentColor" aria-hidden="true">
+											<path d="M416 208c0 45.9-14.9 88.3-40 122.7L502.6 457.4c12.5 12.5 12.5 32.8 0 45.3s-32.8 12.5-45.3 0L330.7 376c-34.4 25.2-76.8 40-122.7 40C93.1 416 0 322.9 0 208S93.1 0 208 0S416 93.1 416 208zM208 352a144 144 0 1 0 0-288 144 144 0 1 0 0 288z"/>
+										</svg>
+									</button>
 								</div>
 								<div class="modal-header-search">
 									<p id="ffl-searching-message"><?php echo esc_html( 'Looking for dealers, please wait...' ); ?></p>
@@ -220,7 +229,12 @@ class Checkout {
 						<div id="map-toggle" class="hide-map">
 							<div class="inner-toggle hide-map">
 								<span id="toggle-map-text-label" class="show-text-map-label"><?php echo esc_html( 'view map' ); ?></span>
-								<i class="fa-icon fas fa-angle-double-up"></i>
+								<svg class="toggle-icon toggle-icon-up" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512" width="16" height="16" fill="currentColor" aria-hidden="true">
+									<path d="M246.6 41.4c-12.5-12.5-32.8-12.5-45.3 0l-160 160c-12.5 12.5-12.5 32.8 0 45.3s32.8 12.5 45.3 0L224 109.3 361.4 246.6c12.5 12.5 32.8 12.5 45.3 0s12.5-32.8 0-45.3l-160-160zm160 352l-160-160c-12.5-12.5-32.8-12.5-45.3 0l-160 160c-12.5 12.5-12.5 32.8 0 45.3s32.8 12.5 45.3 0L224 301.3 361.4 438.6c12.5 12.5 32.8 12.5 45.3 0s12.5-32.8 0-45.3z"/>
+								</svg>
+								<svg class="toggle-icon toggle-icon-down" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512" width="16" height="16" fill="currentColor" aria-hidden="true" style="display: none;">
+									<path d="M246.6 470.6c-12.5 12.5-32.8 12.5-45.3 0l-160-160c-12.5-12.5-12.5-32.8 0-45.3s32.8-12.5 45.3 0L224 402.7 361.4 265.4c12.5-12.5 32.8-12.5 45.3 0s12.5 32.8 0 45.3l-160 160zm160-352l-160 160c-12.5 12.5-32.8 12.5-45.3 0l-160-160c-12.5-12.5-12.5-32.8 0-45.3s32.8-12.5 45.3 0L224 210.7 361.4 73.4c12.5 12.5 32.8 12.5 45.3 0s12.5 32.8 0 45.3z"/>
+								</svg>
 							</div>
 							<div class="automaticffl-map" id="automaticffl-map">
 							</div>
@@ -370,7 +384,7 @@ class Checkout {
 						jQuery("#toggle-map-text").toggleClass("show-text-map hide-text-map");
 						jQuery(".show-text-map-label, .show-text-map").html("View map");
 						jQuery(".hide-text-map-label, .hide-text-map").html("Hide map");
-						jQuery(".fa-icon").toggleClass("fa-angle-double-up fa-angle-double-down");
+						jQuery(".toggle-icon-up, .toggle-icon-down").toggle();
 						jQuery("#search-result-list").toggleClass("show-list hide-list");
 				}
 				closeMap() {

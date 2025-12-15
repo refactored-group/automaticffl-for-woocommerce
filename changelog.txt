@@ -1,5 +1,8 @@
 *** Automatic FFL for WooCommerce ***
 
+2025-12-15 - Version 1.0.12
+* Replaced FontAwesome icons with SVGs for better theme compatibility (fixes issues with Divi theme and other themes that remove FontAwesome)
+
 2025-04-15 - Version 1.0.11
 * Fixes redirect loop on cart page when WooCommerce payments is also installed
 

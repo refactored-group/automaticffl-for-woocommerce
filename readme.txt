@@ -2,7 +2,7 @@
 Contributors: refactoredgroup
 Tags: FFL Locator, Firearms, Search, FFL, Guns
 Tested up to: 6.8
-Stable tag: 1.0.11
+Stable tag: 1.0.12
 Requires PHP: 5.6
 Requires at least: 4.7
 License: GPLv3
@@ -54,6 +54,18 @@ For installation and setup, please follow the instructions [here](https://www.au
 10. Marking products as FFL-required.
 
 == Changelog ==
+
+= 1.0.12 =
+* Replaced FontAwesome icons with SVGs for better theme compatibility (fixes issues with Divi theme and other themes that remove FontAwesome)
+
+= 1.0.11 =
+* Fixes redirect loop on cart page when WooCommerce payments is also installed
+
+= 1.0.10 =
+* Tested with latest WordPress
+
+= 1.0.9 =
+* Updated tested up to version
 
 = 1.0.8 =
 * Fixes bug where customers couldn't ship normal products to a different place than the billing address
