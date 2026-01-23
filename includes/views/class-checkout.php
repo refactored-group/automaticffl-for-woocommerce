@@ -109,6 +109,32 @@ class Checkout {
 	}
 
 	/**
+	 * Build iframe URL with query parameters
+	 *
+	 * @since 1.0.13
+	 *
+	 * @return string|false Returns URL string on success, false if required data is missing
+	 */
+	private static function build_iframe_url() {
+		$base_url = Config::get_iframe_map_url();
+		$store_hash = Config::get_store_hash();
+		$maps_api_key = Config::get_google_maps_api_key();
+
+		// Validate required parameters
+		if ( empty( $store_hash ) || empty( $maps_api_key ) ) {
+			return false;
+		}
+
+		$params = array(
+			'store_hash' => $store_hash,
+			'platform' => 'WooCommerce',
+			'maps_api_key' => $maps_api_key,
+		);
+
+		return add_query_arg( $params, $base_url );
+	}
+
+	/**
 	 * Used by the Hook to return the map when a FFL cart is loaded.
 	 *
 	 * @since 1.0.0
@@ -155,6 +181,19 @@ class Checkout {
 	 */
 	public static function get_map() {
 		$user_name = self::get_user_name();
+		$iframe_url = self::build_iframe_url();
+
+		// If configuration is invalid, show error message
+		if ( false === $iframe_url ) {
+			?>
+			<div class="woocommerce">
+				<div class="woocommerce-error" role="alert">
+					<?php echo esc_html( 'FFL dealer selection is not configured. Please contact the site administrator.' ); ?>
+				</div>
+			</div>
+			<?php
+			return;
+		}
 		?>
 		<h3>
 			<label style="font-weight: 100">
@@ -183,93 +222,7 @@ class Checkout {
 		</script>
 		<div class="automaticffl-dealer-layer" id="automaticffl-dealer-layer">
 			<div class="dealers-container">
-				<span id="automaticffl-close-modal-button" class="w3-button w3-display-topright" title="<?php echo esc_html( 'Close' ); ?>">
-					<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 384 512" width="16" height="16" fill="currentColor" aria-hidden="true">
-						<path d="M342.6 150.6c12.5-12.5 12.5-32.8 0-45.3s-32.8-12.5-45.3 0L192 210.7 86.6 105.4c-12.5-12.5-32.8-12.5-45.3 0s-12.5 32.8 0 45.3L146.7 256 41.4 361.4c-12.5 12.5-12.5 32.8 0 45.3s32.8 12.5 45.3 0L192 301.3 297.4 406.6c12.5 12.5 32.8 12.5 45.3 0s12.5-32.8 0-45.3L237.3 256 342.6 150.6z"/>
-					</svg>
-				</span>
-				<div class="modal-container">
-					<div class="modal-items">
-						<div class="ffl-search-results">
-							<div class="modal-header-container show-list">
-								<div class="modal-header-logo">
-									<img src="<?php echo esc_url( affl()->get_plugin_url() ); ?>/assets/images/logo-automaticffl.png">
-									<h4 class="logo-header"><?php echo esc_html( 'FIND YOUR DEALER' ) ?></h4>
-									<p class="logo-sub"><?php echo esc_html( 'Use the options below to search for a dealer near you.' ) ?></p>
-								</div>
-								<div class="modal-header-search" id="ffl-search-form">
-									<input type="text" name="search" id="automaticffl-search-input" value="" placeholder="<?php echo esc_html( 'Zip Code, City or FFL' ); ?>">
-									<select name="ffl_miles_search" id="automaticffl-search-miles" class="select-ffl dealers-modal-button">
-										<option value="5"><?php echo esc_html( '5 Miles' ); ?></option>
-										<option value="10"><?php echo esc_html( '10 Miles' ); ?></option>
-										<option value="30"><?php echo esc_html( '30 Miles' ); ?></option>
-										<option value="75"><?php echo esc_html( '75 Miles' ); ?></option>
-									</select>
-									<button type="button" id="automaticffl-search-button" value="12" class="button alt ffl-search-button">
-										<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="16" height="16" fill="currentColor" aria-hidden="true">
-											<path d="M416 208c0 45.9-14.9 88.3-40 122.7L502.6 457.4c12.5 12.5 12.5 32.8 0 45.3s-32.8 12.5-45.3 0L330.7 376c-34.4 25.2-76.8 40-122.7 40C93.1 416 0 322.9 0 208S93.1 0 208 0S416 93.1 416 208zM208 352a144 144 0 1 0 0-288 144 144 0 1 0 0 288z"/>
-										</svg>
-									</button>
-								</div>
-								<div class="modal-header-search">
-									<p id="ffl-searching-message"><?php echo esc_html( 'Looking for dealers, please wait...' ); ?></p>
-									<p id="ffl-results-message"></p><span id="toggle-map-text" class="hidden show-text-map"><?php echo esc_html( 'View map' ); ?></span>
-									<div id="ffl-searching-error-message">
-										<div class="woocommerce">
-											<div class="woocommerce-error" role="alert">
-												<?php echo esc_html( 'An error has ocurred. Please, try again later.' ); ?>
-											</div>
-										</div>
-									</div>
-								</div>
-								<div class="modal-header-search show-list" id="search-result-list">
-								</div>
-							</div>
-						</div>
-						<div id="map-toggle" class="hide-map">
-							<div class="inner-toggle hide-map">
-								<span id="toggle-map-text-label" class="show-text-map-label"><?php echo esc_html( 'view map' ); ?></span>
-								<svg class="toggle-icon toggle-icon-up" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512" width="16" height="16" fill="currentColor" aria-hidden="true">
-									<path d="M246.6 41.4c-12.5-12.5-32.8-12.5-45.3 0l-160 160c-12.5 12.5-12.5 32.8 0 45.3s32.8 12.5 45.3 0L224 109.3 361.4 246.6c12.5 12.5 32.8 12.5 45.3 0s12.5-32.8 0-45.3l-160-160zm160 352l-160-160c-12.5-12.5-32.8-12.5-45.3 0l-160 160c-12.5 12.5-12.5 32.8 0 45.3s32.8 12.5 45.3 0L224 301.3 361.4 438.6c12.5 12.5 32.8 12.5 45.3 0s12.5-32.8 0-45.3z"/>
-								</svg>
-								<svg class="toggle-icon toggle-icon-down" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512" width="16" height="16" fill="currentColor" aria-hidden="true" style="display: none;">
-									<path d="M246.6 470.6c-12.5 12.5-32.8 12.5-45.3 0l-160-160c-12.5-12.5-12.5-32.8 0-45.3s32.8-12.5 45.3 0L224 402.7 361.4 265.4c12.5-12.5 32.8-12.5 45.3 0s12.5 32.8 0 45.3l-160 160zm160-352l-160 160c-12.5 12.5-32.8 12.5-45.3 0l-160-160c-12.5-12.5-12.5-32.8 0-45.3s32.8-12.5 45.3 0L224 210.7 361.4 73.4c12.5 12.5 32.8 12.5 45.3 0s12.5 32.8 0 45.3z"/>
-								</svg>
-							</div>
-							<div class="automaticffl-map" id="automaticffl-map">
-							</div>
-						</div>
-					</div>
-				</div>
-			</div>
-			<div id="automaticffl-dealer-result-template">
-				<div class="ffl-single-result{{dealer-preferred}}" id="ffl-single-result{{dealer-index}}">
-					<div class="ffl-preferred-header">
-						<img  alt="<?php echo esc_html( 'Preferred Dealer' ); ?>" src="<?php echo esc_url( affl()->get_plugin_url() ); ?>/assets/images/icons/preferred.png">
-					</div>
-					<div class="ffl-result-body">
-						<p class="dealer-name">{{dealer-name}}</p>
-						<p class="dealer-address">{{dealer-address}}</p>
-						<a href="tel:{{dealer-phone}}"><p class="dealer-phone dealer-phone-formatted">{{dealer-phone}}</p></a>
-					</div>
-					<div class="ffl-result-number">
-						<div class="ffl-result-count">{{result-number}}</div>
-					</div>
-					<button type="button" class="automaticffl-select-button" id="automaticffl-select-button{{dealer-index}}">Select this dealer</button>
-				</div>
-			</div>
-			<div id="automaticffl-popup-template">
-				<div id="automaticffl-marker-modal{{dealer-index}}" class="automaticffl-marker-popup">
-					<h2 class="heading" >{{dealer-name}}</h2>
-					<div class="body-content">
-						<p>{{dealer-address}}</p>
-						<p><b><?php echo esc_html( 'Phone Number' ); ?>: </b><a href="tel:{{dealer-phone}}"><span class="dealer-phone dealer-phone-formatted">{{dealer-phone}}</span></a></p>
-						<p><a id="automaticffl-select-dealer-link" href="#" class="automaticffl-select-dealer-link"><?php echo esc_html( 'Select this dealer' ); ?></a>
-						</p>
-					</div>
-				</div>
-			</div>
-			<div id="automaticffl-popup-container">
+				<iframe id="automaticffl-map-iframe" src="<?php echo esc_url( $iframe_url ); ?>"></iframe>
 			</div>
 		</div>
 		<div id="automaticffl-dealer-card-template">
@@ -285,383 +238,106 @@ class Checkout {
 	}
 
 	/**
-	 * Get Javascript that handles the map experience
+	 * Get Javascript that handles the iframe postMessage communication
 	 *
 	 * @return void
-	 * @since 1.0.0
+	 * @since 1.0.13
 	 */
 	public static function get_js() {
 		$user_name = self::get_user_name();
+		$allowed_origins = Config::get_iframe_allowed_origins();
 		?>
 		<script>
-			// Set Google Maps API Key
-			window.automaticffl_google_maps_api_key = '<?php echo esc_js( Config::get_google_maps_api_key() ); ?>';
-			class AutomaticFflMap {
-				constructor() {
-					this.mapMarkersList = [];
-					this.mapPositionsList = [];
-					this.fflResults = [];
-					this.currentFflItemId = null;
-					this.googleMap = null;
-					this.storeHash = '<?php echo esc_js( Config::get_store_hash() ); ?>';
-					this.purpleMarker = '<?php echo esc_url( affl()->get_plugin_url() ); ?>/assets/images/icons/purple-marker.png';
-					this.preferredMarker = '<?php echo esc_url( affl()->get_plugin_url() ); ?>/assets/images/icons/preferred-marker.png';
-					this.fflApiUrl = '<?php echo esc_js( Config::get_ffl_dealers_url() ); ?>';
-					this.fflResultsTemplate = '<?php echo esc_html( '{{results-count}} results have been found for {{search-string}}' ); ?>';
-					this.fflNoResultsTemplate = '<?php echo esc_html( 'No dealers have been found for "{{search-string}}"' ); ?>';
-					this.currentInfowindow = false;
+			jQuery(document).ready(function($) {
+				// Open modal when "Find a Dealer" button is clicked
+				$('#automaticffl-select-dealer').click(function() {
+					$('body').css('overflow', 'hidden');
+					$('.automaticffl-dealer-layer').addClass('visible');
+				});
 
-					this.initMap();
-					this.bindEvents();
-				}
-
-				bindEvents() {
-					self = this;
-
-					// Search Button on Dalers modal
-					jQuery('#automaticffl-search-button').click(() => {
-						self.getDealers();
-					});
-
-					jQuery('#automaticffl-search-input').keypress(function(e) {
-						if(e.which == 13) {
-							self.getDealers();
-						}
-					});
-
-					// Closes the modal when Escape button is pressed.
-					jQuery('body').keydown((e) => {
-						var hidden = jQuery('.automaticffl-dealer-layer');
-						if (hidden.hasClass('visible')) {
-							if(e.which == 27) {
-								jQuery('body').removeAttr('style');
-								this.toggleDealers();
-							}
-						}
-					});
-
-					// Sets the boundaries for the modal and main layer.
-					const target = document.querySelector('.modal-container')
-					const layer = document.querySelector('.automaticffl-dealer-layer');
-
-					// Add a eventListener 'click' and closes if the click is inside the layer but out of the modal boundaries.
-					layer.addEventListener('click', (event) => {
-					const withinBoundaries = event.composedPath().includes(target)
-
-					if (layer.classList.contains('visible')) {
-						if (!withinBoundaries) {
-							jQuery('body').removeAttr('style');
-							this.toggleDealers();
-						}
+				// Close modal when Escape key is pressed
+				$('body').keydown(function(e) {
+					var modal = $('.automaticffl-dealer-layer');
+					if (modal.hasClass('visible') && e.which == 27) {
+						$('body').css('overflow', '');
+						modal.removeClass('visible');
 					}
-					});
+				});
 
-					// Find a Dealer button on Checkout
-					jQuery('#automaticffl-select-dealer').click(() => {
-						jQuery('body').attr('style', 'overflow-y: hidden;');
-						self.toggleDealers();
-					});
-
-					// Close button on mobile modal
-					jQuery('#automaticffl-close-modal-button').click(() => {
-						jQuery('body').removeAttr('style');
-						self.toggleDealers();
-					});
-
-					// Toggle map on text or bottom bar
-					jQuery('#toggle-map-text, .inner-toggle').click( function () {
-						self.mapToggle();
-					});
-				}
-				formatPhone() {
-					jQuery('.dealer-phone-formatted').text(function(dealer_phone, text) {
-						return text.replace(/(\d{3})(\d{3})(\d{4})/, '($1)-$2-$3');
-					});
-				}
-				mapToggle() {
-						jQuery("#map-toggle, .inner-toggle").toggleClass("show-map hide-map");
-						jQuery("#toggle-map-text-label").toggleClass("show-text-map-label hide-text-map-label");
-						jQuery("#toggle-map-text").toggleClass("show-text-map hide-text-map");
-						jQuery(".show-text-map-label, .show-text-map").html("View map");
-						jQuery(".hide-text-map-label, .hide-text-map").html("Hide map");
-						jQuery(".toggle-icon-up, .toggle-icon-down").toggle();
-						jQuery("#search-result-list").toggleClass("show-list hide-list");
-				}
-				closeMap() {
-					var map = jQuery('#map-toggle');
-					if (map.hasClass('show-map')) {
-						self.mapToggle();
+				// Close modal when clicking on overlay (outside the modal content)
+				$('.automaticffl-dealer-layer').click(function(event) {
+					if (event.target === this) {
+						$('body').css('overflow', '');
+						$(this).removeClass('visible');
 					}
+				});
+
+				// Format phone number helper
+				function formatPhone(phone) {
+					return phone.replace(/(\d{3})(\d{3})(\d{4})/, '($1)-$2-$3');
 				}
-				selectDealer(dealer) {
-					var selectedDealer = this.fflResults[dealer];
-					console.log(selectedDealer)
 
-					// Set values to the hidden Shipping address fields
-					// @TODO: Force customer to enter First and Last Name to use here instead of the dealer's business name
-					jQuery('#shipping_first_name').val('<?php echo esc_html( $user_name['first_name'] ) ?>');
-					jQuery('#shipping_last_name').val('<?php echo esc_html( $user_name['last_name'] ) ?>');
-					jQuery('#shipping_company').val(selectedDealer.business_name);
-					jQuery('#shipping_company').val(selectedDealer.business_name);
-					jQuery('#ffl_license_field').val(selectedDealer.license);
-					jQuery('#shipping_phone').val(selectedDealer.phone_number);
-					jQuery('#shipping_country').val('US');
-					jQuery('#shipping_state').val(selectedDealer.premise_state);
-					jQuery('#shipping_address_1').val(selectedDealer.premise_street);
-					jQuery('#shipping_city').val(selectedDealer.premise_city);
-					jQuery('#shipping_postcode').val(selectedDealer.premise_zip);
-					jQuery('#automaticffl-select-dealer').html("Change Dealer");
-					jQuery('#automaticffl-dealer-selected').addClass('automaticffl-dealer-selected');
-					jQuery('body').trigger('update_checkout');
-					return selectedDealer;
-				}
-				parseDealersResult(dealers) {
-					var self = this;
+				// Allowed origins for postMessage security
+				const allowedOrigins = <?php echo wp_json_encode( $allowed_origins ); ?>;
 
-					//Clear all markers
-					self.removeMarkersFromMap();
-
-					// Remove search results from the sidebar
-					jQuery('#search-result-list').html(' ');
-
-					if (dealers.length > 0) {
-						const resultTemplate = document.getElementById('automaticffl-dealer-result-template').innerHTML;
-						const dealerTemplate = document.getElementById('automaticffl-dealer-card-template').innerHTML;
-						let mappedResult;
-
-						dealers.forEach((dealer, index) => {
-
-								mappedResult = {
-									"{{dealer-name}}": dealer.business_name,
-									"{{dealer-address}}": `${dealer.premise_street}, ${dealer.premise_city}, ${dealer.premise_state}`,
-									"{{dealer-license}}": dealer.license,
-									"{{dealer-phone}}": dealer.phone_number,
-									"{{result-number}}": index + 1,
-									"{{dealer-preferred}}": dealer.preferred ? ' preferred' : '',
-									"{{dealer-index}}": index,
-								};
-
-								jQuery('#search-result-list').append(self.formatTemplate(resultTemplate, mappedResult));
-								dealer.id = index;
-								dealer.icon_url = dealer.preferred ? self.preferredMarker : self.purpleMarker;
-
-								self.addMarker(dealer, mappedResult, index);
-
-								// Open map popup when clicking on card results
-								jQuery('#ffl-single-result' + index).click(() => {
-									var self = this;
-									jQuery(`div[aria-label="${index + 1}"]`).trigger('click');
-
-								});
-
-								// Select the dealer when clicking on the 'Select this dealer' button
-								jQuery('#automaticffl-select-button' + index).click(() => {
-									self.selectDealer(index);
-									jQuery('#automaticffl-dealer-selected').empty();
-									jQuery('#automaticffl-dealer-selected').append(self.formatTemplate(dealerTemplate, {
-										"{{dealer-name}}": dealer.business_name,
-										"{{dealer-address}}": `${dealer.premise_street}, ${dealer.premise_city}, ${dealer.premise_state}`,
-										"{{dealer-license}}": dealer.license,
-										"{{dealer-phone}}": dealer.phone_number,
-									}));
-									jQuery('body').removeAttr("style");
-									self.toggleDealers();
-									self.formatPhone();
-								});
-						});
-
-						// Show results message
-						jQuery('#ffl-results-message').html(self.formatTemplate(self.fflResultsTemplate, {
-							'{{results-count}}': dealers.length,
-							'{{search-string}}': jQuery('#automaticffl-search-input').val()
-						})).show();
-						if(window.outerWidth < 800) {
-							jQuery("#toggle-map-text").removeClass("hidden");
-						}
-						self.fflResults = dealers;
-						self.centerMap();
-					} else {
-						// Show 0 results message
-						jQuery('#ffl-results-message').html(self.formatTemplate(self.fflNoResultsTemplate, {
-							'{{search-string}}': jQuery('#automaticffl-search-input').val()
-						})).show();
+				// Listen for postMessage from iframe
+				window.addEventListener('message', function(event) {
+					// Security: Validate message origin
+					if (!allowedOrigins.includes(event.origin)) {
+						return;
 					}
 
-					jQuery('#ffl-searching-message').hide();
+					// Validate message type
+					if (event.data.type === 'dealerUpdate') {
+						const dealer = event.data.value;
 
-					// Format Phone Numbers on Search Results
-					self.formatPhone();
-				}
-				addPopupToMarker(marker, mappedResult, dealerId) {
-					var self = this;
-
-					const dealerTemplate = document.getElementById('automaticffl-dealer-card-template').innerHTML;
-
-					// Get marker popup template
-					const contentString = document.getElementById('automaticffl-popup-template').innerHTML;
-
-					// Remove from DOM in case it has been previously added
-					jQuery('#automaticffl-marker-modal' + dealerId).remove();
-
-					// Add popup to DOM so we can use later
-					jQuery('#automaticffl-popup-container').append(self.formatTemplate(contentString, mappedResult));
-					var domElement = document.getElementById('automaticffl-marker-modal' + dealerId);
-
-					// Create popup and add to marker
-					const infowindow = new google.maps.InfoWindow({
-						content: domElement,
-					});
-					marker.addListener('click', () => {
-						if (self.currentInfowindow) {
-							self.currentInfowindow.close();
+						// Validate dealer object exists
+						if (!dealer) {
+							return;
 						}
-						self.currentInfowindow = infowindow;
-						infowindow.open({
-							anchor: marker,
-							map: self.googleMap,
-							shouldFocus: false,
-						});
-					});
 
-					// Select dealer when the link is clicked
-					jQuery('#automaticffl-marker-modal' + dealerId + ' .automaticffl-select-dealer-link').click(() => {
-						const selectedDealer = self.selectDealer(dealerId);
-						jQuery('#automaticffl-dealer-selected').empty();
-						jQuery('#automaticffl-dealer-selected').append(self.formatTemplate(dealerTemplate, {
-							"{{dealer-name}}": selectedDealer.business_name,
-							"{{dealer-address}}": `${selectedDealer.premise_street}, ${selectedDealer.premise_city}, ${selectedDealer.premise_state}`,
-							"{{dealer-license}}": selectedDealer.license,
-							"{{dealer-phone}}": selectedDealer.phone_number,
-						}));
-						jQuery('body').removeAttr("style");
-						self.toggleDealers();
-						self.formatPhone();
-					});
-				}
-				addMarker(dealer, mappedResult, zIndex) {
-					var self = this;
-					var marker = new google.maps.Marker({
-						position: {lat: dealer.lat, lng: dealer.lng},
-						zIndex,
-						map: self.googleMap,
-						label: {
-							text: (dealer.id + 1).toString(),
-							color: 'white'
-						},
-						icon: {
-							url: dealer.icon_url,
-							labelOrigin: new google.maps.Point(33, 20)
-						},
-					});
+						// Map iframe dealer fields to WooCommerce shipping fields
+						$('#shipping_first_name').val('<?php echo esc_js( $user_name['first_name'] ); ?>');
+						$('#shipping_last_name').val('<?php echo esc_js( $user_name['last_name'] ); ?>');
+						$('#shipping_company').val(dealer.company || '');
+						$('#ffl_license_field').val(dealer.fflID || '');
+						$('#shipping_phone').val(dealer.phone || '');
+						$('#shipping_country').val(dealer.countryCode || 'US');
+						$('#shipping_state').val(dealer.stateOrProvinceCode || '');
+						$('#shipping_address_1').val(dealer.address1 || '');
+						$('#shipping_city').val(dealer.city || '');
+						$('#shipping_postcode').val(dealer.postalCode || '');
 
-					this.addPopupToMarker(marker, mappedResult, dealer.id);
-					this.mapMarkersList.push(marker);
-					self.mapPositionsList.push(new google.maps.LatLng(dealer.lat, dealer.lng));
-				}
+						// Update button text
+						$('#automaticffl-select-dealer').text("Change Dealer");
+						$('#automaticffl-dealer-selected').addClass('automaticffl-dealer-selected');
 
-				initMap() {
-					const myLatLng = {lat: 40.363, lng: -95.044};
-					this.googleMap = new google.maps.Map(document.getElementById("automaticffl-map"), {
-						zoom: 4,
-						center: myLatLng,
-						mapTypeControlOptions: {
-							mapTypeIds: []
-						},
-						fullscreenControl: false,
-						panControl: false,
-						streetViewControl: false,
-						mapTypeId: 'roadmap',
-						styles: [{"featureType":"administrative","elementType":"labels.text.fill","stylers":[{"color":"#444444"}]},{"featureType":"landscape","elementType":"all","stylers":[{"color":"#f2f2f2"}]},{"featureType":"poi","elementType":"all","stylers":[{"visibility":"off"}]},{"featureType":"road","elementType":"all","stylers":[{"saturation":-100},{"lightness":45}]},{"featureType":"road.highway","elementType":"all","stylers":[{"visibility":"simplified"}]},{"featureType":"road.arterial","elementType":"labels.icon","stylers":[{"visibility":"off"}]},{"featureType":"transit","elementType":"all","stylers":[{"visibility":"off"}]},{"featureType":"water","elementType":"all","stylers":[{"color":"#e3e3fb"},{"visibility":"on"}]}]
-					});
+						// Update selected dealer card display - using safe text insertion
+						const formattedAddress = (dealer.address1 || '') + ', ' + (dealer.city || '') + ', ' + (dealer.stateOrProvinceCode || '');
+						const formattedPhone = formatPhone(dealer.phone || '');
 
-					//@TODO: Setup dealer popup message on the map (same as the Magento extension)
-				}
+						const $cardTemplate = $('#automaticffl-dealer-card-template').clone();
+						$cardTemplate.find('.customer-name').text('<?php echo esc_js( $user_name['first_name'] . ' ' . $user_name['last_name'] ); ?>');
+						$cardTemplate.find('.dealer-name').text(dealer.company || '');
+						$cardTemplate.find('.dealer-address').text(formattedAddress);
+						$cardTemplate.find('.dealer-phone-formatted').text(formattedPhone);
+						$cardTemplate.find('a').attr('href', 'tel:' + (dealer.phone || ''));
 
-				centerMap () {
-					var self = this;
-					var bounds = new google.maps.LatLngBounds();
+						$('#automaticffl-dealer-selected').empty().append($cardTemplate.html());
 
-					for (var i = 0, LtLgLen = self.mapPositionsList.length; i < LtLgLen; i++) {
-						bounds.extend(self.mapPositionsList[i]);
+						// Trigger WooCommerce checkout update
+						$('body').trigger('update_checkout');
+
+						// Close modal
+						$('body').css('overflow', '');
+						$('.automaticffl-dealer-layer').removeClass('visible');
+					} else if (event.data.type === 'closeModal') {
+						// Handle close modal message from iframe
+						$('body').css('overflow', '');
+						$('.automaticffl-dealer-layer').removeClass('visible');
 					}
-					self.googleMap.fitBounds(bounds);
-				}
-
-				formatTemplate (str, mapObj) {
-					var re = new RegExp(Object.keys(mapObj).join("|"),"gi");
-
-					return str.replace(re, function(matched){
-						return mapObj[matched.toLowerCase()];
-					});
-				}
-
-				/**
-				 * Retrieve a list of FFL dealers
-				 */
-				getDealers () {
-					var self = this;
-					var searchString = jQuery('#automaticffl-search-input').val();
-					var searchRadius = jQuery('#automaticffl-search-miles').val();
-
-					// Display searching message
-					// @TODO: could be replaced by an animated gif
-					jQuery('#ffl-searching-message').show();
-
-					// Hide results message
-					jQuery('#ffl-results-message').hide();
-
-					// Hide error message
-					jQuery('#ffl-searching-error-message').hide();
-
-					jQuery.ajax({
-						url: self.fflApiUrl + '?location=' + searchString + '&radius=' + searchRadius,
-						headers: {"store-hash": self.storeHash, "origin": window.location.origin},
-						success: function (results) {
-							self.parseDealersResult(results.dealers);
-						},
-						error: function (result) {
-							jQuery('#ffl-searching-message').hide();
-							jQuery('#ffl-searching-error-message').show();
-						}
-					});
-				}
-
-				/**
-				 * Remove all markers from the map
-				 */
-				removeMarkersFromMap() {
-					var self = this;
-
-					//Clear all markers
-					for (var i = 0; i < self.mapMarkersList.length; i++) {
-						self.mapMarkersList[i].setMap(null);
-					}
-
-					// Clear all positions
-					self.mapPositionsList = [];
-				}
-				toggleDealers() {
-					self.closeMap();
-					var hidden = jQuery('.automaticffl-dealer-layer');
-					if (hidden.hasClass('visible')) {
-						hidden.animate({"left": "100%"}, "slow").removeClass('visible');
-					} else {
-						hidden.animate({"left": "0"}, "slow").addClass('visible');
-					}
-				}
-			}
-
-			// Callback function for initializing the Maps API
-			function initMap() {
-				const automaticFFL = new AutomaticFflMap();
-			}
-
-			var mapsScript = document.createElement('script');
-			mapsScript.async = true;
-
-			// Load Maps API and execute callback function
-			mapsScript.src = `https://maps.googleapis.com/maps/api/js?key=${automaticffl_google_maps_api_key}&callback=initMap`;
-			document.getElementsByTagName('script')[0].parentNode.appendChild(mapsScript);
+				});
+			});
 		</script>
 		<?php
 	}
