@@ -173,6 +173,76 @@ class Config {
 		if ( $total_ffl > 0 && $total_ffl < $total_products && ! is_cart() ) {
 			// Redirect back to the cart where the error message will be displayed.
 			wp_safe_redirect( wc_get_cart_url() );
+			exit;
 		}
+	}
+
+	/**
+	 * Check if the current checkout page is using WooCommerce Blocks
+	 *
+	 * @since 1.0.14
+	 *
+	 * @return bool
+	 */
+	public static function is_blocks_checkout() {
+		if ( ! class_exists( 'Automattic\WooCommerce\Blocks\Utils\CartCheckoutUtils' ) ) {
+			return false;
+		}
+
+		return \Automattic\WooCommerce\Blocks\Utils\CartCheckoutUtils::is_checkout_block_default();
+	}
+
+	/**
+	 * Check if the cart contains any FFL products
+	 *
+	 * @since 1.0.14
+	 *
+	 * @return bool
+	 */
+	public static function has_ffl_products() {
+		if ( ! WC()->cart ) {
+			return false;
+		}
+
+		$cart = WC()->cart->get_cart();
+		foreach ( $cart as $product ) {
+			$product_id = $product['product_id'];
+			$ffl_required = get_post_meta( $product_id, '_ffl_required', true );
+
+			if ( $ffl_required === 'yes' ) {
+				return true;
+			}
+		}
+
+		return false;
+	}
+
+	/**
+	 * Check if the cart contains a mix of FFL and non-FFL products
+	 *
+	 * @since 1.0.14
+	 *
+	 * @return bool
+	 */
+	public static function is_mixed_cart() {
+		if ( ! WC()->cart ) {
+			return false;
+		}
+
+		$cart = WC()->cart->get_cart();
+		$total_products = count( $cart );
+		$total_ffl = 0;
+
+		foreach ( $cart as $product ) {
+			$product_id = $product['product_id'];
+			$ffl_required = get_post_meta( $product_id, '_ffl_required', true );
+
+			if ( $ffl_required === 'yes' ) {
+				$total_ffl++;
+			}
+		}
+
+		// Mixed cart = has FFL products but not all products are FFL
+		return $total_ffl > 0 && $total_ffl < $total_products;
 	}
 }

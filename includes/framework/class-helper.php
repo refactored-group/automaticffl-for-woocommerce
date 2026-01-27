@@ -28,7 +28,8 @@ class Helper {
 	 */
 	public static function get_posted_value( $key, $default = '' ) {
 		$value = $default;
-		if ( ! empty( wp_kses_post( wp_unslash( $_POST['admin_nonce'] ) ) )
+		if ( isset( $_POST['admin_nonce'] )
+			&& ! empty( wp_kses_post( wp_unslash( $_POST['admin_nonce'] ) ) )
 			&& wp_verify_nonce( wp_kses_post( wp_unslash( $_POST['admin_nonce'] ) ), 'admin_nonce' ) ) {
 			if ( isset( $_POST[ $key ] ) ) {
 				$post_value = wp_kses_post( wp_unslash( $_POST[ $key ] ) );

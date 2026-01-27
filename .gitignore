@@ -1,2 +1,5 @@
 vendor/
 .vscode
+node_modules/
+.npm
+package-lock.json

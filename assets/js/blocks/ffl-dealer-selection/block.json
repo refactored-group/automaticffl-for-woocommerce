@@ -1,0 +1,19 @@
+{
+	"$schema": "https://schemas.wp.org/trunk/block.json",
+	"apiVersion": 3,
+	"name": "automaticffl/dealer-selection",
+	"version": "1.0.14",
+	"title": "FFL Dealer Selection",
+	"category": "woocommerce",
+	"description": "Allows customers to select an FFL dealer for firearm orders.",
+	"textdomain": "automaticffl-for-wc",
+	"supports": {
+		"html": false,
+		"align": false,
+		"multiple": false,
+		"reusable": false,
+		"inserter": true
+	},
+	"attributes": {},
+	"usesContext": [ "woocommerce/checkoutData" ]
+}

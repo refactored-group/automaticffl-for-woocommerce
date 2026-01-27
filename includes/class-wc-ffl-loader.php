@@ -57,6 +57,10 @@ class AFFL_Loader {
 		// if the environment check fails, initialize the plugin.
 		if ( $this->is_environment_compatible() ) {
 			add_action( 'plugins_loaded', array( $this, 'init_plugin' ) );
+
+			// Register blocks integration early - woocommerce_blocks_loaded fires during Bootstrap init
+			// which happens before 'init', so we must register this callback immediately
+			$this->init_early_blocks_integration();
 		}
 	}
 
@@ -300,6 +304,52 @@ class AFFL_Loader {
 	private function get_environment_message() {
 
 		return sprintf( 'The minimum PHP version required for this plugin is %1$s. You are running %2$s.', self::MINIMUM_PHP_VERSION, PHP_VERSION );
+	}
+
+	/**
+	 * Initialize WooCommerce Blocks integration early.
+	 *
+	 * woocommerce_blocks_loaded fires during WooCommerce Bootstrap initialization,
+	 * which happens before the 'init' hook. We must register our callback immediately
+	 * when this plugin file loads to catch it.
+	 *
+	 * @since 1.0.14
+	 *
+	 * @return void
+	 */
+	private function init_early_blocks_integration() {
+		add_action( 'woocommerce_blocks_loaded', array( $this, 'register_blocks_integration' ) );
+	}
+
+	/**
+	 * Register the blocks integration and Store API extension.
+	 *
+	 * @since 1.0.14
+	 *
+	 * @return void
+	 */
+	public function register_blocks_integration() {
+		// Ensure required files are loaded
+		require_once plugin_dir_path( __FILE__ ) . 'functions.php';
+
+		// Check if the required classes exist
+		if ( ! class_exists( 'Automattic\WooCommerce\Blocks\Integrations\IntegrationRegistry' ) ) {
+			return;
+		}
+
+		// Register the checkout block integration
+		add_action(
+			'woocommerce_blocks_checkout_block_registration',
+			function( $integration_registry ) {
+				$integration_registry->register( new \RefactoredGroup\AutomaticFFL\Blocks\Blocks_Integration() );
+			}
+		);
+
+		// Initialize the Store API extension
+		if ( class_exists( 'Automattic\WooCommerce\StoreApi\StoreApi' ) ) {
+			$store_api_extension = new \RefactoredGroup\AutomaticFFL\Blocks\Store_Api_Extension();
+			$store_api_extension->init();
+		}
 	}
 
 	/**
