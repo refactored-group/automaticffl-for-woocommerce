@@ -57,8 +57,9 @@
   color: #333333;
 }
 
-/* Hide templates */
-#automaticffl-dealer-card-template {
+/* Hide templates and hidden fields */
+#automaticffl-dealer-card-template,
+.hidden {
   display: none;
 }
 #automaticffl-close-modal-button {
@@ -113,4 +114,84 @@
 /* FFL-298 this prevents the scroll bar from taking up space inside the html */
 body {
   margin-right: calc(-1 * (100vw - 100%)) !important;
+}
+
+/*
+ * Block Checkout Styles - FFL Dealer Selection
+ */
+
+/* Hide shipping address form when FFL checkout is active */
+body.automaticffl-checkout-active .wp-block-woocommerce-checkout-shipping-address-block,
+body.automaticffl-checkout-active .wc-block-checkout__shipping-fields {
+  display: none !important;
+}
+
+/* Hide the "Use same address for billing" checkbox when FFL checkout is active */
+body.automaticffl-checkout-active .wc-block-checkout__use-address-for-billing {
+  display: none !important;
+}
+
+/* Ensure billing address form is always visible when FFL checkout is active */
+body.automaticffl-checkout-active .wp-block-woocommerce-checkout-billing-address-block,
+body.automaticffl-checkout-active .wc-block-checkout__billing-fields {
+  display: block !important;
+}
+
+/* FFL Dealer Selection component styling for blocks checkout */
+.automaticffl-dealer-selection {
+  margin-bottom: 1.5em;
+}
+
+.automaticffl-dealer-selection .wc-block-components-notice-banner {
+  margin-bottom: 1em;
+}
+
+/* Find/Change Dealer button styling */
+.automaticffl-dealer-selection .ffl-search-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  background-color: #333333;
+  color: #ffffff;
+  padding: 12px 24px;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-weight: 500;
+  transition: background-color 200ms ease;
+}
+
+.automaticffl-dealer-selection .ffl-search-button:hover {
+  background-color: #444444;
+}
+
+.automaticffl-dealer-selection .ffl-search-button svg {
+  flex-shrink: 0;
+}
+
+/* Selected dealer card for blocks checkout */
+.automaticffl-dealer-selection .automaticffl-dealer-selected {
+  margin-bottom: 1em;
+}
+
+/* Block checkout modal styling */
+.automaticffl-blocks-modal {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+  z-index: 100000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.automaticffl-blocks-modal .dealers-container {
+  position: relative;
+  transform: none;
+  top: auto;
+  left: auto;
 }

@@ -1,0 +1,14 @@
+{
+  "name": "automaticffl-for-woocommerce",
+  "version": "1.0.14",
+  "description": "Automatic FFL for WooCommerce - WooCommerce Blocks integration",
+  "scripts": {
+    "build": "wp-scripts build",
+    "start": "wp-scripts start",
+    "packages-update": "wp-scripts packages-update"
+  },
+  "devDependencies": {
+    "@woocommerce/dependency-extraction-webpack-plugin": "^3.0.1",
+    "@wordpress/scripts": "^27.9.0"
+  }
+}

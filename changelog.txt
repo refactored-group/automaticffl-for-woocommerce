@@ -1,5 +1,11 @@
 *** Automatic FFL for WooCommerce ***
 
+2026-01-26 - Version 1.0.14
+* Added WooCommerce Blocks (block-based checkout) support for FFL dealer selection
+* Improved DOM manipulation with MutationObserver for more reliable element detection
+* Enhanced error handling and defensive coding practices
+* Fixed React hooks order compliance
+
 2026-01-23 - Version 1.0.13
 * Upgraded to new iframe-based dealer map for improved performance and reliability
 * Simplified dealer selection interface with streamlined modal experience

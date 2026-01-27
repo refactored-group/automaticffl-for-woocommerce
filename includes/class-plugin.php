@@ -11,6 +11,8 @@ use RefactoredGroup\AutomaticFFL\Views\Cart;
 use RefactoredGroup\AutomaticFFL\Views\Checkout;
 use RefactoredGroup\AutomaticFFL\Helper\Config;
 use RefactoredGroup\AutomaticFFL\Admin\Settings;
+use RefactoredGroup\AutomaticFFL\Blocks\Blocks_Integration;
+use RefactoredGroup\AutomaticFFL\Blocks\Store_Api_Extension;
 
 defined( 'ABSPATH' ) || exit;
 
@@ -35,6 +37,13 @@ class Plugin {
 	protected static $instance;
 
 	/**
+	 * Admin settings instance
+	 *
+	 * @var \RefactoredGroup\AutomaticFFL\Admin\Settings
+	 */
+	public $admin_settings;
+
+	/**
 	 * Constructor
 	 *
 	 * @since 1.0.0
@@ -42,6 +51,7 @@ class Plugin {
 	public function __construct() {
 		$this->add_hooks();
 		$this->add_filters();
+		// Note: Blocks integration is now registered early in AFFL_Loader to catch woocommerce_blocks_loaded
 
 		if ( is_admin() ) {
 			$this->admin_settings = new \RefactoredGroup\AutomaticFFL\Admin\Settings();
@@ -412,4 +422,5 @@ class Plugin {
 	protected function get_file() {
 		return __FILE__;
 	}
+
 }
