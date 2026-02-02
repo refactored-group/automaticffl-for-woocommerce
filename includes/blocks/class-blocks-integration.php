@@ -11,6 +11,7 @@ defined( 'ABSPATH' ) || exit;
 
 use Automattic\WooCommerce\Blocks\Integrations\IntegrationInterface;
 use RefactoredGroup\AutomaticFFL\Helper\Config;
+use RefactoredGroup\AutomaticFFL\Helper\Cart_Analyzer;
 use RefactoredGroup\AutomaticFFL\Views\Checkout;
 
 /**
@@ -21,6 +22,13 @@ use RefactoredGroup\AutomaticFFL\Views\Checkout;
  * @since 1.0.14
  */
 class Blocks_Integration implements IntegrationInterface {
+
+	/**
+	 * Cached script data to avoid duplicate computation.
+	 *
+	 * @var array|null
+	 */
+	private $script_data_cache = null;
 
 	/**
 	 * The name of the integration.
@@ -165,6 +173,10 @@ class Blocks_Integration implements IntegrationInterface {
 	 * @return array
 	 */
 	public function get_script_data() {
+		if ( null !== $this->script_data_cache ) {
+			return $this->script_data_cache;
+		}
+
 		$user_name = Checkout::get_user_name();
 		$store_hash = Config::get_store_hash();
 		$maps_api_key = Config::get_google_maps_api_key();
@@ -187,15 +199,32 @@ class Blocks_Integration implements IntegrationInterface {
 			$iframe_url = add_query_arg( $params, $base_url );
 		}
 
-		return array(
-			'isFflCart'        => Config::has_ffl_products() && ! Config::is_mixed_cart(),
-			'hasFflProducts'   => Config::has_ffl_products(),
-			'isMixedCart'      => Config::is_mixed_cart(),
-			'iframeUrl'        => $iframe_url,
-			'allowedOrigins'   => Config::get_iframe_allowed_origins(),
-			'userName'         => $user_name,
-			'isConfigured'     => $has_valid_store_hash && $has_valid_maps_key,
+		// Use Cart_Analyzer for accurate classification
+		$analyzer = new Cart_Analyzer();
+
+		$this->script_data_cache = array(
+			// Legacy fields for backwards compatibility
+			'isFflCart'            => Config::has_ffl_products() && ! Config::is_mixed_cart(),
+			'hasFflProducts'       => $analyzer->has_ffl_products(),
+			'isMixedCart'          => $analyzer->is_mixed_ffl_regular(),
+
+			// New fields for restrictions API
+			'hasFirearms'          => $analyzer->has_firearms(),
+			'hasAmmo'              => $analyzer->has_ammo(),
+			'isAmmoOnly'           => $analyzer->is_ammo_only(),
+			'isAmmoEnabled'        => Config::is_ammo_enabled(),
+			'ammoRestrictedStates' => $analyzer->get_ammo_restricted_states(),
+			'isApiAvailable'       => $analyzer->is_api_available(),
+			'usStates'             => Checkout::get_us_states(),
+
+			// Common fields
+			'iframeUrl'            => $iframe_url,
+			'allowedOrigins'       => Config::get_iframe_allowed_origins(),
+			'userName'             => $user_name,
+			'isConfigured'         => $has_valid_store_hash && $has_valid_maps_key,
 		);
+
+		return $this->script_data_cache;
 	}
 
 	/**

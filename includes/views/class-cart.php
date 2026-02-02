@@ -10,6 +10,7 @@ namespace RefactoredGroup\AutomaticFFL\Views;
 defined( 'ABSPATH' ) || exit;
 
 use RefactoredGroup\AutomaticFFL\Helper\Config;
+use RefactoredGroup\AutomaticFFL\Helper\Cart_Analyzer;
 
 /**
  * Class Cart.
@@ -27,28 +28,32 @@ class Cart {
 	 * @return void
 	 */
 	public static function verify_mixed_cart() {
-		$cart           = WC()->cart->get_cart();
-		$total_products = count( $cart );
-		$ffl_products   = array();
-		$total_ffl      = 0;
-		foreach ( $cart as $product ) {
-			$product_id = $product['product_id'];
-			$ffl_required = get_post_meta($product_id, '_ffl_required', true);
-			
-			if ( $ffl_required === 'yes' ) {
-				$ffl_products[] = $product_id;
-				$total_ffl++;
-			}
+		$analyzer = new Cart_Analyzer();
+
+		// If API is unavailable, skip mixed cart check - allow normal checkout.
+		if ( $analyzer->has_api_error() ) {
+			return;
 		}
 
-		if ( $total_ffl > 0 && $total_ffl < $total_products ) :
+		// Block: FFL items (firearms or restricted ammo) + regular products.
+		if ( ! $analyzer->is_mixed_ffl_regular() ) {
+			return;
+		}
+
+		// Get FFL product IDs for the JavaScript.
+		$ffl_products = array_merge(
+			$analyzer->get_product_ids_by_category( 'firearms' ),
+			$analyzer->get_product_ids_by_category( 'ammo' )
+		);
+
+		if ( ! empty( $ffl_products ) ) :
 			?>
 			<script>
 				window.ffl_products_in_cart = <?php echo wp_json_encode( $ffl_products ); ?>;
 			</script>
 			<div class="woocommerce">
 				<div class="woocommerce-error" role="alert" id="ffl-mixed-cart-error">
-					<?php echo esc_html( 'You can not checkout with a mixed cart. Please remove all items from your cart that need to be shipped to a Dealer or the items that do not.' ); ?>
+					<?php echo esc_html__( 'You can not checkout with a mixed cart. Please remove all items from your cart that need to be shipped to a Dealer or the items that do not.', 'automaticffl-for-wc' ); ?>
 				</div>
 			</div>
 			<style>

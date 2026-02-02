@@ -10,6 +10,7 @@ namespace RefactoredGroup\AutomaticFFL;
 use RefactoredGroup\AutomaticFFL\Views\Cart;
 use RefactoredGroup\AutomaticFFL\Views\Checkout;
 use RefactoredGroup\AutomaticFFL\Helper\Config;
+use RefactoredGroup\AutomaticFFL\Helper\Cart_Analyzer;
 use RefactoredGroup\AutomaticFFL\Admin\Settings;
 use RefactoredGroup\AutomaticFFL\Blocks\Blocks_Integration;
 use RefactoredGroup\AutomaticFFL\Blocks\Store_Api_Extension;
@@ -93,9 +94,11 @@ class Plugin {
 		add_action('woocommerce_product_quick_edit_save', array($this, 'ffl_required_save_admin_edit_checkbox'));
 		add_action('wp_enqueue_scripts', array($this, 'automaticffl_enqueue'));
 
-		// Override the shipping fields since some themes copy the billing address to the shipping address
+		// Override the shipping fields since some themes copy the billing address to the shipping address.
+		// Uses Cart_Analyzer so ammo-only carts in restricted states are also handled.
 		add_action('woocommerce_checkout_create_order', function($order, $data) {
-			if ( ! Config::is_ffl_cart() ) {
+			$analyzer = new Cart_Analyzer();
+			if ( ! $analyzer->has_ffl_products() || $analyzer->is_mixed_ffl_regular() ) {
 				return;
 			}
 			if (isset($data['ship_to_different_address']) && $data['ship_to_different_address']) {

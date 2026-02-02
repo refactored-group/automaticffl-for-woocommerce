@@ -195,3 +195,143 @@ body.automaticffl-checkout-active .wc-block-checkout__billing-fields {
   top: auto;
   left: auto;
 }
+
+/*
+ * State Selector Styles - Ammo Checkout
+ */
+
+/* Classic checkout state selector */
+#automaticffl-ammo-checkout {
+  margin-bottom: 2em;
+}
+
+#automaticffl-ammo-checkout h3 {
+  margin-bottom: 1em;
+}
+
+#automaticffl-state-selector {
+  width: 100%;
+  max-width: 300px;
+  padding: 10px 12px;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  font-size: 14px;
+  background-color: #fff;
+}
+
+#automaticffl-state-selector:focus {
+  border-color: #522a74;
+  outline: none;
+  box-shadow: 0 0 0 2px rgba(82, 42, 116, 0.2);
+}
+
+#automaticffl-state-message {
+  margin-top: 15px;
+  margin-bottom: 15px;
+}
+
+.automaticffl-state-restricted .woocommerce-error,
+.automaticffl-state-allowed .woocommerce-message {
+  margin-bottom: 0;
+}
+
+#automaticffl-ffl-container {
+  margin-top: 20px;
+  padding-top: 20px;
+  border-top: 1px solid #e0e0e0;
+}
+
+/* Block checkout state selector */
+.automaticffl-state-selector {
+  margin-bottom: 1.5em;
+}
+
+.automaticffl-state-selector h3 {
+  margin-bottom: 0.75em;
+  font-size: 1.1em;
+}
+
+.automaticffl-state-select-wrapper {
+  margin: 1em 0;
+}
+
+.automaticffl-state-select-wrapper label {
+  display: block;
+  margin-bottom: 0.5em;
+  font-weight: 500;
+}
+
+.automaticffl-state-select-wrapper select {
+  width: 100%;
+  max-width: 300px;
+  padding: 10px 12px;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  font-size: 14px;
+  background-color: #fff;
+}
+
+.automaticffl-state-select-wrapper select:focus {
+  border-color: #522a74;
+  outline: none;
+  box-shadow: 0 0 0 2px rgba(82, 42, 116, 0.2);
+}
+
+.automaticffl-state-message {
+  margin-top: 1em;
+}
+
+/* Success notice styling for blocks */
+.wc-block-components-notice-banner.is-success {
+  background-color: #d4edda;
+  border-color: #c3e6cb;
+}
+
+.wc-block-components-notice-banner.is-success svg {
+  fill: #28a745;
+}
+
+/* Ammo checkout container in block checkout */
+.automaticffl-dealer-selection .automaticffl-state-selector {
+  margin-bottom: 1.5em;
+  padding-bottom: 1em;
+  border-bottom: 1px solid #e0e0e0;
+}
+
+/*
+ * API Unavailable Notice Styles
+ */
+
+.automaticffl-unavailable-notice {
+  margin-bottom: 1.5em;
+}
+
+.automaticffl-unavailable-message {
+  text-align: center;
+}
+
+.automaticffl-unavailable-message p {
+  margin: 0 0 0.5em 0;
+}
+
+.automaticffl-unavailable-message p:last-of-type {
+  margin-bottom: 1em;
+}
+
+.automaticffl-unavailable-message button {
+  margin-top: 0.5em;
+}
+
+/* Classic checkout unavailable notice */
+#automaticffl-unavailable-notice .woocommerce-info {
+  text-align: center;
+  padding: 20px;
+}
+
+#automaticffl-unavailable-notice .woocommerce-info p {
+  margin: 0 0 0.5em 0;
+}
+
+#automaticffl-unavailable-notice .woocommerce-info button {
+  margin-top: 10px;
+}

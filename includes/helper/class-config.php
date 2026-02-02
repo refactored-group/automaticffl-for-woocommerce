@@ -14,6 +14,7 @@ class Config {
 	const FFL_STORE_HASH_CONFIG          = 'wc_ffl_store_hash';
 	const FFL_SANDBOX_MODE_CONFIG        = 'wc_ffl_sandbox_mode';
 	const FFL_GOOGLE_MAPS_API_KEY_CONFIG = 'wc_ffl_google_maps_api_key';
+	const FFL_AMMO_ENABLED_CONFIG        = 'wc_ffl_ammo_enabled';
 
 	/** Permanent Settings */
 	const SETTING_GOOGLE_MAPS_URL            = 'https://maps.googleapis.com/maps/api/js';
@@ -23,6 +24,7 @@ class Config {
 	const SETTING_FFL_IFRAME_SANDBOX_URL     = 'https://static-stage.automaticffl.com/big-commerce-enhanced-checkout/index.html';
 	const SETTING_YES                        = 1;
 	const SETTING_NO                         = 0;
+	const RESTRICTIONS_CACHE_TTL             = 3600;
 
 	/**
 	 * Get FFL API URL
@@ -193,6 +195,28 @@ class Config {
 	}
 
 	/**
+	 * Check if ammo features are enabled.
+	 *
+	 * @since 1.0.15
+	 *
+	 * @return bool
+	 */
+	public static function is_ammo_enabled(): bool {
+		return get_option( self::FFL_AMMO_ENABLED_CONFIG, '0' ) === '1';
+	}
+
+	/**
+	 * Get the restrictions API URL.
+	 *
+	 * @since 1.0.15
+	 *
+	 * @return string
+	 */
+	public static function get_restrictions_api_url(): string {
+		return self::get_ffl_api_url() . '/stores/' . self::get_store_hash() . '/products/restrictions';
+	}
+
+	/**
 	 * Check if the cart contains any FFL products
 	 *
 	 * @since 1.0.14
@@ -215,35 +239,6 @@ class Config {
 		}
 
 		return false;
-	}
-
-	/**
-	 * Check if the cart contains a mix of FFL and non-FFL products
-	 *
-	 * @since 1.0.14
-	 *
-	 * @return bool
-	 */
-	public static function is_mixed_cart() {
-		if ( ! WC()->cart ) {
-			return false;
-		}
-
-		$cart = WC()->cart->get_cart();
-		$total_products = count( $cart );
-		$total_ffl = 0;
-
-		foreach ( $cart as $product ) {
-			$product_id = $product['product_id'];
-			$ffl_required = get_post_meta( $product_id, '_ffl_required', true );
-
-			if ( $ffl_required === 'yes' ) {
-				$total_ffl++;
-			}
-		}
-
-		// Mixed cart = has FFL products but not all products are FFL
-		return $total_ffl > 0 && $total_ffl < $total_products;
 	}
 
 	/**
@@ -293,5 +288,34 @@ class Config {
 		} else {
 			error_log( 'AutomaticFFL: Registration failed with status ' . $status_code );
 		}
+	}
+
+	/**
+	 * Check if the cart contains a mix of FFL and non-FFL products
+	 *
+	 * @since 1.0.14
+	 *
+	 * @return bool
+	 */
+	public static function is_mixed_cart() {
+		if ( ! WC()->cart ) {
+			return false;
+		}
+
+		$cart = WC()->cart->get_cart();
+		$total_products = count( $cart );
+		$total_ffl = 0;
+
+		foreach ( $cart as $product ) {
+			$product_id = $product['product_id'];
+			$ffl_required = get_post_meta( $product_id, '_ffl_required', true );
+
+			if ( $ffl_required === 'yes' ) {
+				$total_ffl++;
+			}
+		}
+
+		// Mixed cart = has FFL products but not all products are FFL
+		return $total_ffl > 0 && $total_ffl < $total_products;
 	}
 }

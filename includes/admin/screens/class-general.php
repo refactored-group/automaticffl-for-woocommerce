@@ -70,6 +70,17 @@ class General extends Abstract_Settings_Screen {
 				'label' => 'Label',
 				'desc'  => __( "Your subscription's store hash. If you still do not have one, <a href='https://www.automaticffl.com/' target='_blank'>click here</a>.", 'automaticffl-for-wc' ),
 			),
+			array(
+				'id'      => Config::FFL_AMMO_ENABLED_CONFIG,
+				'title'   => __( 'Enable Ammo Features', 'automaticffl-for-wc' ),
+				'type'    => 'select',
+				'desc'    => __( 'Enable state-based FFL requirements for ammunition products. When enabled, ammunition will require FFL dealer selection for shipments to restricted states.', 'automaticffl-for-wc' ),
+				'default' => Config::SETTING_NO,
+				'options' => array(
+					Config::SETTING_YES => __( 'Yes', 'automaticffl-for-wc' ),
+					Config::SETTING_NO  => __( 'No', 'automaticffl-for-wc' ),
+				),
+			),
 			array( 'type' => 'sectionend' ),
 			array(
 				'type'  => 'title',

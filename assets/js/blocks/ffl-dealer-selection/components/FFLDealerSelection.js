@@ -11,6 +11,7 @@ import { CART_STORE_KEY } from '@woocommerce/block-data';
 import { getSetting } from '@woocommerce/settings';
 import DealerModal from './DealerModal';
 import SelectedDealerCard from './SelectedDealerCard';
+import StateSelector from './StateSelector';
 
 /**
  * Selectors for the shipping address block in WooCommerce Blocks checkout
@@ -41,6 +42,7 @@ const getSettings = () => {
 	settings = settings || {};
 
 	return {
+		// Legacy fields for backwards compatibility
 		isFflCart: settings.isFflCart || false,
 		hasFflProducts: settings.hasFflProducts || false,
 		isMixedCart: settings.isMixedCart || false,
@@ -48,7 +50,55 @@ const getSettings = () => {
 		allowedOrigins: settings.allowedOrigins || [],
 		userName: settings.userName || { first_name: 'FFL', last_name: 'Dealer' },
 		isConfigured: settings.isConfigured || false,
+		// New fields for restrictions API
+		hasFirearms: settings.hasFirearms || false,
+		hasAmmo: settings.hasAmmo || false,
+		isAmmoOnly: settings.isAmmoOnly || false,
+		isAmmoEnabled: settings.isAmmoEnabled || false,
+		ammoRestrictedStates: settings.ammoRestrictedStates || [],
+		isApiAvailable: settings.isApiAvailable !== false, // Default to true if not set
+		usStates: settings.usStates || {},
 	};
+};
+
+/**
+ * API Unavailable Notice Component
+ *
+ * @param {Object}   props           Component props.
+ * @param {Function} props.onDismiss Callback when notice is dismissed.
+ *
+ * @return {JSX.Element} Component output.
+ */
+const ApiUnavailableNotice = ( { onDismiss } ) => {
+	return (
+		<div className="automaticffl-unavailable-notice">
+			<div className="wc-block-components-notices">
+				<div className="wc-block-components-notice-banner is-info automaticffl-unavailable-message">
+					<svg
+						xmlns="http://www.w3.org/2000/svg"
+						viewBox="0 0 24 24"
+						width="24"
+						height="24"
+						aria-hidden="true"
+						focusable="false"
+					>
+						<path d="M12 3.2c-4.8 0-8.8 3.9-8.8 8.8 0 4.8 3.9 8.8 8.8 8.8 4.8 0 8.8-3.9 8.8-8.8 0-4.8-4-8.8-8.8-8.8zm0 16c-4 0-7.2-3.2-7.2-7.2C4.8 8 8 4.8 12 4.8s7.2 3.2 7.2 7.2c0 4-3.2 7.2-7.2 7.2zM11 8h2v6h-2V8zm0 8h2v2h-2v-2z" />
+					</svg>
+					<div className="wc-block-components-notice-banner__content">
+						<p><strong>{ __( 'Automatic FFL Unavailable', 'automaticffl-for-wc' ) }</strong></p>
+						<p>{ __( 'Please contact our store after placing an order.', 'automaticffl-for-wc' ) }</p>
+						<button
+							type="button"
+							className="wc-block-components-button wp-element-button"
+							onClick={ onDismiss }
+						>
+							{ __( 'OK', 'automaticffl-for-wc' ) }
+						</button>
+					</div>
+				</div>
+			</div>
+		</div>
+	);
 };
 
 /**
@@ -62,13 +112,27 @@ const FFLDealerSelection = () => {
 	const [ isModalOpen, setIsModalOpen ] = useState( false );
 	const [ selectedDealer, setSelectedDealer ] = useState( null );
 	const [ hasValidationError, setHasValidationError ] = useState( false );
+	// Ammo-specific state
+	const [ selectedState, setSelectedState ] = useState( '' );
+	const [ requiresFfl, setRequiresFfl ] = useState( false );
+	// API unavailable notice state
+	const [ noticeDismissed, setNoticeDismissed ] = useState( false );
 
 	// Get shipping address dispatch
 	const { setShippingAddress } = useDispatch( CART_STORE_KEY );
 
 	/**
 	 * Set extension data for the Store API checkout request.
-	 * Tries the new setExtensionData method first, then falls back to deprecated __internalSetExtensionData.
+	 *
+	 * NOTE: We use wp.data.dispatch('wc/store/checkout') directly because the
+	 * public `checkoutExtensionData` prop (with its `setExtensionData` method)
+	 * is only passed to payment method components, not to SlotFill components
+	 * like ExperimentalOrderShippingPackages where this component renders.
+	 *
+	 * The __internalSetExtensionData dispatch action is an internal WooCommerce
+	 * API (denoted by the __ prefix). If WooCommerce changes this API, the
+	 * try/catch will prevent runtime errors and the console.error will aid
+	 * debugging. Monitor WooCommerce changelogs on updates.
 	 *
 	 * @param {string} namespace The extension namespace
 	 * @param {Object} data The data to set
@@ -78,10 +142,10 @@ const FFLDealerSelection = () => {
 			try {
 				const checkoutStore = wp.data.dispatch( 'wc/store/checkout' );
 
-				// Try the new non-deprecated method first (WooCommerce 8.9+)
+				// Try the public method first (WooCommerce 8.9+)
 				if ( checkoutStore && typeof checkoutStore.setExtensionData === 'function' ) {
 					checkoutStore.setExtensionData( namespace, data );
-				// Fall back to deprecated method for older versions
+				// Fall back to internal method for older versions
 				} else if ( checkoutStore && typeof checkoutStore.__internalSetExtensionData === 'function' ) {
 					checkoutStore.__internalSetExtensionData( namespace, data );
 				}
@@ -287,8 +351,40 @@ const FFLDealerSelection = () => {
 		};
 	}, [ selectedDealer ] );
 
-	// Don't render if not an FFL cart
-	if ( ! settings.hasFflProducts ) {
+	/**
+	 * Handle state selection for ammo-only checkout
+	 */
+	const handleStateSelect = useCallback(
+		( state, isRestricted ) => {
+			setSelectedState( state );
+			setRequiresFfl( isRestricted );
+
+			// Update shipping state
+			setShippingAddress( { state } );
+
+			// Clear dealer if state is not restricted
+			if ( ! isRestricted ) {
+				setSelectedDealer( null );
+				setExtensionData( 'automaticffl', { fflLicense: '' } );
+			}
+		},
+		[ setShippingAddress, setExtensionData ]
+	);
+
+	// Show API unavailable notice if API is down (and not dismissed)
+	if ( ! settings.isApiAvailable && ! noticeDismissed ) {
+		return (
+			<ApiUnavailableNotice onDismiss={ () => setNoticeDismissed( true ) } />
+		);
+	}
+
+	// Don't render if API unavailable and notice dismissed - allow normal checkout
+	if ( ! settings.isApiAvailable && noticeDismissed ) {
+		return null;
+	}
+
+	// Don't render if no FFL products (firearms or ammo)
+	if ( ! settings.hasFirearms && ! settings.hasAmmo && ! settings.hasFflProducts ) {
 		return null;
 	}
 
@@ -309,7 +405,7 @@ const FFLDealerSelection = () => {
 					</svg>
 					<div className="wc-block-components-notice-banner__content">
 						{ __(
-							'Your cart contains both firearms and non-firearm items. Please purchase them separately.',
+							'Your cart contains both FFL-required items and non-FFL items. Please purchase them separately.',
 							'automaticffl-for-wc'
 						) }
 					</div>
@@ -318,6 +414,123 @@ const FFLDealerSelection = () => {
 		);
 	}
 
+	// Ammo-only checkout with ammo features enabled
+	if ( settings.isAmmoOnly && settings.isAmmoEnabled ) {
+		// No state selected yet - show state selector
+		if ( ! selectedState ) {
+			return (
+				<StateSelector
+					restrictedStates={ settings.ammoRestrictedStates }
+					onStateSelect={ handleStateSelect }
+					selectedState={ selectedState }
+					usStates={ settings.usStates }
+				/>
+			);
+		}
+
+		// State selected but not restricted - standard checkout
+		if ( ! requiresFfl ) {
+			return (
+				<StateSelector
+					restrictedStates={ settings.ammoRestrictedStates }
+					onStateSelect={ handleStateSelect }
+					selectedState={ selectedState }
+					usStates={ settings.usStates }
+				/>
+			);
+		}
+
+		// State is restricted - show FFL selection after state selector
+		if ( ! settings.isConfigured ) {
+			return (
+				<div className="automaticffl-dealer-selection">
+					<StateSelector
+						restrictedStates={ settings.ammoRestrictedStates }
+						onStateSelect={ handleStateSelect }
+						selectedState={ selectedState }
+					/>
+					<div className="wc-block-components-notices">
+						<div className="wc-block-components-notice-banner is-error">
+							<div className="wc-block-components-notice-banner__content">
+								{ __(
+									'FFL dealer selection is not configured. Please contact the site administrator.',
+									'automaticffl-for-wc'
+								) }
+							</div>
+						</div>
+					</div>
+				</div>
+			);
+		}
+
+		// Show state selector + FFL selection
+		return (
+			<div className="automaticffl-dealer-selection">
+				<StateSelector
+					restrictedStates={ settings.ammoRestrictedStates }
+					onStateSelect={ handleStateSelect }
+					selectedState={ selectedState }
+					usStates={ settings.usStates }
+				/>
+
+				{ /* Validation Error */ }
+				{ hasValidationError && ! selectedDealer && (
+					<div className="wc-block-components-notices">
+						<div className="wc-block-components-notice-banner is-error">
+							<div className="wc-block-components-notice-banner__content">
+								{ __(
+									'Please select an FFL dealer before placing your order.',
+									'automaticffl-for-wc'
+								) }
+							</div>
+						</div>
+					</div>
+				) }
+
+				{ /* Selected Dealer Card */ }
+				{ selectedDealer && (
+					<SelectedDealerCard
+						dealer={ selectedDealer }
+						userName={ settings.userName }
+					/>
+				) }
+
+				{ /* Find/Change Dealer Button */ }
+				<button
+					type="button"
+					className="wc-block-components-button wp-element-button ffl-search-button"
+					onClick={ () => setIsModalOpen( true ) }
+				>
+					<svg
+						xmlns="http://www.w3.org/2000/svg"
+						viewBox="0 0 512 512"
+						width="16"
+						height="16"
+						fill="currentColor"
+						aria-hidden="true"
+						style={ { verticalAlign: 'middle', marginRight: '8px' } }
+					>
+						<path d="M416 208c0 45.9-14.9 88.3-40 122.7L502.6 457.4c12.5 12.5 12.5 32.8 0 45.3s-32.8 12.5-45.3 0L330.7 376c-34.4 25.2-76.8 40-122.7 40C93.1 416 0 322.9 0 208S93.1 0 208 0S416 93.1 416 208zM208 352a144 144 0 1 0 0-288 144 144 0 1 0 0 288z" />
+					</svg>
+					{ selectedDealer
+						? __( 'Change Dealer', 'automaticffl-for-wc' )
+						: __( 'Find a Dealer', 'automaticffl-for-wc' ) }
+				</button>
+
+				{ /* Dealer Selection Modal */ }
+				{ isModalOpen && (
+					<DealerModal
+						iframeUrl={ settings.iframeUrl }
+						allowedOrigins={ settings.allowedOrigins }
+						onSelect={ handleDealerSelect }
+						onClose={ () => setIsModalOpen( false ) }
+					/>
+				) }
+			</div>
+		);
+	}
+
+	// Firearms checkout (or legacy FFL cart) - always require FFL
 	// Show configuration error
 	if ( ! settings.isConfigured ) {
 		return (

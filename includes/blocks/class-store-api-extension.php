@@ -12,6 +12,8 @@ defined( 'ABSPATH' ) || exit;
 use Automattic\WooCommerce\StoreApi\Schemas\V1\CheckoutSchema;
 use Automattic\WooCommerce\StoreApi\StoreApi;
 use Automattic\WooCommerce\StoreApi\Schemas\ExtendSchema;
+use RefactoredGroup\AutomaticFFL\Helper\Config;
+use RefactoredGroup\AutomaticFFL\Helper\Cart_Analyzer;
 
 /**
  * Class Store_Api_Extension
@@ -158,19 +160,16 @@ class Store_Api_Extension {
 	 * @return void
 	 */
 	public function validate_order( $order ) {
-		// Check if order has FFL products
-		$has_ffl_product = false;
-		foreach ( $order->get_items() as $item ) {
-			$product_id = $item->get_product_id();
-			$ffl_required = get_post_meta( $product_id, '_ffl_required', true );
+		$analyzer = new Cart_Analyzer();
 
-			if ( $ffl_required === 'yes' ) {
-				$has_ffl_product = true;
-				break;
-			}
+		// If API is unavailable, skip validation and allow normal checkout.
+		// Customer was shown notice to contact store after placing order.
+		if ( $analyzer->has_api_error() ) {
+			return;
 		}
 
-		if ( $has_ffl_product ) {
+		// Firearms always need FFL
+		if ( $analyzer->has_firearms() ) {
 			$ffl_license = $order->get_meta( '_ffl_license_field' );
 
 			if ( empty( $ffl_license ) ) {
@@ -179,6 +178,24 @@ class Store_Api_Extension {
 					__( 'Please select an FFL dealer for your firearm order.', 'automaticffl-for-wc' ),
 					400
 				);
+			}
+			return;
+		}
+
+		// Ammo only - check state restriction
+		if ( $analyzer->is_ammo_only() && Config::is_ammo_enabled() ) {
+			$shipping_state = $order->get_shipping_state();
+
+			if ( $analyzer->requires_ffl_for_state( $shipping_state ) ) {
+				$ffl_license = $order->get_meta( '_ffl_license_field' );
+
+				if ( empty( $ffl_license ) ) {
+					throw new \Automattic\WooCommerce\StoreApi\Exceptions\RouteException(
+						'ffl_dealer_required_ammo',
+						__( 'Please select an FFL dealer for ammunition shipping to this state.', 'automaticffl-for-wc' ),
+						400
+					);
+				}
 			}
 		}
 	}
