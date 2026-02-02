@@ -32,7 +32,7 @@ class General extends Abstract_Settings_Screen {
 	/**
 	 * Save settings and register credentials with backend.
 	 *
-	 * @since 1.0.15
+	 * @since 1.0.14
 	 */
 	public function save() {
 		parent::save();

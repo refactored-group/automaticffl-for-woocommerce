@@ -47,7 +47,7 @@ class AFFL_Loader {
 	 */
 	protected function __construct() {
 
-		register_activation_hook( __FILE__, array( $this, 'activation_check' ) );
+		register_activation_hook( _AFFL_LOADER_, array( $this, 'activation_check' ) );
 
 		add_action( 'admin_init', array( $this, 'check_environment' ) );
 		add_action( 'admin_init', array( $this, 'add_plugin_notices' ) );
@@ -126,7 +126,7 @@ class AFFL_Loader {
 	 */
 	public function check_environment() {
 
-		if ( ! $this->is_environment_compatible() && is_plugin_active( plugin_basename( __FILE__ ) ) ) {
+		if ( ! $this->is_environment_compatible() && is_plugin_active( plugin_basename( _AFFL_LOADER_ ) ) ) {
 
 			$this->deactivate_plugin();
 
@@ -229,7 +229,7 @@ class AFFL_Loader {
 	 * @since 1.0.0
 	 */
 	protected function deactivate_plugin() {
-		deactivate_plugins( plugin_basename( __FILE__ ) );
+		deactivate_plugins( plugin_basename( _AFFL_LOADER_ ) );
 	}
 
 	/**

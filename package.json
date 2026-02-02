@@ -1,6 +1,6 @@
 {
   "name": "automaticffl-for-woocommerce",
-  "version": "1.0.14",
+  "version": "1.0.15",
   "description": "Automatic FFL for WooCommerce - WooCommerce Blocks integration",
   "scripts": {
     "build": "wp-scripts build",

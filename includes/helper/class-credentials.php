@@ -16,7 +16,7 @@ defined( 'ABSPATH' ) || exit;
  * These credentials are sent to the AutomaticFFL backend so it can fetch
  * product and category data from the merchant's WooCommerce store.
  *
- * @since 1.0.15
+ * @since 1.0.14
  */
 class Credentials {
 	const APP_NAME       = 'AutomaticFFL Integration';
@@ -26,7 +26,7 @@ class Credentials {
 	 * Get or create Application Password for current admin user.
 	 * Uses WordPress's built-in Application Passwords (WP 5.6+).
 	 *
-	 * @since 1.0.15
+	 * @since 1.0.14
 	 *
 	 * @return array|\WP_Error Array with 'username' and 'password' keys, or WP_Error on failure.
 	 */
@@ -83,7 +83,7 @@ class Credentials {
 	/**
 	 * Get an admin user ID suitable for Application Password creation.
 	 *
-	 * @since 1.0.15
+	 * @since 1.0.14
 	 *
 	 * @return int|null User ID or null if none found.
 	 */

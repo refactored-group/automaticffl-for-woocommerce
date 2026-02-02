@@ -67,42 +67,28 @@ class Config {
 	}
 
 	/**
-	 * Returns a bool of whether the current cart has only FFL products or not
+	 * Build iframe URL with query parameters.
 	 *
-	 * @since 1.0.0
-	 * @return bool
+	 * @since 1.0.14
+	 *
+	 * @return string|false Returns URL string on success, false if required data is missing.
 	 */
-	public static function is_ffl_cart() {
-		$cart           = WC()->cart->get_cart();
-		$total_products = count( $cart );
-		$total_ffl      = 0;
-		foreach ( $cart as $product ) {
-			$product_id = $product['product_id'];
-			$ffl_required = get_post_meta($product_id, '_ffl_required', true);
+	public static function build_iframe_url() {
+		$store_hash   = self::get_store_hash();
+		$maps_api_key = self::get_google_maps_api_key();
 
-			if ( $ffl_required === 'yes' ) {
-				$total_ffl++;
-			}
+		if ( empty( $store_hash ) || empty( $maps_api_key ) ) {
+			return false;
 		}
 
-		if ( $total_products === $total_ffl ) {
-			return true;
-		}
+		$params = array(
+			'store_hash'   => $store_hash,
+			'platform'     => 'WooCommerce',
+			'maps_api_key' => $maps_api_key,
+		);
 
-		return false;
+		return add_query_arg( $params, self::get_iframe_map_url() );
 	}
-
-	/**
-	 * Get URL to retrieve a dealers list
-	 *
-	 * @since 1.0.0
-	 *
-	 * @return string
-	 */
-	public static function get_ffl_dealers_url() {
-		return sprintf( '%s/%s/%s', self::get_ffl_api_url(), self::get_store_hash(), 'dealers' );
-	}
-
 
 	/**
 	 * Get the store URL
@@ -121,10 +107,10 @@ class Config {
 	 *
 	 * @since 1.0.0
 	 *
-	 * @return false|mixed|void
+	 * @return string
 	 */
 	public static function get_store_hash() {
-		return get_option( self::FFL_STORE_HASH_CONFIG, true );
+		return get_option( self::FFL_STORE_HASH_CONFIG, '' );
 	}
 
 
@@ -133,10 +119,10 @@ class Config {
 	 *
 	 * @since 1.0.0
 	 *
-	 * @return false|mixed|void
+	 * @return string
 	 */
 	public static function get_google_maps_api_key() {
-		return get_option( self::FFL_GOOGLE_MAPS_API_KEY_CONFIG, true );
+		return get_option( self::FFL_GOOGLE_MAPS_API_KEY_CONFIG, '' );
 	}
 
 	/**
@@ -148,33 +134,6 @@ class Config {
 	 */
 	public static function get_google_maps_api_url() {
 		return self::SETTING_GOOGLE_MAPS_URL;
-	}
-
-	/**
-	 * Verifies if there are FFL products with regular products in the shopping cart.
-	 * If there are any, redirects customer back to the Cart page.
-	 *
-	 * @return void
-	 * @since 1.0.0
-	 */
-	public static function verify_mixed_cart() {
-		$cart           = WC()->cart->get_cart();
-		$total_products = count( $cart );
-		$total_ffl      = 0;
-		foreach ( $cart as $product ) {
-			$product_id = $product['product_id'];
-			$ffl_required = get_post_meta($product_id, '_ffl_required', true);
-
-			if ( $ffl_required === 'yes' ) {
-				$total_ffl++;
-			}
-		}
-
-		if ( $total_ffl > 0 && $total_ffl < $total_products && ! is_cart() ) {
-			// Redirect back to the cart where the error message will be displayed.
-			wp_safe_redirect( wc_get_cart_url() );
-			exit;
-		}
 	}
 
 	/**
@@ -193,57 +152,14 @@ class Config {
 	}
 
 	/**
-	 * Check if the cart contains any FFL products
+	 * Get the restrictions API URL.
 	 *
 	 * @since 1.0.14
 	 *
-	 * @return bool
+	 * @return string
 	 */
-	public static function has_ffl_products() {
-		if ( ! WC()->cart ) {
-			return false;
-		}
-
-		$cart = WC()->cart->get_cart();
-		foreach ( $cart as $product ) {
-			$product_id = $product['product_id'];
-			$ffl_required = get_post_meta( $product_id, '_ffl_required', true );
-
-			if ( $ffl_required === 'yes' ) {
-				return true;
-			}
-		}
-
-		return false;
-	}
-
-	/**
-	 * Check if the cart contains a mix of FFL and non-FFL products
-	 *
-	 * @since 1.0.14
-	 *
-	 * @return bool
-	 */
-	public static function is_mixed_cart() {
-		if ( ! WC()->cart ) {
-			return false;
-		}
-
-		$cart = WC()->cart->get_cart();
-		$total_products = count( $cart );
-		$total_ffl = 0;
-
-		foreach ( $cart as $product ) {
-			$product_id = $product['product_id'];
-			$ffl_required = get_post_meta( $product_id, '_ffl_required', true );
-
-			if ( $ffl_required === 'yes' ) {
-				$total_ffl++;
-			}
-		}
-
-		// Mixed cart = has FFL products but not all products are FFL
-		return $total_ffl > 0 && $total_ffl < $total_products;
+	public static function get_restrictions_api_url(): string {
+		return self::get_ffl_api_url() . '/stores/' . self::get_store_hash() . '/products/restrictions';
 	}
 
 	/**
@@ -252,13 +168,13 @@ class Config {
 	 * Creates a WordPress Application Password and sends it to the backend
 	 * so it can fetch product/category data from the WooCommerce REST API.
 	 *
-	 * @since 1.0.15
+	 * @since 1.0.14
 	 *
 	 * @return void
 	 */
 	public static function register_with_backend() {
-		$store_hash = get_option( self::FFL_STORE_HASH_CONFIG );
-		if ( empty( $store_hash ) || $store_hash === '1' ) {
+		$store_hash = self::get_store_hash();
+		if ( empty( $store_hash ) ) {
 			return;
 		}
 
@@ -294,4 +210,83 @@ class Config {
 			error_log( 'AutomaticFFL: Registration failed with status ' . $status_code );
 		}
 	}
+
+	/**
+	 * Build ATF EzCheck URL from FFL ID.
+	 *
+	 * FFL ID format: X-XX-XXX-XX-XXXXX or X-XX-XXX-XX-XX-XXXXX
+	 * - licsRegn = 1st part (e.g., "5")
+	 * - licsDis = 2nd part (e.g., "75")
+	 * - licsSeq = last part (e.g., "23572")
+	 *
+	 * @since 1.0.14
+	 *
+	 * @param string $ffl_id The FFL license number.
+	 * @return string The ATF EzCheck URL, or empty string if FFL ID is malformed.
+	 */
+	public static function build_ezcheck_url( $ffl_id ) {
+		$parts = explode( '-', $ffl_id );
+		if ( count( $parts ) < 5 ) {
+			return '';
+		}
+		$lics_regn = $parts[0];
+		$lics_dis  = $parts[1];
+		$lics_seq  = end( $parts );
+		return sprintf(
+			'https://fflezcheck.atf.gov/FFLEzCheck/fflSearch?licsRegn=%s&licsDis=%s&licsSeq=%s',
+			rawurlencode( $lics_regn ),
+			rawurlencode( $lics_dis ),
+			rawurlencode( $lics_seq )
+		);
+	}
+
+	/**
+	 * Build the FFL certificate URL from UUID.
+	 *
+	 * @since 1.0.14
+	 *
+	 * @param string $uuid The FFL UUID.
+	 * @return string The certificate URL, or empty string if UUID is empty.
+	 */
+	public static function build_certificate_url( $uuid ) {
+		if ( empty( $uuid ) ) {
+			return '';
+		}
+		return 'https://certificate.automaticffl.com/' . rawurlencode( $uuid );
+	}
+
+	/**
+	 * Build enhanced order note with FFL details.
+	 *
+	 * Shared between classic and blocks checkout paths.
+	 *
+	 * @since 1.0.14
+	 *
+	 * @param string $ffl_license     The FFL license number.
+	 * @param string $expiration_date The FFL expiration date (optional).
+	 * @param string $uuid            The FFL UUID for certificate link (optional).
+	 * @return string The formatted order note.
+	 */
+	public static function build_enhanced_order_note( $ffl_license, $expiration_date = '', $uuid = '' ) {
+		$note_lines = array();
+
+		$note_lines[] = 'FFL License: ' . $ffl_license;
+
+		$ezcheck_url = self::build_ezcheck_url( $ffl_license );
+		if ( ! empty( $ezcheck_url ) ) {
+			$note_lines[] = 'ezCheck: ' . $ezcheck_url;
+		}
+
+		if ( ! empty( $expiration_date ) ) {
+			$note_lines[] = 'Expiration: ' . $expiration_date;
+		}
+
+		$certificate_url = self::build_certificate_url( $uuid );
+		if ( ! empty( $certificate_url ) ) {
+			$note_lines[] = 'Certificate: ' . $certificate_url;
+		}
+
+		return implode( "\n\n", $note_lines );
+	}
+
 }

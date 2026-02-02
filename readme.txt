@@ -2,7 +2,7 @@
 Contributors: refactoredgroup
 Tags: FFL Locator, Firearms, Search, FFL, Guns
 Tested up to: 6.9
-Stable tag: 1.0.14
+Stable tag: 1.0.15
 Requires PHP: 5.6
 Requires at least: 4.7
 License: GPLv3
@@ -54,6 +54,9 @@ For installation and setup, please follow the instructions [here](https://www.au
 10. Marking products as FFL-required.
 
 == Changelog ==
+
+= 1.0.15 =
+* Updated version
 
 = 1.0.14 =
 * Added WooCommerce Blocks (block-based checkout) support for FFL dealer selection
