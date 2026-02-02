@@ -24,8 +24,29 @@
 
 defined( 'ABSPATH' ) || exit;
 define( '_AFFL_LOADER_', __FILE__ );
+define( 'AFFL_VERSION', '1.0.15' );
 
 require_once 'includes/class-wc-ffl-loader.php';
+
+// Re-register credentials with backend on plugin update (version change).
+// Uses a 5-minute backoff to avoid retrying on every admin page load if the backend is down.
+add_action( 'admin_init', function() {
+	$registered_version = get_option( 'automaticffl_registered_version' );
+
+	if ( $registered_version !== AFFL_VERSION ) {
+		// Check backoff: don't retry if we failed recently.
+		$last_attempt = get_transient( 'automaticffl_registration_backoff' );
+		if ( false !== $last_attempt ) {
+			return;
+		}
+
+		$store_hash = get_option( 'wc_ffl_store_hash' );
+		if ( ! empty( $store_hash ) && $store_hash !== '1' ) {
+			set_transient( 'automaticffl_registration_backoff', time(), 300 );
+			\RefactoredGroup\AutomaticFFL\Helper\Config::register_with_backend();
+		}
+	}
+} );
 
 spl_autoload_register(
 	function ( $class ) {

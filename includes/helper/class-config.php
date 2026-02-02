@@ -245,4 +245,53 @@ class Config {
 		// Mixed cart = has FFL products but not all products are FFL
 		return $total_ffl > 0 && $total_ffl < $total_products;
 	}
+
+	/**
+	 * Register store credentials with the AutomaticFFL backend.
+	 *
+	 * Creates a WordPress Application Password and sends it to the backend
+	 * so it can fetch product/category data from the WooCommerce REST API.
+	 *
+	 * @since 1.0.15
+	 *
+	 * @return void
+	 */
+	public static function register_with_backend() {
+		$store_hash = get_option( self::FFL_STORE_HASH_CONFIG );
+		if ( empty( $store_hash ) || $store_hash === '1' ) {
+			return;
+		}
+
+		$credentials = Credentials::get_or_create_app_password();
+		if ( is_wp_error( $credentials ) ) {
+			error_log( 'AutomaticFFL: Failed to create credentials - ' . $credentials->get_error_message() );
+			return;
+		}
+
+		$response = wp_remote_post(
+			self::get_ffl_api_url() . '/stores/' . $store_hash . '/register',
+			array(
+				'headers' => array( 'Content-Type' => 'application/json' ),
+				'body'    => wp_json_encode( array(
+					'username' => $credentials['username'],
+					'password' => $credentials['password'],
+					'site_url' => get_site_url(),
+					'platform' => 'woocommerce',
+				) ),
+				'timeout' => 15,
+			)
+		);
+
+		if ( is_wp_error( $response ) ) {
+			error_log( 'AutomaticFFL: Registration request failed - ' . $response->get_error_message() );
+			return;
+		}
+
+		$status_code = wp_remote_retrieve_response_code( $response );
+		if ( $status_code === 200 ) {
+			update_option( 'automaticffl_registered_version', AFFL_VERSION );
+		} else {
+			error_log( 'AutomaticFFL: Registration failed with status ' . $status_code );
+		}
+	}
 }
