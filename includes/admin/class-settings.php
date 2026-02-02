@@ -32,19 +32,11 @@ class Settings {
 	private $screens;
 
 	/**
-	 * Whether the new Woo nav should be used.
-	 *
-	 * @var bool
-	 */
-	public $use_woo_nav;
-
-	/**
 	 * Settings constructor.
 	 *
 	 * @since 1.0.0
 	 */
 	public function __construct() {
-		$this->screens = $this->build_menu_item_array();
 
 		add_action( 'admin_menu', array( $this, 'add_menu_item' ) );
 		add_action( 'wp_loaded', array( $this, 'save' ) );
@@ -119,13 +111,11 @@ class Settings {
 		$screen = $this->get_screen( $current_tab );
 		?>
 		<div class="wrap woocommerce">
-			<?php if ( ! $this->use_woo_nav ) : ?>
-				<nav class="nav-tab-wrapper woo-nav-tab-wrapper">
-					<?php foreach ( $tabs as $id => $label ) : ?>
-						<a href="<?php echo esc_html( admin_url( 'admin.php?page=' . self::PAGE_ID . '&tab=' . esc_attr( $id ) ) ); ?>" class="nav-tab <?php echo $current_tab === $id ? 'nav-tab-active' : ''; ?>"><?php echo esc_html( $label ); ?></a>
-					<?php endforeach; ?>
-				</nav>
-			<?php endif; ?>
+			<nav class="nav-tab-wrapper woo-nav-tab-wrapper">
+				<?php foreach ( $tabs as $id => $label ) : ?>
+					<a href="<?php echo esc_html( admin_url( 'admin.php?page=' . self::PAGE_ID . '&tab=' . esc_attr( $id ) ) ); ?>" class="nav-tab <?php echo $current_tab === $id ? 'nav-tab-active' : ''; ?>"><?php echo esc_html( $label ); ?></a>
+				<?php endforeach; ?>
+			</nav>
 			<?php if ( $screen ) : ?>
 				<h1 class="screen-reader-text"><?php echo esc_html( $screen->get_title() ); ?></h1>
 				<p><?php echo wp_kses_post( $screen->get_description() ); ?></p>
@@ -149,8 +139,7 @@ class Settings {
 		$screen = false;
 
 		if ( isset( $_POST['admin_nonce'] )
-			&& ! empty( wp_kses_post( wp_unslash( $_POST['admin_nonce'] ) ) )
-			&& wp_verify_nonce( wp_kses_post( wp_unslash( $_POST['admin_nonce'] ) ), 'admin_nonce' ) ) {
+			&& wp_verify_nonce( sanitize_text_field( wp_unslash( $_POST['admin_nonce'] ) ), 'admin_nonce' ) ) {
 			$screen = $this->get_screen( Helper::get_posted_value( 'screen_id' ) );
 		}
 
@@ -167,7 +156,7 @@ class Settings {
 		try {
 			$screen->save();
 			// @TODO: Implement message handler
-		} catch ( Exception $exception ) {
+		} catch ( \Exception $exception ) {
 			// @TODO: Implement message handler and show error message
 			echo esc_html( $exception->getMessage() );
 			exit();
@@ -195,6 +184,9 @@ class Settings {
 	 * @return Abstract_Settings_Screen[]
 	 */
 	public function get_screens() {
+		if ( null === $this->screens ) {
+			$this->screens = $this->build_menu_item_array();
+		}
 		/**
 		 * Filters the admin settings screens.
 		 *

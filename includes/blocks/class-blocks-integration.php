@@ -11,6 +11,10 @@ defined( 'ABSPATH' ) || exit;
 
 use Automattic\WooCommerce\Blocks\Integrations\IntegrationInterface;
 use RefactoredGroup\AutomaticFFL\Helper\Config;
+use RefactoredGroup\AutomaticFFL\Helper\Cart_Analyzer;
+use RefactoredGroup\AutomaticFFL\Helper\Messages;
+use RefactoredGroup\AutomaticFFL\Helper\Saved_Cart;
+use RefactoredGroup\AutomaticFFL\Helper\US_States;
 use RefactoredGroup\AutomaticFFL\Views\Checkout;
 
 /**
@@ -21,6 +25,13 @@ use RefactoredGroup\AutomaticFFL\Views\Checkout;
  * @since 1.0.14
  */
 class Blocks_Integration implements IntegrationInterface {
+
+	/**
+	 * Cached script data to avoid duplicate computation.
+	 *
+	 * @var array|null
+	 */
+	private $script_data_cache = null;
 
 	/**
 	 * The name of the integration.
@@ -165,37 +176,58 @@ class Blocks_Integration implements IntegrationInterface {
 	 * @return array
 	 */
 	public function get_script_data() {
-		$user_name = Checkout::get_user_name();
-		$store_hash = Config::get_store_hash();
-		$maps_api_key = Config::get_google_maps_api_key();
-
-		// Build iframe URL
-		$iframe_url = '';
-		// Config::get_store_hash() and get_google_maps_api_key() pass `true` as the
-		// get_option() default, so when the option is unset they return boolean true.
-		// The '1' check handles SETTING_YES being stored as the default value.
-		$has_valid_store_hash = ! empty( $store_hash ) && $store_hash !== true && $store_hash !== '1';
-		$has_valid_maps_key   = ! empty( $maps_api_key ) && $maps_api_key !== true && $maps_api_key !== '1';
-
-		if ( $has_valid_store_hash && $has_valid_maps_key ) {
-			$base_url = Config::get_iframe_map_url();
-			$params = array(
-				'store_hash'   => $store_hash,
-				'platform'     => 'WooCommerce',
-				'maps_api_key' => $maps_api_key,
-			);
-			$iframe_url = add_query_arg( $params, $base_url );
+		if ( null !== $this->script_data_cache ) {
+			return $this->script_data_cache;
 		}
 
-		return array(
-			'isFflCart'        => Config::has_ffl_products() && ! Config::is_mixed_cart(),
-			'hasFflProducts'   => Config::has_ffl_products(),
-			'isMixedCart'      => Config::is_mixed_cart(),
-			'iframeUrl'        => $iframe_url,
-			'allowedOrigins'   => Config::get_iframe_allowed_origins(),
-			'userName'         => $user_name,
-			'isConfigured'     => $has_valid_store_hash && $has_valid_maps_key,
+		$user_name  = Checkout::get_user_name();
+		$iframe_url = Config::build_iframe_url() ?: '';
+
+		// Use Cart_Analyzer for accurate classification
+		$analyzer = new Cart_Analyzer();
+
+		// Get item counts for save for later buttons (total quantity, not line items).
+		$ffl_count     = $analyzer->get_quantity_by_category( 'firearms' ) + $analyzer->get_quantity_by_category( 'ammo' );
+		$regular_count = $analyzer->get_quantity_by_category( 'regular' );
+
+		$this->script_data_cache = array(
+			// Cart state flags for frontend
+			'isFflCart'            => $analyzer->has_ffl_products() && ! $analyzer->is_mixed_ffl_regular(),
+			'hasFflProducts'       => $analyzer->has_ffl_products(),
+			'isMixedCart'          => $analyzer->is_mixed_ffl_regular(),
+
+			// New fields for restrictions API
+			'hasFirearms'          => $analyzer->has_firearms(),
+			'hasAmmo'              => $analyzer->has_ammo(),
+			'isAmmoOnly'           => $analyzer->is_ammo_only(),
+			'isAmmoEnabled'        => true,
+			'ammoRestrictedStates' => $analyzer->get_ammo_restricted_states(),
+			'isApiAvailable'       => $analyzer->is_api_available(),
+			'usStates'             => US_States::get_all(),
+
+			// Ammo + regular mixed cart fields
+			'isAmmoRegularMixed'     => $analyzer->is_ammo_regular_mixed(),
+			'isFirearmsRegularMixed' => $analyzer->is_firearms_regular_mixed(),
+			'selectedAmmoState'      => WC()->session ? WC()->session->get( 'automaticffl_ammo_state', '' ) : '',
+			'cartUrl'                => wc_get_cart_url(),
+
+			// Save for later fields
+			'fflItemCount'         => $ffl_count,
+			'regularItemCount'     => $regular_count,
+			'hasSavedItems'        => Saved_Cart::has_saved_items(),
+			'savedItemsCount'      => Saved_Cart::get_saved_items_count(),
+
+			// Common fields
+			'iframeUrl'            => $iframe_url,
+			'allowedOrigins'       => Config::get_iframe_allowed_origins(),
+			'userName'             => $user_name,
+			'isConfigured'         => ! empty( $iframe_url ),
+
+			// Centralized messages for consistency with classic checkout
+			'i18n'                 => Messages::get_all(),
 		);
+
+		return $this->script_data_cache;
 	}
 
 	/**
@@ -210,6 +242,6 @@ class Blocks_Integration implements IntegrationInterface {
 		if ( file_exists( $file_path ) ) {
 			return (string) filemtime( $file_path );
 		}
-		return '1.0.14';
+		return AFFL_VERSION;
 	}
 }

@@ -62,27 +62,7 @@
 .hidden {
   display: none;
 }
-#automaticffl-close-modal-button {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  position: absolute;
-  left: 15px;
-  top: 15px;
-  color: #8a8a8a;
-  width: 32px;
-  height: 32px;
-  text-align: center;
-  cursor: pointer;
-  z-index: 10;
-  border-radius: 50%;
-  background-color: rgba(255, 255, 255, 0.9);
-  transition: background-color 200ms ease;
-}
-#automaticffl-close-modal-button:hover {
-  background-color: #e0e0e0;
-  color: #333333;
-}
+
 .dealer-phone {
   color: #512a74;
   margin: 0;
@@ -175,23 +155,482 @@ body.automaticffl-checkout-active .wc-block-checkout__billing-fields {
   margin-bottom: 1em;
 }
 
-/* Block checkout modal styling */
-.automaticffl-blocks-modal {
-  position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background: rgba(0, 0, 0, 0.5);
-  z-index: 100000;
-  display: flex;
-  align-items: center;
-  justify-content: center;
+/*
+ * State Selector Styles - Ammo Checkout
+ */
+
+/* Classic checkout state selector */
+#automaticffl-ammo-checkout {
+  margin-bottom: 2em;
 }
 
-.automaticffl-blocks-modal .dealers-container {
-  position: relative;
-  transform: none;
-  top: auto;
-  left: auto;
+#automaticffl-ammo-checkout h3 {
+  margin-bottom: 1em;
 }
+
+#automaticffl-state-selector {
+  width: 100%;
+  max-width: 300px;
+  padding: 10px 12px;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  font-size: 14px;
+  background-color: #fff;
+}
+
+#automaticffl-state-selector:focus {
+  border-color: #522a74;
+  outline: none;
+  box-shadow: 0 0 0 2px rgba(82, 42, 116, 0.2);
+}
+
+#automaticffl-state-message {
+  margin-top: 15px;
+  margin-bottom: 15px;
+}
+
+.automaticffl-state-restricted .woocommerce-error,
+.automaticffl-state-allowed .woocommerce-message {
+  margin-bottom: 0;
+}
+
+#automaticffl-ffl-container {
+  margin-top: 20px;
+  padding-top: 20px;
+  border-top: 1px solid #e0e0e0;
+}
+
+/* Block checkout state selector */
+.automaticffl-state-selector {
+  margin-bottom: 1.5em;
+}
+
+.automaticffl-state-selector h3 {
+  margin-bottom: 0.75em;
+  font-size: 1.1em;
+}
+
+.automaticffl-state-select-wrapper {
+  margin: 1em 0;
+}
+
+.automaticffl-state-select-wrapper label {
+  display: block;
+  margin-bottom: 0.5em;
+  font-weight: 500;
+}
+
+.automaticffl-state-select-wrapper select {
+  width: 100%;
+  max-width: 300px;
+  padding: 10px 12px;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  font-size: 14px;
+  background-color: #fff;
+}
+
+.automaticffl-state-select-wrapper select:focus {
+  border-color: #522a74;
+  outline: none;
+  box-shadow: 0 0 0 2px rgba(82, 42, 116, 0.2);
+}
+
+.automaticffl-state-message {
+  margin-top: 1em;
+}
+
+/* Success notice styling for blocks */
+.wc-block-components-notice-banner.is-success {
+  background-color: #d4edda;
+  border-color: #c3e6cb;
+}
+
+.wc-block-components-notice-banner.is-success svg {
+  fill: #28a745;
+}
+
+/* Warning notice styling for blocks */
+.wc-block-components-notice-banner.is-warning {
+  background-color: #fff3cd;
+  border-color: #ffc107;
+}
+
+.wc-block-components-notice-banner.is-warning svg {
+  fill: #856404;
+}
+
+/* Ammo checkout container in block checkout */
+.automaticffl-dealer-selection .automaticffl-state-selector {
+  margin-bottom: 1.5em;
+  padding-bottom: 1em;
+  border-bottom: 1px solid #e0e0e0;
+}
+
+/*
+ * API Unavailable Notice Styles
+ */
+
+.automaticffl-unavailable-notice {
+  margin-bottom: 1.5em;
+}
+
+.automaticffl-unavailable-message {
+  text-align: center;
+}
+
+.automaticffl-unavailable-message p {
+  margin: 0 0 0.5em 0;
+}
+
+.automaticffl-unavailable-message p:last-of-type {
+  margin-bottom: 1em;
+}
+
+.automaticffl-unavailable-message button {
+  margin-top: 0.5em;
+}
+
+/* Classic checkout unavailable notice */
+#automaticffl-unavailable-notice .woocommerce-info {
+  text-align: center;
+  padding: 20px;
+}
+
+#automaticffl-unavailable-notice .woocommerce-info p {
+  margin: 0 0 0.5em 0;
+}
+
+#automaticffl-unavailable-notice .woocommerce-info button {
+  margin-top: 10px;
+}
+
+/*
+ * Ammo-Only Checkout - Shipping Form Visibility Transitions
+ */
+
+/* Classic checkout shipping form transitions */
+.woocommerce-shipping-fields,
+#ship-to-different-address,
+.woocommerce-shipping-fields__field-wrapper {
+  transition: opacity 0.15s ease-in-out;
+}
+
+/* Block checkout shipping form transitions */
+.wp-block-woocommerce-checkout-shipping-address-block,
+.wc-block-checkout__shipping-fields {
+  transition: opacity 0.15s ease-in-out;
+}
+
+/*
+ * Standardized Notice Banners - Cart Page
+ * Used for both firearms and ammo mixed cart notices
+ */
+
+/* Base notice styles */
+.automaticffl-notice {
+  box-sizing: border-box !important;
+  display: flex !important;
+  flex-direction: row !important;
+  align-items: flex-start !important;
+  gap: 12px !important;
+  margin-bottom: 2em;
+  padding: 1em 1.5em;
+  border-radius: 4px;
+  background: #f9f9f9;
+  color: #515151;
+  font-size: 14px;
+  line-height: 1.5;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+}
+
+/* Checkout ammo+regular notice: hidden by default, shown via JS class toggle */
+#automaticffl-ammo-regular-message {
+  display: none !important;
+}
+
+#automaticffl-ammo-regular-message.is-visible {
+  display: flex !important;
+}
+
+/* Notice icon */
+.automaticffl-notice-icon {
+  flex-shrink: 0 !important;
+  display: inline-flex !important;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  margin-top: 2px;
+}
+
+.automaticffl-notice-icon svg {
+  display: block;
+  width: 24px;
+  height: 24px;
+}
+
+/* Notice content */
+.automaticffl-notice-content {
+  flex: 1 1 auto !important;
+  min-width: 0;
+}
+
+/* Notice message */
+.automaticffl-notice-message {
+  margin: 0 0 0.5em 0;
+  padding: 0;
+  font-weight: 600;
+  color: #515151;
+}
+
+/* Error state */
+.automaticffl-notice-error {
+  border-top: 3px solid #b81c23;
+}
+
+.automaticffl-notice-error .automaticffl-notice-icon {
+  color: #b81c23;
+}
+
+/* Success state */
+.automaticffl-notice-success {
+  border-top: 3px solid #4a7c0f;
+}
+
+.automaticffl-notice-success .automaticffl-notice-icon {
+  color: #4a7c0f;
+}
+
+/* Info state */
+.automaticffl-notice-info {
+  border-top: 3px solid #1e85be;
+}
+
+.automaticffl-notice-info .automaticffl-notice-icon {
+  color: #1e85be;
+}
+
+.automaticffl-state-row {
+  margin-bottom: 15px;
+}
+
+.automaticffl-state-row label {
+  display: block;
+  margin-bottom: 8px;
+  font-weight: 600;
+}
+
+.automaticffl-state-row abbr.required {
+  text-decoration: none;
+  border: none;
+  color: #b81c23;
+  cursor: default;
+}
+
+#automaticffl-cart-state-select {
+  width: 100%;
+  max-width: 300px;
+  padding: 10px 12px;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  font-size: 14px;
+  background-color: #fff;
+}
+
+#automaticffl-cart-state-select:focus {
+  border-color: #522a74;
+  outline: none;
+  box-shadow: 0 0 0 2px rgba(82, 42, 116, 0.2);
+}
+
+/* Ammo + Regular allowed state styling for blocks */
+.automaticffl-ammo-regular-allowed {
+  margin-bottom: 1.5em;
+}
+
+/*
+ * Save for Later - Mixed Cart Feature
+ */
+
+/* Save for later section within notice */
+.automaticffl-notice .automaticffl-save-prompt {
+  margin: 0.75em 0 0.5em 0;
+  padding-top: 0.75em;
+  border-top: 1px solid rgba(0, 0, 0, 0.1);
+  font-weight: 500;
+  font-size: 14px;
+  color: #515151;
+}
+
+.automaticffl-save-buttons {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin: 0;
+  padding: 0;
+}
+
+/* Primary button (FFL items) */
+.automaticffl-notice .automaticffl-save-btn {
+  flex: 1;
+  max-width: 220px;
+  min-width: auto;
+  padding: 10px 20px;
+  background-color: #b81c23;
+  color: #ffffff;
+  border: none;
+  border-radius: 3px;
+  cursor: pointer;
+  font-weight: 500;
+  font-size: 14px;
+  text-align: center;
+  transition: background-color 150ms ease;
+}
+
+.automaticffl-notice .automaticffl-save-btn:hover {
+  background-color: #961720;
+  color: #ffffff;
+}
+
+.automaticffl-notice .automaticffl-save-btn:focus {
+  outline: 2px solid #522a74;
+  outline-offset: 2px;
+}
+
+/* Secondary button (Regular items) */
+.automaticffl-notice .automaticffl-save-btn[data-item-type="regular"] {
+  background-color: #f7f6f7;
+  color: #515151;
+  border: 1px solid #ccc;
+}
+
+.automaticffl-notice .automaticffl-save-btn[data-item-type="regular"]:hover {
+  background-color: #eee;
+  border-color: #999;
+  color: #515151;
+}
+
+.automaticffl-notice .automaticffl-save-btn:disabled,
+.automaticffl-notice .automaticffl-save-btn.loading {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+/* Helper text for save for later */
+.automaticffl-notice .automaticffl-save-help {
+  margin: 0.75em 0 0 0;
+  padding: 0;
+  font-size: 13px;
+  color: #666;
+  font-style: italic;
+}
+
+/* Error message for save failures */
+#automaticffl-save-error {
+  margin-bottom: 10px;
+}
+
+/* Thank you page redirect notice */
+.automaticffl-redirect-notice.automaticffl-notice {
+  margin-bottom: 2em;
+}
+
+.automaticffl-countdown {
+  font-weight: bold;
+  font-size: 1.1em;
+  color: #1e85be;
+  margin: 0 3px;
+}
+
+.automaticffl-redirect-action {
+  margin: 0.75em 0 0 0;
+}
+
+.automaticffl-redirect-action .button {
+  display: inline-block;
+  background-color: #333333;
+  color: #ffffff;
+  padding: 10px 20px;
+  border: none;
+  border-radius: 3px;
+  text-decoration: none;
+  font-weight: 500;
+  font-size: 14px;
+}
+
+.automaticffl-redirect-action .button:hover {
+  background-color: #444444;
+  color: #ffffff;
+}
+
+/* Responsive adjustments */
+@media screen and (max-width: 600px) {
+  .automaticffl-save-buttons {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .automaticffl-save-btn {
+    width: 100%;
+  }
+}
+
+/*
+ * Blocks Checkout - Save for Later
+ */
+
+.automaticffl-blocks-save-for-later {
+  margin-top: 15px;
+  padding-top: 15px;
+  border-top: 1px solid rgba(0, 0, 0, 0.1);
+}
+
+.automaticffl-blocks-save-prompt {
+  margin-bottom: 12px;
+  font-weight: 500;
+}
+
+.automaticffl-blocks-save-buttons {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-bottom: 12px;
+}
+
+.automaticffl-blocks-save-btn {
+  flex: 1;
+  min-width: 180px;
+}
+
+/* Primary button (FFL items) - uses default dark style */
+.automaticffl-blocks-save-btn--primary {
+  background-color: #333333;
+  color: #ffffff;
+}
+
+.automaticffl-blocks-save-btn--primary:hover {
+  background-color: #444444;
+  color: #ffffff;
+}
+
+/* Secondary button (Regular items) - lighter style */
+.automaticffl-blocks-save-btn--secondary {
+  background-color: #f7f6f7;
+  color: #515151;
+  border: 1px solid #ccc;
+}
+
+.automaticffl-blocks-save-btn--secondary:hover {
+  background-color: #eee;
+  border-color: #999;
+  color: #515151;
+}
+
+.automaticffl-blocks-save-help {
+  margin: 0;
+  font-size: 13px;
+  color: #666;
+  font-style: italic;
+}
+
