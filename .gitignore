@@ -3,3 +3,5 @@ vendor/
 node_modules/
 .npm
 package-lock.json
+.wp-env.json
+my-readme.txt
