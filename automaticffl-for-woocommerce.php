@@ -24,9 +24,17 @@
 
 defined( 'ABSPATH' ) || exit;
 define( '_AFFL_LOADER_', __FILE__ );
-define( 'AFFL_VERSION', '1.0.15' );
+define( 'AFFL_VERSION', '1.0.14' );
+define( 'AFFL_TEMPLATES_PATH', plugin_dir_path( __FILE__ ) . 'templates/' );
 
 require_once 'includes/class-wc-ffl-loader.php';
+
+// Declare HPOS (High-Performance Order Storage) compatibility.
+add_action( 'before_woocommerce_init', function() {
+	if ( class_exists( \Automattic\WooCommerce\Utilities\FeaturesUtil::class ) ) {
+		\Automattic\WooCommerce\Utilities\FeaturesUtil::declare_compatibility( 'custom_order_tables', __FILE__, true );
+	}
+} );
 
 // Re-register credentials with backend on plugin update (version change).
 // Uses a 5-minute backoff to avoid retrying on every admin page load if the backend is down.
@@ -40,8 +48,8 @@ add_action( 'admin_init', function() {
 			return;
 		}
 
-		$store_hash = get_option( 'wc_ffl_store_hash' );
-		if ( ! empty( $store_hash ) && $store_hash !== '1' ) {
+		$store_hash = \RefactoredGroup\AutomaticFFL\Helper\Config::get_store_hash();
+		if ( ! empty( $store_hash ) ) {
 			set_transient( 'automaticffl_registration_backoff', time(), 300 );
 			\RefactoredGroup\AutomaticFFL\Helper\Config::register_with_backend();
 		}
