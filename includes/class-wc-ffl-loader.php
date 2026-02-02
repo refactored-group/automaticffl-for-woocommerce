@@ -56,7 +56,7 @@ class AFFL_Loader {
 
 		// if the environment check fails, initialize the plugin.
 		if ( $this->is_environment_compatible() ) {
-			add_action( 'init', array( $this, 'init_plugin' ) );
+			add_action( 'plugins_loaded', array( $this, 'init_plugin' ) );
 
 			// Register blocks integration early - woocommerce_blocks_loaded fires during Bootstrap init
 			// which happens before 'init', so we must register this callback immediately

@@ -173,6 +173,7 @@ class Config {
 		if ( $total_ffl > 0 && $total_ffl < $total_products && ! is_cart() ) {
 			// Redirect back to the cart where the error message will be displayed.
 			wp_safe_redirect( wc_get_cart_url() );
+			exit;
 		}
 	}
 

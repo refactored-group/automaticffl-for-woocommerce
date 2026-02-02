@@ -171,7 +171,13 @@ class Blocks_Integration implements IntegrationInterface {
 
 		// Build iframe URL
 		$iframe_url = '';
-		if ( ! empty( $store_hash ) && ! empty( $maps_api_key ) ) {
+		// Config::get_store_hash() and get_google_maps_api_key() pass `true` as the
+		// get_option() default, so when the option is unset they return boolean true.
+		// The '1' check handles SETTING_YES being stored as the default value.
+		$has_valid_store_hash = ! empty( $store_hash ) && $store_hash !== true && $store_hash !== '1';
+		$has_valid_maps_key   = ! empty( $maps_api_key ) && $maps_api_key !== true && $maps_api_key !== '1';
+
+		if ( $has_valid_store_hash && $has_valid_maps_key ) {
 			$base_url = Config::get_iframe_map_url();
 			$params = array(
 				'store_hash'   => $store_hash,
@@ -188,7 +194,7 @@ class Blocks_Integration implements IntegrationInterface {
 			'iframeUrl'        => $iframe_url,
 			'allowedOrigins'   => Config::get_iframe_allowed_origins(),
 			'userName'         => $user_name,
-			'isConfigured'     => ! empty( $store_hash ) && ! empty( $maps_api_key ),
+			'isConfigured'     => $has_valid_store_hash && $has_valid_maps_key,
 		);
 	}
 

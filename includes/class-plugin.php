@@ -93,8 +93,11 @@ class Plugin {
 		add_action('woocommerce_product_quick_edit_save', array($this, 'ffl_required_save_admin_edit_checkbox'));
 		add_action('wp_enqueue_scripts', array($this, 'automaticffl_enqueue'));
 
-		// Override the shippining fields since some themes copies the billing address to the shipping address
+		// Override the shipping fields since some themes copy the billing address to the shipping address
 		add_action('woocommerce_checkout_create_order', function($order, $data) {
+			if ( ! Config::is_ffl_cart() ) {
+				return;
+			}
 			if (isset($data['ship_to_different_address']) && $data['ship_to_different_address']) {
 				$order->set_shipping_first_name($data['shipping_first_name'] ?? '');
 				$order->set_shipping_last_name($data['shipping_last_name'] ?? '');
