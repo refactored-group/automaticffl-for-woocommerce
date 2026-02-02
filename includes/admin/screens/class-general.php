@@ -30,6 +30,16 @@ class General extends Abstract_Settings_Screen {
 	}
 
 	/**
+	 * Save settings and register credentials with backend.
+	 *
+	 * @since 1.0.15
+	 */
+	public function save() {
+		parent::save();
+		Config::register_with_backend();
+	}
+
+	/**
 	 * Get Settings.
 	 *
 	 * @since 1.0.0
