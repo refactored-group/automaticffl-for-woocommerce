@@ -1,8 +1,18 @@
 *** Automatic FFL for WooCommerce ***
 
+<<<<<<< Updated upstream
 2026-02-10 - Version 1.0.15
 * Updated version
 
+=======
+<<<<<<< Updated upstream
+=======
+2026-02-10 - Version 1.0.15
+* Added save-for-later functionality for mixed carts containing both FFL and non-FFL items
+* Added ammunition detection and state-based shipping restrictions
+
+>>>>>>> Stashed changes
+>>>>>>> Stashed changes
 2026-01-26 - Version 1.0.14
 * Added WooCommerce Blocks (block-based checkout) support for FFL dealer selection
 * Improved DOM manipulation with MutationObserver for more reliable element detection

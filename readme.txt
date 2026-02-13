@@ -12,21 +12,23 @@ Automatic FFL is a powerful extension designed to simplify the process of shippi
 
 == Description ==
 
-Automatic FFL for WooCommerce is a powerful extension designed to simplify the process of shipping firearms to Federal Firearms License (FFL) dealers when customers place orders containing firearm products. The extension seamlessly integrates with WooCommerce, adding a user-friendly interface that allows customers to select an FFL dealer near them for order pickup. With this extension, you can ensure compliance with firearm shipping regulations while providing a convenient experience for your customers.
+Automatic FFL for WooCommerce is a powerful extension designed to simplify the process of shipping firearms and ammunition to Federal Firearms License (FFL) dealers. The extension seamlessly integrates with both the classic and block-based WooCommerce checkouts, adding a user-friendly interface that allows customers to select an FFL dealer near them for order pickup. It automatically detects firearms and ammunition in the cart, enforces state-based shipping restrictions, and handles mixed carts containing both regulated and non-regulated items. With this extension, you can ensure compliance with firearms and ammunitions shipping regulations while providing a convenient experience for your customers.
 
 Features:
 
-* **Simplified Firearms Shipping:** With Automatic FFL for WooCommerce, you can streamline the complex process of shipping firearms to FFL dealers, making it easy to comply with federal regulations.
+* **Simplified Firearms and Ammunitions Shipping:** With Automatic FFL for WooCommerce, you can streamline the complex process of shipping firearms and ammunitions to FFL dealers, making it easy to comply with federal regulations.
 
-* **Automatic Detection of Firearm Products:** When a product is selected on the product page as _FFL Required_ and is added to the cart, the extension will automatically recognize it as a firearm product, prompting the FFL selection process.
+* **Automatic Detection of FFL-Required Products:** The extension automatically analyzes your cart to identify firearms and ammunition and will trigger an FFL selection when needed.
 
-* **FFL Dealer Map:** A map, along with a list, will be displayed to customers at the checkout, showing nearby FFL dealers based on the customer's address, zipcode, or other search criteria.
+* **FFL Dealer Map:** An interactive dealer map is displayed at checkout, allowing customers to search for nearby FFL dealers by address or zipcode and select one for order pickup.
 
-* **Seamless Checkout Integration:** Once a customer selects an FFL dealer, the extension will update the shipping address with the dealer's address, ensuring a smooth and compliant checkout process.
+* **Classic & Block Checkout Support:** Works with both the traditional WooCommerce checkout and the newer block-based checkout, providing the same dealer selection experience regardless of which checkout your store uses.
 
-* **Validated by the ATF:** Our dealers database updates directly from the Bureau of Alcohol, Tobacco, Firearms and Explosives, commonly referred to as the ATF.
+* **Validated by the ATF:** Our dealers database updates daily directly from the Bureau of Alcohol, Tobacco, Firearms and Explosives, commonly referred to as the ATF.
 
-* **Full Support to Bulk and Quick Edit:** With Automatic FFL for WooCommerce you are able to Import, Export and Edit via CSV with full compatibility. You also have the option to Bulk Edit on WooCommerce Admin Products Panel. Additionally you can set a product as FFL Required using Quick Edit WooCommerce feature.
+* **Mixed Cart Handling & Save for Later:** When a cart contains both FFL-required and non-FFL-required items, customers can save either group for later, and have their saved items automatically restored to the cart after the order is placed.
+
+* **Ammunition & State Restrictions:** Automatically enforces state-based compliance for ammunition purchases. When a customer's shipping state requires an FFL transfer for ammunition, the extension will prompt dealer selection at checkout.
 
 * **Customization:** We automatically display common FFL dealers, but you have full control over which dealers show to your customers. You can also promote dealers by marking them as preferred or add information to them such as store hours or transfer fees.
 
@@ -55,9 +57,19 @@ For installation and setup, please follow the instructions [here](https://www.au
 
 == Changelog ==
 
+<<<<<<< Updated upstream
 = 1.0.15 =
 * Updated version
 
+=======
+<<<<<<< Updated upstream
+=======
+= 1.0.15 =
+* Added save-for-later functionality for mixed carts containing both FFL and non-FFL items
+* Added ammunition detection and state-based shipping restrictions
+
+>>>>>>> Stashed changes
+>>>>>>> Stashed changes
 = 1.0.14 =
 * Added WooCommerce Blocks (block-based checkout) support for FFL dealer selection
 
@@ -95,11 +107,11 @@ For installation and setup, please follow the instructions [here](https://www.au
 * [Google Maps](https://developers.google.com/maps/)
 * [Terms of service](https://cloud.google.com/maps-platform/terms)
 
-**AutomaticFFL:** provides map coordinates of FFL dealers that will be used for the map experience
+**AutomaticFFL:** provides FFL dealer data, an interactive map experience, and product restrictions
 
 * [AutomaticFFL](https://www.automaticffl.com/)
 * [Privacy Policy](https://www.automaticffl.com/privacy-policy/)
 
 == Support and Documentation ==
 
-For support, inquiries, or documentation, please visit [https://support.automaticffl.com/](https://support.automaticffl.com/).
+For support, inquiries, or documentation, please visit [https://automaticffl.com/](https://automaticffl.com/).
