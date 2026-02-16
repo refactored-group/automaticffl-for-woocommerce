@@ -274,7 +274,7 @@ class Config {
 
 		$ezcheck_url = self::build_ezcheck_url( $ffl_license );
 		if ( ! empty( $ezcheck_url ) ) {
-			$note_lines[] = 'ezCheck: ' . $ezcheck_url;
+			$note_lines[] = 'ezCheck: <a href="' . esc_url( $ezcheck_url ) . '" target="_blank">' . esc_html( $ezcheck_url ) . '</a>';
 		}
 
 		if ( ! empty( $expiration_date ) ) {
@@ -283,7 +283,7 @@ class Config {
 
 		$certificate_url = self::build_certificate_url( $uuid );
 		if ( ! empty( $certificate_url ) ) {
-			$note_lines[] = 'Certificate: ' . $certificate_url;
+			$note_lines[] = 'Certificate: <a href="' . esc_url( $certificate_url ) . '" target="_blank">' . esc_html( $certificate_url ) . '</a>';
 		}
 
 		return implode( "\n\n", $note_lines );
