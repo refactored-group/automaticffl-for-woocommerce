@@ -21,12 +21,17 @@ jQuery(document).ready(function($) {
 	let fflRequired = false;
 	let ammoFflLocked = false;
 
-	// Selectors for shipping form elements to hide/show.
-	// Note: Do NOT include '.woocommerce-shipping-fields' (the parent) because our
-	// ammo checkout HTML is rendered inside it via the woocommerce_before_checkout_shipping_form hook.
-	const shippingFormSelectors = [
-		'#ship-to-different-address',
-		'.woocommerce-shipping-fields__field-wrapper'
+	// Selectors for shipping address fields to hide/show (excluding name fields).
+	// Name fields stay visible so the customer can enter their name (important for guests).
+	const shippingAddressSelectors = [
+		'#shipping_company_field',
+		'#shipping_country_field',
+		'#shipping_address_1_field',
+		'#shipping_address_2_field',
+		'#shipping_city_field',
+		'#shipping_state_field',
+		'#shipping_postcode_field',
+		'#shipping_phone_field'
 	];
 
 	/**
@@ -45,21 +50,24 @@ jQuery(document).ready(function($) {
 	}
 
 	/**
-	 * Hide the standard WooCommerce shipping form
+	 * Hide the standard WooCommerce shipping address fields (keeps name fields visible).
 	 */
 	function hideShippingForm() {
-		shippingFormSelectors.forEach(function(selector) {
+		$('#ship-to-different-address').hide();
+		shippingAddressSelectors.forEach(function(selector) {
 			$(selector).hide();
 		});
 	}
 
 	/**
-	 * Show the standard WooCommerce shipping form fields.
+	 * Show the standard WooCommerce shipping address fields.
 	 * The WooCommerce heading is always hidden (our custom h3 replaces it).
 	 */
 	function showShippingForm() {
 		$('#ship-to-different-address').hide();
-		$('.woocommerce-shipping-fields__field-wrapper').show();
+		shippingAddressSelectors.forEach(function(selector) {
+			$(selector).show();
+		});
 		// Force checkbox checked (so WooCommerce processes shipping fields)
 		var $checkbox = $('#ship-to-different-address-checkbox');
 		if ($checkbox.length && !$checkbox.prop('checked')) {
@@ -96,16 +104,14 @@ jQuery(document).ready(function($) {
 			// Only hide shipping form after a dealer is selected (ammoFflLocked).
 			showShippingForm();
 			$messageContainer
-				.html('<div class="woocommerce"><div class="woocommerce-error" role="alert"><?php echo esc_js( $messages['fflRequiredForState'] ); ?></div></div>')
+				.html('<div class="woocommerce"><div class="woocommerce-info" role="alert"><?php echo esc_js( $messages['fflRequiredForState'] ); ?></div></div>')
 				.show();
 			$fflContainer.show();
 			fflRequired = true;
 		} else {
 			// Unrestricted state: show shipping form, hide FFL container
 			showShippingForm();
-			$messageContainer
-				.html('<div class="woocommerce"><div class="woocommerce-message" role="alert"><?php echo esc_js( $messages['standardShippingAvailable'] ); ?></div></div>')
-				.show();
+			$messageContainer.empty().hide();
 			$fflContainer.hide();
 			fflRequired = false;
 

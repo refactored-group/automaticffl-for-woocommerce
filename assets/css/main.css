@@ -100,9 +100,12 @@ body {
  * Block Checkout Styles - FFL Dealer Selection
  */
 
-/* Hide shipping address form when FFL checkout is active */
-body.automaticffl-checkout-active .wp-block-woocommerce-checkout-shipping-address-block,
-body.automaticffl-checkout-active .wc-block-checkout__shipping-fields {
+/* Hide shipping address fields (except name) when FFL checkout is active.
+ * WooCommerce Blocks renders each field in a div with id like "shipping-{field_name}".
+ * We keep shipping-first_name and shipping-last_name visible so guests can enter their name.
+ * Tested with WooCommerce Blocks 12.x / WooCommerce 9.x. If WooCommerce changes the
+ * shipping field ID convention, this selector may need updating. */
+body.automaticffl-checkout-active .wp-block-woocommerce-checkout-shipping-address-block [id^="shipping-"]:not(#shipping-first_name):not(#shipping-last_name) {
   display: none !important;
 }
 

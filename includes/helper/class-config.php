@@ -270,7 +270,7 @@ class Config {
 	public static function build_enhanced_order_note( $ffl_license, $expiration_date = '', $uuid = '' ) {
 		$note_lines = array();
 
-		$note_lines[] = 'FFL License: ' . $ffl_license;
+		$note_lines[] = 'FFL License: ' . esc_html( $ffl_license );
 
 		$ezcheck_url = self::build_ezcheck_url( $ffl_license );
 		if ( ! empty( $ezcheck_url ) ) {
@@ -278,7 +278,7 @@ class Config {
 		}
 
 		if ( ! empty( $expiration_date ) ) {
-			$note_lines[] = 'Expiration: ' . $expiration_date;
+			$note_lines[] = 'Expiration: ' . esc_html( $expiration_date );
 		}
 
 		$certificate_url = self::build_certificate_url( $uuid );

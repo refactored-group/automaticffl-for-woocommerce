@@ -157,7 +157,7 @@ class Plugin {
 		add_action( 'woocommerce_store_api_checkout_order_processed', array( $this, 'restore_shipping_after_ffl_blocks' ), 20 );
 
 		// Hide "ship to different address" when FFL dealer handles shipping.
-		add_action( 'wp_head', array( $this, 'maybe_hide_ship_to_different_address' ) );
+		add_action( 'wp_enqueue_scripts', array( $this, 'maybe_hide_ship_to_different_address' ), 20 );
 
 		// Clear session state when cart is emptied.
 		add_action( 'woocommerce_cart_emptied', function() {
@@ -579,6 +579,11 @@ class Plugin {
 			return $value;
 		}
 
+		// Don't clear name fields — customer fills these in (important for guests).
+		if ( in_array( $input, array( 'shipping_first_name', 'shipping_last_name' ), true ) ) {
+			return $value;
+		}
+
 		// Cache the check across multiple filter calls.
 		static $should_clear = null;
 		if ( null === $should_clear ) {
@@ -640,11 +645,20 @@ class Plugin {
 		}
 
 		if ( $analyzer->has_firearms() ) {
-			echo '<style>
-				#ship-to-different-address, .woocommerce-shipping-fields__field-wrapper {
+			$css = '
+				#ship-to-different-address,
+				#shipping_company_field,
+				#shipping_country_field,
+				#shipping_address_1_field,
+				#shipping_address_2_field,
+				#shipping_city_field,
+				#shipping_state_field,
+				#shipping_postcode_field,
+				#shipping_phone_field {
 					display: none !important;
 				}
-			</style>';
+			';
+			wp_add_inline_style( 'automaticffl-main', $css );
 		}
 	}
 

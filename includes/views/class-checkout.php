@@ -240,7 +240,7 @@ class Checkout {
 				return array('first_name' => $first_name, 'last_name' => $last_name);
 			}
 		}
-		return array( 'first_name' => 'FFL', 'last_name' => 'Dealer');
+		return array( 'first_name' => '', 'last_name' => '' );
 	}
 
 	/**
@@ -355,7 +355,6 @@ class Checkout {
 	 * @since 1.0.0
 	 */
 	public static function get_map() {
-		$user_name  = self::get_user_name();
 		$iframe_url = self::build_iframe_url();
 
 		// If configuration is invalid, show error message.
@@ -381,7 +380,6 @@ class Checkout {
 	 * @since 1.0.13
 	 */
 	public static function get_js() {
-		$user_name       = self::get_user_name();
 		$allowed_origins = Config::get_iframe_allowed_origins();
 
 		// Include the template.
@@ -398,7 +396,6 @@ class Checkout {
 	 */
 	private static function get_ammo_checkout( Cart_Analyzer $analyzer ) {
 		$restricted_states = $analyzer->get_ammo_restricted_states();
-		$user_name         = self::get_user_name();
 		$iframe_url        = self::build_iframe_url();
 		$us_states         = US_States::get_all();
 		$messages          = Messages::get_all();

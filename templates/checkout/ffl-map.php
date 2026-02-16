@@ -9,7 +9,6 @@
  *
  * Available variables:
  * @var string $iframe_url    The URL for the dealer selection iframe.
- * @var array  $user_name     Array with 'first_name' and 'last_name' keys.
  */
 
 defined( 'ABSPATH' ) || exit;
@@ -48,7 +47,7 @@ defined( 'ABSPATH' ) || exit;
 <div id="automaticffl-dealer-card-template">
 	<p><?php echo esc_html__( 'Your order will be shipped to', 'automaticffl-for-wc' ); ?>:</p>
 	<div id="ffl-selected-dealer" class="ffl-result-body">
-		<p class="customer-name"><?php echo esc_html( $user_name['first_name'] ) . ' ' . esc_html( $user_name['last_name'] ); ?></p>
+		<p class="customer-name"></p>
 		<p class="dealer-name">{{dealer-name}}</p>
 		<p class="dealer-address">{{dealer-address}}</p>
 		<a href="tel:{{dealer-phone}}"><p><span class="dealer-phone dealer-phone-formatted">{{dealer-phone}}</span></p></a>

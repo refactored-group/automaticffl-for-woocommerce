@@ -4,7 +4,7 @@
  * Main component that handles FFL dealer selection in WooCommerce Blocks checkout.
  */
 
-import { useState, useEffect, useCallback, useRef } from '@wordpress/element';
+import { useState, useEffect, useCallback, useRef, useMemo } from '@wordpress/element';
 import { __ } from '@wordpress/i18n';
 import { useDispatch, useSelect } from '@wordpress/data';
 import { CART_STORE_KEY } from '@woocommerce/block-data';
@@ -19,14 +19,6 @@ import SaveForLaterButtons from './SaveForLaterButtons';
  */
 let persistedAmmoFflLocked = false;
 let persistedDealer = null;
-
-/**
- * Selectors for the shipping address block in WooCommerce Blocks checkout
- */
-const SHIPPING_ADDRESS_SELECTORS = [
-	'.wp-block-woocommerce-checkout-shipping-address-block',
-	'.wc-block-checkout__shipping-fields',
-];
 
 /**
  * Selectors for the "Use same address for billing" checkbox
@@ -55,7 +47,7 @@ const getSettings = () => {
 		isMixedCart: settings.isMixedCart || false,
 		iframeUrl: settings.iframeUrl || '',
 		allowedOrigins: settings.allowedOrigins || [],
-		userName: settings.userName || { first_name: 'FFL', last_name: 'Dealer' },
+		userName: settings.userName || { first_name: '', last_name: '' },
 		isConfigured: settings.isConfigured || false,
 		// New fields for restrictions API
 		hasFirearms: settings.hasFirearms || false,
@@ -137,12 +129,25 @@ const FFLDealerSelection = () => {
 	// Get shipping address dispatch
 	const { setShippingAddress } = useDispatch( CART_STORE_KEY );
 
-	// Get shipping state from the cart store (for ammo-only validation)
+	// Get shipping state and name from the cart store
 	const shippingState = useSelect( ( select ) => {
 		const store = select( CART_STORE_KEY );
 		const shippingAddress = store.getCustomerData?.()?.shippingAddress || {};
 		return shippingAddress.state || '';
 	}, [] );
+
+	const shippingFirstName = useSelect( ( select ) => {
+		return select( CART_STORE_KEY ).getCustomerData?.()?.shippingAddress?.first_name || '';
+	}, [] );
+
+	const shippingLastName = useSelect( ( select ) => {
+		return select( CART_STORE_KEY ).getCustomerData?.()?.shippingAddress?.last_name || '';
+	}, [] );
+
+	const shippingName = useMemo(
+		() => ( { first_name: shippingFirstName, last_name: shippingLastName } ),
+		[ shippingFirstName, shippingLastName ]
+	);
 
 	// Determine if FFL is required based on shipping state (for ammo-only carts)
 	const requiresFfl = settings.isAmmoOnly &&
@@ -224,10 +229,15 @@ const FFLDealerSelection = () => {
 				fflUuid: dealer.uuid || '',
 			} );
 
-			// Update shipping address with dealer information
+			// Update shipping address with dealer information.
+			// Read current shipping name from store (customer's input) instead of
+			// settings.userName so guest users keep their own entered name.
+			const customerData = wp.data.select( CART_STORE_KEY ).getCustomerData?.() || {};
+			const currentShipping = customerData.shippingAddress || {};
+
 			setShippingAddress( {
-				first_name: settings.userName.first_name,
-				last_name: settings.userName.last_name,
+				first_name: currentShipping.first_name || '',
+				last_name: currentShipping.last_name || '',
 				company: dealer.company || '',
 				address_1: dealer.address1 || '',
 				address_2: dealer.address2 || '',
@@ -238,7 +248,7 @@ const FFLDealerSelection = () => {
 				phone: dealer.phone || '',
 			} );
 		},
-		[ setExtensionData, setShippingAddress, settings.userName, settings.isAmmoOnly, settings.isAmmoEnabled, ammoFflLocked ]
+		[ setExtensionData, setShippingAddress, settings.isAmmoOnly, settings.isAmmoEnabled, ammoFflLocked ]
 	);
 
 	/**
@@ -254,22 +264,11 @@ const FFLDealerSelection = () => {
 		const shouldHideForm = ( settings.hasFirearms && ! settings.isMixedCart && settings.isConfigured )
 			|| ammoFflLocked;
 
-		// Find and hide/show the shipping address form
+		// Shipping address field visibility is handled via CSS body class
+		// (body.automaticffl-checkout-active hides address fields but keeps name fields visible).
+		// No need to set element.style.display directly on the shipping block.
 		const hideShippingForm = () => {
-			for ( const selector of SHIPPING_ADDRESS_SELECTORS ) {
-				const element = document.querySelector( selector );
-				if ( element ) {
-					if ( shouldHideForm ) {
-						element.style.display = 'none';
-						element.setAttribute( 'data-ffl-hidden', 'true' );
-						shippingFormHiddenRef.current = true;
-					} else if ( element.getAttribute( 'data-ffl-hidden' ) === 'true' ) {
-						element.style.display = '';
-						element.removeAttribute( 'data-ffl-hidden' );
-						shippingFormHiddenRef.current = false;
-					}
-				}
-			}
+			shippingFormHiddenRef.current = shouldHideForm;
 		};
 
 		/**
@@ -320,8 +319,7 @@ const FFLDealerSelection = () => {
 					return Array.from( mutation.addedNodes ).some( ( node ) => {
 						if ( node.nodeType === Node.ELEMENT_NODE ) {
 							// Check if the added node or its children match our selectors
-							const allSelectors = [ ...SHIPPING_ADDRESS_SELECTORS, ...USE_SAME_ADDRESS_SELECTORS ];
-							return allSelectors.some( ( selector ) =>
+							return USE_SAME_ADDRESS_SELECTORS.some( ( selector ) =>
 								node.matches?.( selector ) || node.querySelector?.( selector )
 							);
 						}
@@ -354,13 +352,6 @@ const FFLDealerSelection = () => {
 		return () => {
 			observer.disconnect();
 			if ( shippingFormHiddenRef.current ) {
-				for ( const selector of SHIPPING_ADDRESS_SELECTORS ) {
-					const element = document.querySelector( selector );
-					if ( element && element.getAttribute( 'data-ffl-hidden' ) === 'true' ) {
-						element.style.display = '';
-						element.removeAttribute( 'data-ffl-hidden' );
-					}
-				}
 				for ( const selector of USE_SAME_ADDRESS_SELECTORS ) {
 					const element = document.querySelector( selector );
 					if ( element && element.getAttribute( 'data-ffl-hidden' ) === 'true' ) {
@@ -695,32 +686,9 @@ const FFLDealerSelection = () => {
 			);
 		}
 
-		// State selected but not restricted - show success message, allow normal checkout
+		// State selected but not restricted - no banner needed, allow normal checkout
 		if ( ! requiresFfl ) {
-			return (
-				<div className="automaticffl-ammo-notice">
-					<div className="wc-block-components-notices">
-						<div className="wc-block-components-notice-banner is-success">
-							<svg
-								xmlns="http://www.w3.org/2000/svg"
-								viewBox="0 0 24 24"
-								width="24"
-								height="24"
-								aria-hidden="true"
-								focusable="false"
-							>
-								<path d="M16.7 7.1l-6.3 8.5-3.3-2.5-.9 1.2 4.5 3.4L17.9 8z" />
-							</svg>
-							<div className="wc-block-components-notice-banner__content">
-								{ settings.i18n?.standardShippingAvailable || __(
-									'Standard shipping is available for ammunition to your state.',
-									'automaticffl-for-wc'
-								) }
-							</div>
-						</div>
-					</div>
-				</div>
-			);
+			return null;
 		}
 
 		// State is restricted - show FFL selection requirement
@@ -770,7 +738,7 @@ const FFLDealerSelection = () => {
 				{ selectedDealer && (
 					<SelectedDealerCard
 						dealer={ selectedDealer }
-						userName={ settings.userName }
+						userName={ shippingName }
 					/>
 				) }
 
@@ -859,7 +827,7 @@ const FFLDealerSelection = () => {
 			{ selectedDealer && (
 				<SelectedDealerCard
 					dealer={ selectedDealer }
-					userName={ settings.userName }
+					userName={ shippingName }
 				/>
 			) }
 

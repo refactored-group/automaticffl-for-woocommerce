@@ -8,7 +8,6 @@
  * @since 1.0.14
  *
  * Available variables:
- * @var array  $user_name        Array with 'first_name' and 'last_name' keys.
  * @var array  $allowed_origins  Array of allowed origins for postMessage security.
  */
 
@@ -64,8 +63,8 @@ defined( 'ABSPATH' ) || exit;
 				}
 
 				// Map iframe dealer fields to WooCommerce shipping fields
-				$('#shipping_first_name').val('<?php echo esc_js( $user_name['first_name'] ); ?>');
-				$('#shipping_last_name').val('<?php echo esc_js( $user_name['last_name'] ); ?>');
+				// Note: shipping_first_name and shipping_last_name are left as-is
+				// so the customer's own input is preserved (important for guests).
 				$('#shipping_company').val(dealer.company || '');
 				$('#ffl_license_field').val(dealer.fflID || '');
 				$('#ffl_expiration_date').val(dealer.expirationDate || '');
@@ -86,7 +85,9 @@ defined( 'ABSPATH' ) || exit;
 				const formattedPhone = formatPhone(dealer.phone || '');
 
 				const $cardTemplate = $('#automaticffl-dealer-card-template').clone();
-				$cardTemplate.find('.customer-name').text('<?php echo esc_js( $user_name['first_name'] . ' ' . $user_name['last_name'] ); ?>');
+				var firstName = $('#shipping_first_name').val() || '';
+				var lastName = $('#shipping_last_name').val() || '';
+				$cardTemplate.find('.customer-name').text(firstName + ' ' + lastName);
 				$cardTemplate.find('.dealer-name').text(dealer.company || '');
 				$cardTemplate.find('.dealer-address').text(formattedAddress);
 				$cardTemplate.find('.dealer-phone-formatted').text(formattedPhone);
@@ -104,6 +105,16 @@ defined( 'ABSPATH' ) || exit;
 				// Handle close modal message from iframe
 				$('body').css('overflow', '');
 				$('.automaticffl-dealer-layer').removeClass('visible');
+			}
+		});
+
+		// Update the dealer card name live when the customer edits the name fields.
+		$(document.body).on('input', '#shipping_first_name, #shipping_last_name', function() {
+			var $card = $('#automaticffl-dealer-selected .customer-name');
+			if ($card.length) {
+				var firstName = $('#shipping_first_name').val() || '';
+				var lastName = $('#shipping_last_name').val() || '';
+				$card.text(firstName + ' ' + lastName);
 			}
 		});
 	});
