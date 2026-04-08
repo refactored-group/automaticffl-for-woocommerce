@@ -117,8 +117,18 @@ class Plugin {
 		// Reactive ammo + regular notice for classic checkout (watches state fields).
 		add_action( 'woocommerce_checkout_before_customer_details', array( Checkout::class, 'get_ammo_regular_notice' ) );
 
-		// Load map experience.
-		add_action( 'woocommerce_before_checkout_shipping_form', array( Checkout::class, 'get_ffl' ) );
+		// Render "Shipping Address" heading at the top of the classic
+		// shipping form (replaces the hidden "Ship to a different address?"
+		// heading) when an FFL is required.
+		add_action( 'woocommerce_before_checkout_shipping_form', array( Checkout::class, 'render_shipping_address_heading' ) );
+
+		// Render the ammo-only FFL UI (heading + state message + FFL container)
+		// BEFORE the shipping fields so the heading sits above the fields it
+		// labels. Firearms flow stays on the after hook below.
+		add_action( 'woocommerce_before_checkout_shipping_form', array( Checkout::class, 'get_ffl_ammo_only' ), 20 );
+
+		// Load map experience (firearms flow only — ammo-only handled above).
+		add_action( 'woocommerce_after_checkout_shipping_form', array( Checkout::class, 'get_ffl' ) );
 		add_action('woocommerce_after_order_notes', array(Checkout::class, 'add_automaticffl_checkout_field'));
 		add_action('woocommerce_checkout_update_order_meta', array(Checkout::class, 'after_checkout_create_order'), 20, 2);
 		add_action('woocommerce_checkout_update_order_meta', array(Checkout::class, 'save_automaticffl_checkout_field_value'));
@@ -149,6 +159,9 @@ class Plugin {
 		// Validate checkout for ammo + regular mixed carts in restricted states.
 		add_action( 'woocommerce_checkout_process', array( $this, 'validate_ammo_regular_checkout' ) );
 
+		// Validate FFL license and shipping name for firearms carts.
+		add_action( 'woocommerce_checkout_process', array( $this, 'validate_ffl_checkout' ) );
+
 		// Stash customer shipping address before blocks checkout overwrites user meta.
 		// Classic checkout doesn't need a stash (user meta is protected by maybe_update_customer_data),
 		// but blocks' sync_customer_data_with_order() writes the dealer address to user meta directly.
@@ -170,25 +183,37 @@ class Plugin {
 			}
 		});
 
-		// Override the shipping fields since some themes copy the billing address to the shipping address.
-		// Uses Cart_Analyzer so ammo-only carts in restricted states are also handled.
+		// Override shipping fields for FFL orders. WooCommerce copies billing to
+		// shipping in $data when it doesn't see ship_to_different_address, so
+		// read directly from $_POST to get the actual dealer values set by JS.
+		//
+		// Gated on a non-empty ffl_license_field — that's the signal a dealer
+		// was actually picked. Without this guard, ammo-only carts shipping to
+		// an unrestricted state (no FFL needed) would still hit this handler,
+		// $_POST['ffl_*'] would be empty, and set_shipping_*('') would blank
+		// the customer's real address that WooCommerce just populated from
+		// $data. has_ffl_products() returns true for any cart with ammo, so
+		// gating on cart shape alone is not sufficient.
 		add_action('woocommerce_checkout_create_order', function($order, $data) {
 			$analyzer = new Cart_Analyzer();
 			if ( ! $analyzer->has_ffl_products() || $analyzer->is_mixed_ffl_regular() ) {
 				return;
 			}
-			if (isset($data['ship_to_different_address']) && $data['ship_to_different_address']) {
-				$order->set_shipping_first_name($data['shipping_first_name'] ?? '');
-				$order->set_shipping_last_name($data['shipping_last_name'] ?? '');
-				$order->set_shipping_company($data['shipping_company'] ?? '');
-				$order->set_shipping_country($data['shipping_country'] ?? '');
-				$order->set_shipping_address_1($data['shipping_address_1'] ?? '');
-				$order->set_shipping_address_2($data['shipping_address_2'] ?? '');
-				$order->set_shipping_city($data['shipping_city'] ?? '');
-				$order->set_shipping_state($data['shipping_state'] ?? '');
-				$order->set_shipping_postcode($data['shipping_postcode'] ?? '');
-				$order->set_shipping_phone($data['shipping_phone'] ?? '');
+			// phpcs:disable WordPress.Security.NonceVerification.Missing -- nonce verified by WC_Checkout::process_checkout().
+			if ( empty( $_POST['ffl_license_field'] ) ) {
+				return;
 			}
+			$order->set_shipping_first_name( sanitize_text_field( wp_unslash( $_POST['shipping_first_name'] ?? '' ) ) );
+			$order->set_shipping_last_name( sanitize_text_field( wp_unslash( $_POST['shipping_last_name'] ?? '' ) ) );
+			$order->set_shipping_company( sanitize_text_field( wp_unslash( $_POST['ffl_company_name'] ?? '' ) ) );
+			$order->set_shipping_country( sanitize_text_field( wp_unslash( $_POST['shipping_country'] ?? '' ) ) );
+			$order->set_shipping_address_1( sanitize_text_field( wp_unslash( $_POST['shipping_address_1'] ?? '' ) ) );
+			$order->set_shipping_address_2( sanitize_text_field( wp_unslash( $_POST['shipping_address_2'] ?? '' ) ) );
+			$order->set_shipping_city( sanitize_text_field( wp_unslash( $_POST['shipping_city'] ?? '' ) ) );
+			$order->set_shipping_state( sanitize_text_field( wp_unslash( $_POST['shipping_state'] ?? '' ) ) );
+			$order->set_shipping_postcode( sanitize_text_field( wp_unslash( $_POST['shipping_postcode'] ?? '' ) ) );
+			$order->set_shipping_phone( sanitize_text_field( wp_unslash( $_POST['shipping_phone'] ?? '' ) ) );
+			// phpcs:enable WordPress.Security.NonceVerification.Missing
 		}, 99, 2);
 	}
 
@@ -266,6 +291,52 @@ class Plugin {
 				'error'
 			);
 		}
+	}
+
+	/**
+	 * Validate FFL license and shipping name fields during classic checkout.
+	 *
+	 * @since 1.0.18
+	 *
+	 * @return void
+	 */
+	public function validate_ffl_checkout() {
+		$analyzer = new Cart_Analyzer();
+
+		if ( ! $analyzer->has_ffl_products() || $analyzer->is_mixed_ffl_regular() ) {
+			return;
+		}
+
+		// phpcs:disable WordPress.Security.NonceVerification.Missing -- nonce verified by WC_Checkout::process_checkout() before this action fires.
+
+		// Validate FFL dealer selection for firearms.
+		if ( $analyzer->has_firearms() && empty( $_POST['ffl_license_field'] ) ) {
+			wc_add_notice( __( 'Please select an FFL dealer for your firearm order.', 'automaticffl-for-wc' ), 'error' );
+		}
+
+		// Validate shipping name fields, falling back to billing names.
+		// On firearms checkout the WC "Ship to a different address?" toggle
+		// is hidden by maybe_hide_ship_to_different_address() and the
+		// shipping_*_name fields aren't always visibly labeled — a guest who
+		// types their name in billing and then picks a dealer would
+		// otherwise hit a blocking error with no visible field to correct.
+		// ffl-map-js.php also copies billing → shipping on dealer pick;
+		// this is the server-side belt-and-suspenders.
+		$shipping_first = ! empty( $_POST['shipping_first_name'] )
+			? $_POST['shipping_first_name']
+			: ( $_POST['billing_first_name'] ?? '' );
+		$shipping_last = ! empty( $_POST['shipping_last_name'] )
+			? $_POST['shipping_last_name']
+			: ( $_POST['billing_last_name'] ?? '' );
+
+		if ( empty( $shipping_first ) ) {
+			wc_add_notice( __( 'Shipping first name is required.', 'automaticffl-for-wc' ), 'error' );
+		}
+		if ( empty( $shipping_last ) ) {
+			wc_add_notice( __( 'Shipping last name is required.', 'automaticffl-for-wc' ), 'error' );
+		}
+
+		// phpcs:enable WordPress.Security.NonceVerification.Missing
 	}
 
 	/**
@@ -604,14 +675,29 @@ class Plugin {
 	 * @return void
 	 */
 	public function automaticffl_enqueue() {
-		// Only load CSS on cart and checkout pages.
+		$css_url     = self::get_plugin_url() . '/assets/css/main.css';
+		$css_path    = dirname( _AFFL_LOADER_ ) . '/assets/css/main.css';
+		$css_version = filemtime( $css_path );
+
+		// Classic cart/checkout pages: enqueue normally.
 		if ( is_cart() || is_checkout() ) {
-			wp_enqueue_style(
-				'automaticffl-main',
-				self::get_plugin_url() . '/assets/css/main.css',
-				array(),
-				filemtime( dirname( _AFFL_LOADER_ ) . '/assets/css/main.css' )
+			wp_enqueue_style( 'automaticffl-main', $css_url, array(), $css_version );
+		}
+
+		// Blocks cart/checkout: register the stylesheet against the block
+		// itself so WordPress loads it whenever the block renders —
+		// regardless of where the block lives (post content, FSE template,
+		// reusable pattern, secondary page not set as WC's checkout, etc.).
+		// Covers render paths is_checkout()/has_block() miss.
+		if ( function_exists( 'wp_enqueue_block_style' ) ) {
+			$block_style_args = array(
+				'handle' => 'automaticffl-main',
+				'src'    => $css_url,
+				'ver'    => $css_version,
+				'path'   => $css_path,
 			);
+			wp_enqueue_block_style( 'woocommerce/checkout', $block_style_args );
+			wp_enqueue_block_style( 'woocommerce/cart', $block_style_args );
 		}
 
 		// Load ammo state selector script on cart page (needed for AJAX cart updates).
@@ -627,11 +713,17 @@ class Plugin {
 	}
 
 	/**
-	 * Hide "ship to different address" checkbox on checkout for firearms carts.
+	 * Hide the "Ship to a different address?" heading on checkout for FFL
+	 * carts, plus the surrounding shipping fields for firearms carts.
 	 *
-	 * FFL dealer selection handles shipping, so the standard shipping form
-	 * should be hidden. Ammo-only carts keep it visible so the state field
-	 * can drive FFL requirement detection.
+	 * Firearms: dealer selection handles shipping, so the full address form
+	 * is hidden (except the first/last name fields, which the customer must
+	 * fill for the shipping label).
+	 *
+	 * Ammo-only: always hide the WC h3 — our ammo-state-selector template
+	 * renders its own "Shipping Address" heading. Field-level show/hide is
+	 * driven dynamically by ammo-state-selector-js.php based on the chosen
+	 * state.
 	 *
 	 * @since 1.0.0
 	 *
@@ -659,6 +751,16 @@ class Plugin {
 				#shipping_state_field,
 				#shipping_postcode_field,
 				#shipping_phone_field {
+					display: none !important;
+				}
+			';
+			wp_add_inline_style( 'automaticffl-main', $css );
+			return;
+		}
+
+		if ( $analyzer->is_ammo_only() ) {
+			$css = '
+				#ship-to-different-address {
 					display: none !important;
 				}
 			';

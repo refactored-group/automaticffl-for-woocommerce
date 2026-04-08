@@ -62,13 +62,25 @@ defined( 'ABSPATH' ) || exit;
 					return;
 				}
 
-				// Map iframe dealer fields to WooCommerce shipping fields
-				// Note: shipping_first_name and shipping_last_name are left as-is
-				// so the customer's own input is preserved (important for guests).
+				// Map iframe dealer fields to WooCommerce shipping fields.
+				// shipping_first_name / shipping_last_name are left as-is when
+				// the customer already typed something there. When they're
+				// empty (common: a guest who hasn't visited the shipping form
+				// yet because the dealer modal opened first), copy from
+				// billing_first_name / billing_last_name so the order has a
+				// shipping name and the server-side validator doesn't block
+				// checkout with no obvious field for the customer to fix.
+				if ( ! ($('#shipping_first_name').val() || '').trim() ) {
+					$('#shipping_first_name').val($('#billing_first_name').val() || '');
+				}
+				if ( ! ($('#shipping_last_name').val() || '').trim() ) {
+					$('#shipping_last_name').val($('#billing_last_name').val() || '');
+				}
 				$('#shipping_company').val(dealer.company || '');
 				$('#ffl_license_field').val(dealer.fflID || '');
 				$('#ffl_expiration_date').val(dealer.expirationDate || '');
 				$('#ffl_uuid').val(dealer.uuid || '');
+				$('#ffl_company_name').val(dealer.company || '');
 				$('#shipping_phone').val(dealer.phone || '');
 				$('#shipping_country').val(dealer.countryCode || 'US');
 				$('#shipping_state').val(dealer.stateOrProvinceCode || '');

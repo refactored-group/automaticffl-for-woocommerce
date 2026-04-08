@@ -48,9 +48,8 @@ class Blocks_Integration implements IntegrationInterface {
 	 * @return void
 	 */
 	public function initialize() {
-		$this->register_block_type();
-		$this->register_frontend_scripts();
-		$this->register_editor_scripts();
+		$this->register_dealer_selection_block_type();
+		$this->register_dealer_selection_scripts();
 		$this->add_settings_data();
 	}
 
@@ -79,7 +78,7 @@ class Blocks_Integration implements IntegrationInterface {
 			function() {
 				if ( function_exists( 'is_checkout' ) && is_checkout() ) {
 					wp_localize_script(
-						'automaticffl-blocks-frontend',
+						'automaticffl-dealer-selection-frontend',
 						'automaticfflBlocksData',
 						$this->get_script_data()
 					);
@@ -90,62 +89,57 @@ class Blocks_Integration implements IntegrationInterface {
 	}
 
 	/**
-	 * Register the block type.
+	 * Register the dealer-selection child block.
+	 *
+	 * Registered as a child of woocommerce/checkout-shipping-address-block
+	 * via the parent metadata in block.json. Auto-inserts as a forced block
+	 * via the lock attribute.
 	 *
 	 * @return void
 	 */
-	private function register_block_type() {
+	private function register_dealer_selection_block_type() {
 		register_block_type(
-			dirname( _AFFL_LOADER_ ) . '/assets/js/blocks/ffl-dealer-selection'
+			dirname( _AFFL_LOADER_ ) . '/assets/js/blocks/dealer-selection'
 		);
 	}
 
 	/**
-	 * Register frontend scripts.
+	 * Register frontend + editor scripts for the dealer-selection block.
 	 *
 	 * @return void
 	 */
-	private function register_frontend_scripts() {
-		$script_path       = '/build/ffl-dealer-selection-frontend.js';
-		$script_url        = plugins_url( $script_path, _AFFL_LOADER_ );
-		$script_asset_path = dirname( _AFFL_LOADER_ ) . '/build/ffl-dealer-selection-frontend.asset.php';
-		$script_asset      = file_exists( $script_asset_path )
-			? require $script_asset_path
+	private function register_dealer_selection_scripts() {
+		$frontend_path       = '/build/dealer-selection-frontend.js';
+		$frontend_asset_path = dirname( _AFFL_LOADER_ ) . '/build/dealer-selection-frontend.asset.php';
+		$frontend_asset      = file_exists( $frontend_asset_path )
+			? require $frontend_asset_path
 			: array(
 				'dependencies' => array(),
-				'version'      => $this->get_file_version( $script_path ),
+				'version'      => $this->get_file_version( $frontend_path ),
 			);
 
 		wp_register_script(
-			'automaticffl-blocks-frontend',
-			$script_url,
-			$script_asset['dependencies'],
-			$script_asset['version'],
+			'automaticffl-dealer-selection-frontend',
+			plugins_url( $frontend_path, _AFFL_LOADER_ ),
+			$frontend_asset['dependencies'],
+			$frontend_asset['version'],
 			true
 		);
-	}
 
-	/**
-	 * Register editor scripts.
-	 *
-	 * @return void
-	 */
-	private function register_editor_scripts() {
-		$script_path       = '/build/ffl-dealer-selection-editor.js';
-		$script_url        = plugins_url( $script_path, _AFFL_LOADER_ );
-		$script_asset_path = dirname( _AFFL_LOADER_ ) . '/build/ffl-dealer-selection-editor.asset.php';
-		$script_asset      = file_exists( $script_asset_path )
-			? require $script_asset_path
+		$editor_path       = '/build/dealer-selection-editor.js';
+		$editor_asset_path = dirname( _AFFL_LOADER_ ) . '/build/dealer-selection-editor.asset.php';
+		$editor_asset      = file_exists( $editor_asset_path )
+			? require $editor_asset_path
 			: array(
 				'dependencies' => array(),
-				'version'      => $this->get_file_version( $script_path ),
+				'version'      => $this->get_file_version( $editor_path ),
 			);
 
 		wp_register_script(
-			'automaticffl-blocks-editor',
-			$script_url,
-			$script_asset['dependencies'],
-			$script_asset['version'],
+			'automaticffl-dealer-selection-editor',
+			plugins_url( $editor_path, _AFFL_LOADER_ ),
+			$editor_asset['dependencies'],
+			$editor_asset['version'],
 			true
 		);
 	}
@@ -156,7 +150,7 @@ class Blocks_Integration implements IntegrationInterface {
 	 * @return string[]
 	 */
 	public function get_script_handles() {
-		return array( 'automaticffl-blocks-frontend' );
+		return array( 'automaticffl-dealer-selection-frontend' );
 	}
 
 	/**
@@ -165,7 +159,7 @@ class Blocks_Integration implements IntegrationInterface {
 	 * @return string[]
 	 */
 	public function get_editor_script_handles() {
-		return array( 'automaticffl-blocks-editor' );
+		return array( 'automaticffl-dealer-selection-editor' );
 	}
 
 	/**

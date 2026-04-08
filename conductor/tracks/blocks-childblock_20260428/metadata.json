@@ -1,0 +1,9 @@
+{
+  "track_id": "blocks-childblock_20260428",
+  "type": "refactor",
+  "status": "archived",
+  "archived_at": "2026-04-29T00:00:00Z",
+  "created_at": "2026-04-28T15:51:51Z",
+  "updated_at": "2026-04-29T00:00:00Z",
+  "description": "Migrate WooCommerce Blocks FFL dealer selection from React portal + private-class CSS hiding to the documented WC Blocks child-block API (registerCheckoutBlock + additionalCartCheckoutInnerBlockTypes). Drops portal targeting of .wp-block-woocommerce-checkout-shipping-address-block and CSS targeting of .wc-block-components-* internal classes. Address card becomes single source of truth via setShippingAddress; non-name fields locked after dealer pick. Resolves the ammo-only Blocks bug where the FFL UI rendered at the bottom of checkout instead of inside the shipping section. Store API extension and order processing untouched."
+}

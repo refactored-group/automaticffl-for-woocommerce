@@ -1,5 +1,26 @@
 *** Automatic FFL for WooCommerce ***
 
+2026-04-28 - Version 1.0.19
+* Refactored WooCommerce Blocks dealer selection to use the documented child-block API (registerCheckoutBlock + parent metadata + lock attribute for forced auto-insertion)
+* Removed React createPortal targeting of .wp-block-woocommerce-checkout-shipping-address-block
+* Removed CSS hiding rules targeting .wc-block-components-* private classes
+* Removed MutationObserver watching the use-shipping-as-billing checkbox
+* Removed inline first/last name inputs (the WooCommerce shipping card now owns those)
+* Added :has() based CSS that hides non-name shipping fields when a dealer is selected, using standard input name attributes (Store API order schema)
+* Added billing address restoration on dealer pick: customer's original address is mirrored into billing and "use shipping as billing" is unchecked
+* Fixed the ammo-only restricted-state bug where the FFL dealer prompt rendered at the bottom of checkout instead of inside the shipping section
+* Fixed an ammo-only classic checkout bug where changing the state after picking an FFL dealer left the dealer in place, causing the order to ship to the previous state
+* Apply the FFL-required hide-fields rule whenever an FFL is required (not only after a dealer is picked), so Edit-mode shows only first/last name in both pre- and post-pick states
+* Added a "Shipping Address" heading at the top of the classic shipping form when an FFL is required, replacing the hidden "Ship to a different address?" heading
+* Hide the "Use same address for billing" toggle in Blocks checkout when an FFL is required (billing cannot equal shipping when shipping goes to a licensed dealer)
+* Register Blocks CSS via wp_enqueue_block_style so it loads on FSE templates, secondary pages, and other render paths is_checkout() misses
+
+2026-04-24 - Version 1.0.18
+* Added customer first/last name capture on FFL shipping addresses (classic + Blocks checkout, logged-in and guest flows)
+* Moved FFL dealer map below the shipping form in classic checkout
+* Fixed shipping-form visibility selector in classic checkout
+* Render FFL UI inside the shipping address block in WooCommerce Blocks checkout
+
 2026-04-09 - Version 1.0.17
 * Added dismissible admin review request notice with snooze option
 

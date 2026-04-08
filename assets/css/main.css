@@ -100,33 +100,97 @@ body {
  * Block Checkout Styles - FFL Dealer Selection
  */
 
-/* Hide shipping address fields (except name) when FFL checkout is active.
- * WooCommerce Blocks renders each field in a div with id like "shipping-{field_name}".
- * We keep shipping-first_name and shipping-last_name visible so guests can enter their name.
- * Tested with WooCommerce Blocks 12.x / WooCommerce 9.x. If WooCommerce changes the
- * shipping field ID convention, this selector may need updating. */
-body.automaticffl-checkout-active .wp-block-woocommerce-checkout-shipping-address-block [id^="shipping-"]:not(#shipping-first_name):not(#shipping-last_name) {
+/*
+ * FR-4: Hide non-name shipping fields whenever an FFL is required.
+ *
+ * The body class .automaticffl-ffl-required is added by the
+ * dealer-selection child block whenever an FFL is required for the
+ * cart (firearm present, or ammo bound for a restricted state).
+ * Applied always — whether or not a dealer has been picked — so the
+ * Edit-mode form behaves identically before and after selection.
+ *
+ * Pre-pick:  cart shipping is the customer's saved address. Edit
+ *            shows only first/last name; other fields can't be
+ *            changed because the FFL pick will overwrite them.
+ * Post-pick: cart shipping is the dealer's address. Edit shows only
+ *            first/last name so the customer can fix typos without
+ *            losing the dealer-set fields.
+ *
+ * Selectors target stable HTML attributes (input name + element id)
+ * — not WooCommerce's internal .wc-block-components-* class names —
+ * to stay NFR-1 doc-clean. WC Blocks renders shipping fields with:
+ *   - text inputs:  name="shipping_<field>", id="shipping-<field>"
+ *   - state/country selects: id="shipping-<field>" (no name attr)
+ *
+ * The text-input wrapper is one div deep (input is a direct child),
+ * so :has(> input[...]) matches the wrapper. The select wrapper is
+ * two divs deep (select inside .wc-blocks-components-select__container
+ * inside .wc-blocks-components-select), so :has(> div > select[...])
+ * targets the outer wrapper.
+ *
+ * first_name and last_name are intentionally NOT in the list — those
+ * stay editable so the customer can correct typos at any time.
+ *
+ * :has() browser support: Safari 15.4+ (Mar 2022), Chrome 105+
+ * (Aug 2022), Firefox 121+ (Dec 2023). Within WC Blocks' modern
+ * baseline.
+ */
+body.automaticffl-ffl-required div:has(> input[name="shipping_address_1"]),
+body.automaticffl-ffl-required div:has(> input[name="shipping_address_2"]),
+body.automaticffl-ffl-required div:has(> input[name="shipping_city"]),
+body.automaticffl-ffl-required div:has(> input[name="shipping_postcode"]),
+body.automaticffl-ffl-required div:has(> input[name="shipping_phone"]),
+body.automaticffl-ffl-required div:has(> input[name="shipping_company"]),
+body.automaticffl-ffl-required div:has(> div > select#shipping-state),
+body.automaticffl-ffl-required div:has(> div > select#shipping-country),
+body.automaticffl-ffl-required div:has(> div > input#shipping-state),
+body.automaticffl-ffl-required div:has(> div > input#shipping-country) {
   display: none !important;
 }
 
-/* Hide the "Use same address for billing" checkbox when FFL checkout is active */
-body.automaticffl-checkout-active .wc-block-checkout__use-address-for-billing {
+/*
+ * FR-4: hide the "Use same address for billing" toggle when an FFL
+ * is required. Billing CAN'T equal shipping when shipping goes to a
+ * licensed dealer — the dealer isn't the customer's billing party.
+ * Our handleDealerSelect flips the toggle state off programmatically;
+ * this rule hides it from the UI so the customer can't re-enable a
+ * setting that no longer makes sense.
+ *
+ * Targets the toggle wrapper structurally: the only <input
+ * type="checkbox"> inside the shipping-fields fieldset is this one
+ * (verified live 2026-04). NFR-1 doc-clean — uses the fieldset id +
+ * native HTML <input type="checkbox">, no .wc-block-components-* or
+ * .wp-block-woocommerce-* class names. As of 2026-04 WooCommerce
+ * Blocks ships no documented filter, slot fill, or block attribute
+ * for hiding this toggle per-cart-context.
+ */
+body.automaticffl-ffl-required #shipping-fields div:has(> label > input[type="checkbox"]) {
   display: none !important;
 }
 
-/* Ensure billing address form is always visible when FFL checkout is active */
-body.automaticffl-checkout-active .wp-block-woocommerce-checkout-billing-address-block,
-body.automaticffl-checkout-active .wc-block-checkout__billing-fields {
-  display: block !important;
+/*
+ * FR-4 (backup): visually-disabled state for non-name shipping fields
+ * when an FFL is required. Acts as a safety net if the :has() hide
+ * rules above ever miss — e.g. browser predates :has() support, or a
+ * WC Blocks DOM change breaks the wrapper selector. The fields stay
+ * rendered but become non-interactive and clearly read-only.
+ *
+ * Cannot set the actual `disabled` attribute from CSS, so we use
+ * pointer-events + visual cues. The hide rules above take precedence
+ * when they match (display:none beats this).
+ */
+body.automaticffl-ffl-required input[name^="shipping_"]:not([name="shipping_first_name"]):not([name="shipping_last_name"]),
+body.automaticffl-ffl-required select[id^="shipping-"]:not([id="shipping-first_name"]):not([id="shipping-last_name"]) {
+  pointer-events: none !important;
+  background-color: #f5f5f5 !important;
+  color: #999 !important;
+  cursor: not-allowed !important;
+  opacity: 0.6 !important;
 }
 
 /* FFL Dealer Selection component styling for blocks checkout */
 .automaticffl-dealer-selection {
   margin-bottom: 1.5em;
-}
-
-.automaticffl-dealer-selection .wc-block-components-notice-banner {
-  margin-bottom: 1em;
 }
 
 /* Find/Change Dealer button styling */
@@ -243,26 +307,6 @@ body.automaticffl-checkout-active .wc-block-checkout__billing-fields {
   margin-top: 1em;
 }
 
-/* Success notice styling for blocks */
-.wc-block-components-notice-banner.is-success {
-  background-color: #d4edda;
-  border-color: #c3e6cb;
-}
-
-.wc-block-components-notice-banner.is-success svg {
-  fill: #28a745;
-}
-
-/* Warning notice styling for blocks */
-.wc-block-components-notice-banner.is-warning {
-  background-color: #fff3cd;
-  border-color: #ffc107;
-}
-
-.wc-block-components-notice-banner.is-warning svg {
-  fill: #856404;
-}
-
 /* Ammo checkout container in block checkout */
 .automaticffl-dealer-selection .automaticffl-state-selector {
   margin-bottom: 1.5em;
@@ -310,18 +354,16 @@ body.automaticffl-checkout-active .wc-block-checkout__billing-fields {
 
 /*
  * Ammo-Only Checkout - Shipping Form Visibility Transitions
+ *
+ * Classic-checkout transitions only. The block checkout transitions
+ * targeted private WC classes (.wp-block-woocommerce-* and
+ * .wc-block-checkout__*) and were removed for NFR-1 compliance —
+ * the FFL child block now manages its own visibility within the
+ * shipping address area.
  */
-
-/* Classic checkout shipping form transitions */
 .woocommerce-shipping-fields,
 #ship-to-different-address,
 .woocommerce-shipping-fields__field-wrapper {
-  transition: opacity 0.15s ease-in-out;
-}
-
-/* Block checkout shipping form transitions */
-.wp-block-woocommerce-checkout-shipping-address-block,
-.wc-block-checkout__shipping-fields {
   transition: opacity 0.15s ease-in-out;
 }
 

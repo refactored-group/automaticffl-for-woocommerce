@@ -28,10 +28,24 @@ const DealerModal = ( { iframeUrl, allowedOrigins, onSelect, onClose } ) => {
 				return;
 			}
 
-			// Handle dealer selection message
+			// Handle dealer selection message.
+			//
+			// Origin validation above gates *who* can send a message; this
+			// guard validates *what* they sent. A misbehaving iframe (stale
+			// CDN cache, future contractor bug, staging env mistake)
+			// sending non-string fields like { company: {} } would
+			// otherwise flow into setShippingAddress / setExtensionData and
+			// into React text rendering — where a non-string child throws
+			// "Objects are not valid as a React child" and crashes the
+			// entire checkout block. Required string is fflID; everything
+			// else gets defaulted in handleDealerSelect via `|| ''`.
 			if ( event.data && event.data.type === 'dealerUpdate' ) {
 				const dealer = event.data.value;
-				if ( dealer ) {
+				if (
+					dealer &&
+					typeof dealer === 'object' &&
+					typeof dealer.fflID === 'string'
+				) {
 					onSelect( dealer );
 				}
 			}

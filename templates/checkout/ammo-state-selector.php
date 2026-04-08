@@ -19,7 +19,11 @@
 defined( 'ABSPATH' ) || exit;
 ?>
 <div id="automaticffl-ammo-checkout">
-	<h3 id="automaticffl-shipping-heading"><?php esc_html_e( 'Shipping details', 'automaticffl-for-wc' ); ?></h3>
+	<h3 id="automaticffl-shipping-heading"><?php esc_html_e( 'Shipping Address', 'automaticffl-for-wc' ); ?></h3>
+
+	<?php /* JS moves first/last/state field rows here when a restricted state is picked. */ ?>
+	<div id="automaticffl-grouped-fields-anchor"></div>
+
 	<div id="automaticffl-state-message">
 		<div class="woocommerce">
 			<div class="woocommerce-info" role="alert">

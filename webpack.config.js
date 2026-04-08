@@ -11,13 +11,13 @@ const filteredPlugins = defaultConfig.plugins.filter(
 module.exports = {
 	...defaultConfig,
 	entry: {
-		'ffl-dealer-selection-frontend': path.resolve(
+		'dealer-selection-frontend': path.resolve(
 			__dirname,
-			'assets/js/blocks/ffl-dealer-selection/frontend.js'
+			'assets/js/blocks/dealer-selection/frontend.js'
 		),
-		'ffl-dealer-selection-editor': path.resolve(
+		'dealer-selection-editor': path.resolve(
 			__dirname,
-			'assets/js/blocks/ffl-dealer-selection/index.js'
+			'assets/js/blocks/dealer-selection/index.js'
 		),
 	},
 	output: {

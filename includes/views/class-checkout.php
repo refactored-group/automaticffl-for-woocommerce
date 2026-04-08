@@ -125,6 +125,48 @@ class Checkout {
 		}
 	}
 
+	/**
+	 * Render a "Shipping Address" heading at the top of the classic
+	 * checkout shipping form when an FFL is required.
+	 *
+	 * The default WC heading is the "Ship to a different address?"
+	 * <h3 id="ship-to-different-address"> — but our existing inline
+	 * CSS (Plugin::maybe_hide_ship_to_different_address) hides that
+	 * toggle because billing must not equal shipping when shipping
+	 * goes to a licensed dealer. Without a replacement heading, the
+	 * visible first/last name fields appear to belong to the billing
+	 * form above. This adds the section context back.
+	 *
+	 * Markup matches WooCommerce's own checkout headings (bare <h3>,
+	 * no class) so the merchant's theme styles it identically to the
+	 * adjacent "Billing details" / "Contact information" headings.
+	 *
+	 * Skipped for ammo-only carts: that flow's
+	 * templates/checkout/ammo-state-selector.php renders its own
+	 * "Shipping Address" h3 inside #automaticffl-ammo-checkout, where
+	 * the moved first/last/state fields live when a restricted state
+	 * is picked. Rendering ours here too would double the heading.
+	 *
+	 * Hook: woocommerce_before_checkout_shipping_form (fires inside
+	 * .shipping_address, immediately before the field wrapper).
+	 *
+	 * @since 1.0.20
+	 *
+	 * @return void
+	 */
+	public static function render_shipping_address_heading() {
+		if ( ! self::needs_ffl_checkout() ) {
+			return;
+		}
+		// Ammo-only flow's own template owns the heading.
+		if ( self::get_analyzer()->is_ammo_only() ) {
+			return;
+		}
+		?>
+		<h3><?php esc_html_e( 'Shipping Address', 'automaticffl-for-wc' ); ?></h3>
+		<?php
+	}
+
 	public static function add_automaticffl_checkout_field($checkout) {
 		if ( self::needs_ffl_checkout() ) {
 			$analyzer = self::get_analyzer();
@@ -151,6 +193,14 @@ class Checkout {
 				'label' => __('FFL UUID', 'automaticffl-for-wc'),
 				'required' => false,
 			), $checkout->get_value('ffl_uuid'));
+
+			// Hidden field for FFL dealer company name.
+			woocommerce_form_field('ffl_company_name', array(
+				'type' => 'text',
+				'class' => array('hidden'),
+				'label' => __('FFL Company Name', 'automaticffl-for-wc'),
+				'required' => false,
+			), $checkout->get_value('ffl_company_name'));
 		}
 	}
 
@@ -288,11 +338,42 @@ class Checkout {
 			return;
 		}
 
-		// Ammo only - show state selector.
-		if ( $analyzer->is_ammo_only() ) {
-			self::get_ammo_checkout( $analyzer );
+		// Ammo-only is rendered earlier on woocommerce_before_checkout_shipping_form
+		// so the heading + state message sit above the shipping fields. See
+		// get_ffl_ammo_only() below.
+	}
+
+	/**
+	 * Render ammo-only FFL UI before the shipping form fields.
+	 *
+	 * Hooked to woocommerce_before_checkout_shipping_form so the
+	 * "Shipping Address" heading + state message sit ABOVE the
+	 * shipping address fields. Hooking after them (where get_ffl()
+	 * runs for firearms) would push the heading below the fields it
+	 * labels.
+	 *
+	 * Firearms flow stays on the after hook because its FFL banner
+	 * + Find a Dealer button belong below the visible name fields,
+	 * not above them.
+	 *
+	 * @since 1.0.20
+	 *
+	 * @return void
+	 */
+	public static function get_ffl_ammo_only() {
+		$analyzer = self::get_analyzer();
+
+		if ( $analyzer->has_api_error() ) {
 			return;
 		}
+		if ( $analyzer->is_mixed_ffl_regular() ) {
+			return;
+		}
+		if ( ! $analyzer->is_ammo_only() ) {
+			return;
+		}
+
+		self::get_ammo_checkout( $analyzer );
 	}
 
 	/**

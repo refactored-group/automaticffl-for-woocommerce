@@ -19,20 +19,38 @@ defined( 'ABSPATH' ) || exit;
 jQuery(document).ready(function($) {
 	const restrictedStates = <?php echo wp_json_encode( $restricted_states ); ?>;
 	let fflRequired = false;
-	let ammoFflLocked = false;
 
-	// Selectors for shipping address fields to hide/show (excluding name fields).
-	// Name fields stay visible so the customer can enter their name (important for guests).
+	// State of the currently-picked dealer, captured from the dealerUpdate
+	// postMessage. Used by the state-change handler to detect when the user
+	// has switched away from the dealer's state — at which point the dealer
+	// must be dropped, otherwise the order ships to the previous (and now
+	// incorrect) state.
+	let pickedDealerState = '';
+
+	// Selectors for shipping fields to hide in restricted state.
+	// Excludes name fields (customer must be able to enter their own name) and
+	// the state field (customer must be able to switch out of the restricted state).
 	const shippingAddressSelectors = [
 		'#shipping_company_field',
 		'#shipping_country_field',
 		'#shipping_address_1_field',
 		'#shipping_address_2_field',
 		'#shipping_city_field',
-		'#shipping_state_field',
 		'#shipping_postcode_field',
 		'#shipping_phone_field'
 	];
+
+	// Fields that move into the FFL "Shipping details" container when the
+	// customer picks a restricted state, so first/last name and state sit
+	// grouped with the dealer card instead of floating orphaned above it.
+	const fflGroupedFieldSelectors = [
+		'#shipping_first_name_field',
+		'#shipping_last_name_field',
+		'#shipping_state_field'
+	];
+
+	// Remember where to restore each moved field to.
+	var fieldOriginalPositions = {};
 
 	/**
 	 * Get the effective shipping state from the checkout form.
@@ -60,6 +78,85 @@ jQuery(document).ready(function($) {
 	}
 
 	/**
+	 * Move the shipping first/last name + state fields into the
+	 * "Shipping Address" header section, ABOVE the blue state-message
+	 * banner and the FFL container. Order: heading → name fields →
+	 * state → banner → dealer card → button. Otherwise the fields
+	 * would sit orphaned below — the WC "Ship to a different address?"
+	 * h3 is always hidden in ammo flow and the surrounding address
+	 * fields are hidden when a restricted state is picked.
+	 */
+	function moveFieldsIntoFFLContainer() {
+		// Capture each field's original position on first move so we can
+		// restore them exactly where WooCommerce rendered them.
+		fflGroupedFieldSelectors.forEach(function(selector) {
+			if (fieldOriginalPositions[selector]) {
+				return;
+			}
+			var $field = $(selector);
+			if (!$field.length) {
+				return;
+			}
+			fieldOriginalPositions[selector] = {
+				anchor: $field.prev(),
+				parent: $field.parent()
+			};
+		});
+
+		if ($('#automaticffl-grouped-fields-row').length > 0) {
+			return;
+		}
+		var $row = $('<div id="automaticffl-grouped-fields-row" class="automaticffl-grouped-fields-row"></div>');
+		fflGroupedFieldSelectors.forEach(function(selector) {
+			var $field = $(selector);
+			if ($field.length) {
+				$row.append($field);
+			}
+		});
+		if ($row.children().length > 0) {
+			$('#automaticffl-grouped-fields-anchor').empty().append($row);
+		}
+	}
+
+	/**
+	 * Restore the grouped fields to their original WooCommerce positions so
+	 * the full shipping form reads naturally when the user switches back to
+	 * an unrestricted state.
+	 */
+	function restoreFieldsToOriginalPosition() {
+		var $row = $('#automaticffl-grouped-fields-row');
+		if ($row.length === 0) {
+			return;
+		}
+		fflGroupedFieldSelectors.forEach(function(selector) {
+			var $field = $(selector).detach();
+			var pos = fieldOriginalPositions[selector];
+			if (!$field.length || !pos) {
+				return;
+			}
+			if (pos.anchor && pos.anchor.length) {
+				$field.insertAfter(pos.anchor);
+			} else if (pos.parent && pos.parent.length) {
+				pos.parent.prepend($field);
+			}
+		});
+		$row.remove();
+	}
+
+	/**
+	 * Clear the currently-selected dealer and reset the FFL UI.
+	 */
+	function clearDealer() {
+		$('#ffl_license_field').val('');
+		$('#ffl_expiration_date').val('');
+		$('#ffl_uuid').val('');
+		$('#ffl_company_name').val('');
+		$('#automaticffl-dealer-selected').empty().removeClass('automaticffl-dealer-selected');
+		$('#automaticffl-select-dealer').text('<?php echo esc_js( __( 'Find a Dealer', 'automaticffl-for-wc' ) ); ?>');
+		pickedDealerState = '';
+	}
+
+	/**
 	 * Show the standard WooCommerce shipping address fields.
 	 * The WooCommerce heading is always hidden (our custom h3 replaces it).
 	 */
@@ -77,20 +174,48 @@ jQuery(document).ready(function($) {
 
 	/**
 	 * Update checkout UI based on the current shipping state.
+	 *
+	 * Restricted state: declutter the form to first name + last name + state
+	 * (everything else hidden), move the name fields into the FFL "Shipping
+	 * details" container, and show the dealer picker.
+	 *
+	 * Unrestricted state: restore the full shipping form and clear any
+	 * previously-selected dealer.
 	 */
 	function updateAmmoCheckout() {
-		// If locked into FFL flow (dealer selected for restricted state), don't change UI
-		if (ammoFflLocked) {
-			return;
-		}
-
 		const state = getEffectiveShippingState();
 		const isRestricted = state !== '' && restrictedStates.includes(state);
+		const dealerSelected = ($('#ffl_license_field').val() || '') !== '';
 		const $messageContainer = $('#automaticffl-state-message');
 		const $fflContainer = $('#automaticffl-ffl-container');
 
+		// Once a dealer has been picked, the FFL UI is locked in for this
+		// checkout — same shape as the firearms flow, which has no state
+		// watcher and never clears the dealer. The ammo flow's reactive
+		// updateAmmoCheckout otherwise re-evaluates on every `updated_checkout`
+		// (including the one fired by ffl-map-js right after the pick) and
+		// can take the empty/unrestricted branch, which clobbers the dealer
+		// card and un-hides the shipping form. Guests hit this most readily
+		// because their billing_state can fall outside restrictedStates while
+		// their shipping_state is the dealer's address.
+		//
+		// #ffl_license_field is the right signal: ffl-map-js sets it on pick,
+		// it lives outside the replaced fragments, and clearDealer() is the
+		// only thing that empties it — so the lock self-clears when a future
+		// "Change Dealer" flow explicitly resets state.
+		if (dealerSelected) {
+			hideShippingForm();
+			moveFieldsIntoFFLContainer();
+			$messageContainer.empty().hide();
+			$fflContainer.show();
+			fflRequired = true;
+			return;
+		}
+
 		if (!state) {
-			// No state selected: show info message, keep shipping form visible
+			// No state selected yet: prompt, full shipping form visible.
+			showShippingForm();
+			restoreFieldsToOriginalPosition();
 			$messageContainer
 				.html('<div class="woocommerce"><div class="woocommerce-info" role="alert"><?php echo esc_js( $messages['ammoSelectState'] ); ?></div></div>')
 				.show();
@@ -100,32 +225,49 @@ jQuery(document).ready(function($) {
 		}
 
 		if (isRestricted) {
-			// Restricted state: keep shipping form visible so the user can change state.
-			// Only hide shipping form after a dealer is selected (ammoFflLocked).
-			showShippingForm();
+			// Declutter the form and group name fields with the dealer card.
+			hideShippingForm();
+			moveFieldsIntoFFLContainer();
 			$messageContainer
 				.html('<div class="woocommerce"><div class="woocommerce-info" role="alert"><?php echo esc_js( $messages['fflRequiredForState'] ); ?></div></div>')
 				.show();
 			$fflContainer.show();
 			fflRequired = true;
 		} else {
-			// Unrestricted state: show shipping form, hide FFL container
+			// Unrestricted state: restore the full shipping form and drop
+			// any previously-selected dealer so the customer ships to their
+			// own address.
 			showShippingForm();
+			restoreFieldsToOriginalPosition();
 			$messageContainer.empty().hide();
 			$fflContainer.hide();
 			fflRequired = false;
-
-			// Clear any previously selected dealer
-			$('#ffl_license_field').val('');
-			$('#ffl_expiration_date').val('');
-			$('#ffl_uuid').val('');
-			$('#automaticffl-dealer-selected').empty().removeClass('automaticffl-dealer-selected');
-			$('#automaticffl-select-dealer').text('<?php echo esc_js( __( 'Find a Dealer', 'automaticffl-for-wc' ) ); ?>');
+			clearDealer();
 		}
 	}
 
-	// Listen for shipping state changes
+	// Listen for shipping state changes.
+	//
+	// A user-driven change to the state field invalidates any picked dealer:
+	// the dealer's address belongs to the previous state, so leaving it in
+	// place would ship the order to the wrong state. Clear the dealer first,
+	// then let updateAmmoCheckout() decide the UI from a clean slate (prompt
+	// for re-pick if the new state is also restricted, or restore the full
+	// shipping form if it isn't).
+	//
+	// We compare against pickedDealerState rather than clearing
+	// unconditionally so that a billing_state change (which doesn't affect
+	// the effective shipping state when ship-to-different is checked, as it
+	// always is once a dealer is picked) doesn't drop the dealer.
+	//
+	// The "dealer locked" early-return inside updateAmmoCheckout still
+	// protects against the post-pick updated_checkout event clobbering the
+	// dealer card — that path runs through updated_checkout, not change.
 	$(document.body).on('change', '#shipping_state, #billing_state', function() {
+		var dealerSelected = ($('#ffl_license_field').val() || '') !== '';
+		if (dealerSelected && getEffectiveShippingState() !== pickedDealerState) {
+			clearDealer();
+		}
 		updateAmmoCheckout();
 	});
 
@@ -139,15 +281,14 @@ jQuery(document).ready(function($) {
 		updateAmmoCheckout();
 	});
 
-	// Lock into FFL mode when a dealer is selected (via postMessage from iframe).
-	// This prevents the feedback loop where dealer address state triggers re-evaluation.
-	// Now that a dealer is chosen, hide the shipping form and the warning banner.
+	// When a dealer is chosen, hide the "FFL required" banner.
+	// The decluttered UI (hidden shipping fields, name fields in the FFL
+	// container) is already driven by updateAmmoCheckout.
 	$(window).on('message', function(e) {
 		var event = e.originalEvent;
 		if (event.data && event.data.type === 'dealerUpdate' && event.data.value) {
+			pickedDealerState = event.data.value.stateOrProvinceCode || '';
 			if (fflRequired) {
-				ammoFflLocked = true;
-				hideShippingForm();
 				$('#automaticffl-state-message').hide();
 			}
 		}
@@ -158,6 +299,14 @@ jQuery(document).ready(function($) {
 	// woocommerce_before_checkout_shipping_form hook, so the "ship to different
 	// address" checkbox must be checked for it to be visible.
 	showShippingForm();
+
+	// If WC restored a previously-picked dealer from session, capture its
+	// state from the shipping form so the state-change handler has a baseline
+	// to compare against (otherwise the first change event would always look
+	// like a divergence and clear the dealer).
+	if (($('#ffl_license_field').val() || '') !== '') {
+		pickedDealerState = $('#shipping_state').val() || '';
+	}
 
 	// Run initial check
 	updateAmmoCheckout();

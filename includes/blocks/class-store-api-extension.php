@@ -189,6 +189,7 @@ class Store_Api_Extension {
 			'fflLicense'        => '',
 			'fflExpirationDate' => '',
 			'fflUuid'           => '',
+			'fflCompanyName'    => '',
 		);
 	}
 
@@ -215,6 +216,13 @@ class Store_Api_Extension {
 			),
 			'fflUuid'           => array(
 				'description' => __( 'FFL dealer UUID for certificate lookup.', 'automaticffl-for-wc' ),
+				'type'        => 'string',
+				'context'     => array( 'view', 'edit' ),
+				'readonly'    => false,
+				'optional'    => true,
+			),
+			'fflCompanyName'    => array(
+				'description' => __( 'FFL dealer company name.', 'automaticffl-for-wc' ),
 				'type'        => 'string',
 				'context'     => array( 'view', 'edit' ),
 				'readonly'    => false,
@@ -256,6 +264,13 @@ class Store_Api_Extension {
 			if ( ! empty( $ffl_data['fflUuid'] ) ) {
 				$uuid = sanitize_text_field( $ffl_data['fflUuid'] );
 				$order->update_meta_data( '_ffl_uuid', $uuid );
+			}
+
+			// Explicitly set the dealer company name on shipping address.
+			// setShippingAddress() in JS may not persist the company field
+			// through WooCommerce's address form sync, so we set it here.
+			if ( ! empty( $ffl_data['fflCompanyName'] ) ) {
+				$order->set_shipping_company( sanitize_text_field( $ffl_data['fflCompanyName'] ) );
 			}
 
 			$order->save();

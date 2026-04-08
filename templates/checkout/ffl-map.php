@@ -13,11 +13,6 @@
 
 defined( 'ABSPATH' ) || exit;
 ?>
-<h3>
-	<label style="font-weight: 100">
-		<span><?php esc_html_e( 'Ship to a different address?', 'automaticffl-for-wc' ); ?></span>
-	</label>
-</h3>
 <div class="woocommerce">
 	<div class="woocommerce-info" role="alert">
 		<?php echo esc_html__( 'You have a firearm in your cart and must choose a Licensed Firearm Dealer (FFL) for the Shipping Address.', 'automaticffl-for-wc' ); ?>
@@ -35,7 +30,9 @@ defined( 'ABSPATH' ) || exit;
 	</div>
 </div>
 <script>
-	// Force customers to enter a Shipping Address different than Billing
+	// Force customers to enter a Shipping Address different than Billing so WC
+	// processes the shipping fields. The "Ship to a different address?" h3 is
+	// hidden via CSS in maybe_hide_ship_to_different_address().
 	var shipCheckbox = document.getElementById('ship-to-different-address-checkbox');
 	if ( shipCheckbox ) { shipCheckbox.checked = true; }
 </script>

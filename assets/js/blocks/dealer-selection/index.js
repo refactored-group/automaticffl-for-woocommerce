@@ -1,7 +1,13 @@
 /**
- * FFL Dealer Selection Block - Editor Entry
+ * FFL Dealer Selection — Editor Entry
  *
- * Registers the block type for the WordPress block editor.
+ * Registers the block as a forced child of
+ * woocommerce/checkout-shipping-address-block. The block auto-inserts
+ * into every checkout via the lock.default.{remove,move} flags in
+ * block.json — no merchant action required.
+ *
+ * Docs:
+ * https://github.com/woocommerce/woocommerce/blob/trunk/plugins/woocommerce/client/blocks/packages/checkout/blocks-registry/README.md
  */
 
 import { registerBlockType } from '@wordpress/blocks';
@@ -9,21 +15,29 @@ import { useBlockProps } from '@wordpress/block-editor';
 import { __ } from '@wordpress/i18n';
 import metadata from './block.json';
 
-/**
- * Editor component - shows a placeholder in the block editor
- */
 const Edit = () => {
 	const blockProps = useBlockProps();
 
 	return (
 		<div { ...blockProps }>
-			<div className="wc-block-components-placeholder" style={{ padding: '20px', border: '1px dashed #ccc', backgroundColor: '#f9f9f9', borderRadius: '4px' }}>
+			<div
+				className="wc-block-components-placeholder"
+				style={ {
+					padding: '20px',
+					border: '1px dashed #ccc',
+					backgroundColor: '#f9f9f9',
+					borderRadius: '4px',
+				} }
+			>
 				<div className="wc-block-components-placeholder__content">
-					<strong style={{ display: 'block', marginBottom: '8px' }}>
+					<strong style={ { display: 'block', marginBottom: '8px' } }>
 						{ __( 'FFL Dealer Selection', 'automaticffl-for-wc' ) }
 					</strong>
-					<span style={{ color: '#666' }}>
-						{ __( 'Customers with firearms in their cart will select an FFL dealer here.', 'automaticffl-for-wc' ) }
+					<span style={ { color: '#666' } }>
+						{ __(
+							'Customers with firearms or restricted ammunition will select an FFL dealer here.',
+							'automaticffl-for-wc'
+						) }
 					</span>
 				</div>
 			</div>
@@ -31,14 +45,8 @@ const Edit = () => {
 	);
 };
 
-/**
- * Save component - returns null as this block is rendered dynamically
- */
 const Save = () => null;
 
-/**
- * Register the block type
- */
 registerBlockType( metadata.name, {
 	...metadata,
 	icon: {

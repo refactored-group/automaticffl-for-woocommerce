@@ -82,9 +82,16 @@
 		},
 
 		/**
-		 * Update the UI based on selected state
+		 * Update the UI based on selected state.
+		 *
+		 * @param {string} state          Selected state code.
+		 * @param {boolean} deferCheckout If true, keep the checkout button hidden
+		 *                                even when the state is unrestricted. Used
+		 *                                while the session-save AJAX is in flight,
+		 *                                so the user can't reach checkout before
+		 *                                the server has the state.
 		 */
-		updateStateUI: function(state) {
+		updateStateUI: function(state, deferCheckout) {
 			var $notice = $('#automaticffl-cart-state-selector');
 			var $message = $('#automaticffl-cart-state-message');
 			var $icon = $notice.find('.automaticffl-notice-icon');
@@ -116,10 +123,15 @@
 				$checkoutButtons.hide();
 				$saveForLater.show();
 			} else {
-				// Unrestricted state - can checkout
+				// Unrestricted state - can checkout, but only once the server-side
+				// session has the state (otherwise the checkout page bounces back).
 				newType = 'success';
 				newMessage = this.config.i18n.unrestrictedPrefix + ' ' + stateName + '. ' + this.config.i18n.unrestrictedSuffix;
-				$checkoutButtons.show();
+				if (deferCheckout) {
+					$checkoutButtons.hide();
+				} else {
+					$checkoutButtons.show();
+				}
 				$saveForLater.hide();
 			}
 
@@ -135,10 +147,11 @@
 		saveStateToSession: function(state) {
 			var self = this;
 
-			// Update UI immediately for responsiveness
-			this.updateStateUI(state);
+			// Update messaging immediately, but keep the checkout button hidden
+			// until the session save completes — clicking checkout before then
+			// reads an empty session server-side and redirects back to the cart.
+			this.updateStateUI(state, true);
 
-			// Save to session in background
 			$.ajax({
 				url: this.config.ajaxUrl,
 				type: 'POST',
@@ -146,6 +159,11 @@
 					action: 'automaticffl_set_ammo_state',
 					state: state,
 					nonce: this.config.nonce
+				},
+				success: function(response) {
+					if (response && response.success) {
+						self.updateStateUI(state, false);
+					}
 				}
 			});
 		}
