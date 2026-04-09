@@ -15,6 +15,7 @@ use RefactoredGroup\AutomaticFFL\Helper\Cart_Analyzer;
 use RefactoredGroup\AutomaticFFL\Helper\Saved_Cart;
 use RefactoredGroup\AutomaticFFL\Admin\Settings;
 use RefactoredGroup\AutomaticFFL\Admin\Product_FFL_Meta;
+use RefactoredGroup\AutomaticFFL\Admin\Review_Notice;
 use RefactoredGroup\AutomaticFFL\Blocks\Blocks_Integration;
 use RefactoredGroup\AutomaticFFL\Blocks\Store_Api_Extension;
 use RefactoredGroup\AutomaticFFL\Helper\US_States;
@@ -83,6 +84,9 @@ class Plugin {
 		if ( is_admin() ) {
 			$this->admin_settings   = new \RefactoredGroup\AutomaticFFL\Admin\Settings();
 			$this->product_ffl_meta = new Product_FFL_Meta();
+
+			require_once plugin_dir_path( __FILE__ ) . 'admin/class-review-notice.php';
+			Review_Notice::init();
 		}
 	}
 

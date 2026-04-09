@@ -115,6 +115,11 @@ class AFFL_Loader {
 
 			wp_die( esc_html( self::PLUGIN_NAME . ' could not be activated. ' . $this->get_environment_message() ) );
 		}
+
+		// Store activation date for the review notice (only on first activation).
+		if ( false === get_option( 'wc_ffl_activated_at' ) ) {
+			update_option( 'wc_ffl_activated_at', time() );
+		}
 	}
 
 	/**

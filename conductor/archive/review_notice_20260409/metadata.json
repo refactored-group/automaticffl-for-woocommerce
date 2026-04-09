@@ -1,0 +1,8 @@
+{
+  "track_id": "review_notice_20260409",
+  "type": "feature",
+  "status": "completed",
+  "created_at": "2026-04-09T00:00:00Z",
+  "updated_at": "2026-04-09T00:00:00Z",
+  "description": "Add dismissible admin review request notice"
+}

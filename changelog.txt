@@ -1,5 +1,8 @@
 *** Automatic FFL for WooCommerce ***
 
+2026-04-09 - Version 1.0.17
+* Added dismissible admin review request notice with snooze option
+
 2026-02-16 - Version 1.0.16
 * Links are clickable in order comments
 

@@ -2,7 +2,7 @@
 Contributors: refactoredgroup
 Tags: woocommerce, ffl, firearms, ammunition, checkout
 Tested up to: 6.9.4
-Stable tag: 1.0.16
+Stable tag: 1.0.17
 Requires PHP: 5.6
 Requires at least: 4.7
 License: GPLv3
