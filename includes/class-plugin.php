@@ -129,6 +129,7 @@ class Plugin {
 
 		// Load map experience (firearms flow only — ammo-only handled above).
 		add_action( 'woocommerce_after_checkout_shipping_form', array( Checkout::class, 'get_ffl' ) );
+		add_action( 'woocommerce_after_order_notes', array( Checkout::class, 'get_ffl' ), 5 );
 		add_action('woocommerce_after_order_notes', array(Checkout::class, 'add_automaticffl_checkout_field'));
 		add_action('woocommerce_checkout_update_order_meta', array(Checkout::class, 'after_checkout_create_order'), 20, 2);
 		add_action('woocommerce_checkout_update_order_meta', array(Checkout::class, 'save_automaticffl_checkout_field_value'));
@@ -203,8 +204,15 @@ class Plugin {
 			if ( empty( $_POST['ffl_license_field'] ) ) {
 				return;
 			}
-			$order->set_shipping_first_name( sanitize_text_field( wp_unslash( $_POST['shipping_first_name'] ?? '' ) ) );
-			$order->set_shipping_last_name( sanitize_text_field( wp_unslash( $_POST['shipping_last_name'] ?? '' ) ) );
+			$shipping_first_name = ! empty( $_POST['shipping_first_name'] )
+				? $_POST['shipping_first_name']
+				: ( $_POST['billing_first_name'] ?? '' );
+			$shipping_last_name  = ! empty( $_POST['shipping_last_name'] )
+				? $_POST['shipping_last_name']
+				: ( $_POST['billing_last_name'] ?? '' );
+
+			$order->set_shipping_first_name( sanitize_text_field( wp_unslash( $shipping_first_name ) ) );
+			$order->set_shipping_last_name( sanitize_text_field( wp_unslash( $shipping_last_name ) ) );
 			$order->set_shipping_company( sanitize_text_field( wp_unslash( $_POST['ffl_company_name'] ?? '' ) ) );
 			$order->set_shipping_country( sanitize_text_field( wp_unslash( $_POST['shipping_country'] ?? '' ) ) );
 			$order->set_shipping_address_1( sanitize_text_field( wp_unslash( $_POST['shipping_address_1'] ?? '' ) ) );

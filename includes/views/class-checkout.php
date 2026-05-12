@@ -22,6 +22,17 @@ use RefactoredGroup\AutomaticFFL\Helper\US_States;
 class Checkout {
 
 	/**
+	 * Tracks whether the classic firearms FFL UI has already rendered.
+	 *
+	 * Some themes/templates skip the shipping-address hook but still fire
+	 * woocommerce_after_order_notes. The fallback hook calls get_ffl() again,
+	 * so guard output that must appear only once.
+	 *
+	 * @var bool
+	 */
+	private static $ffl_ui_rendered = false;
+
+	/**
 	 * Shared Cart_Analyzer instance for the current request.
 	 *
 	 * @var Cart_Analyzer|null
@@ -312,10 +323,15 @@ class Checkout {
 	 * @return void
 	 */
 	public static function get_ffl() {
+		if ( self::$ffl_ui_rendered ) {
+			return;
+		}
+
 		$analyzer = self::get_analyzer();
 
 		// Check if API is available - if not, show unavailable notice and allow normal checkout.
 		if ( $analyzer->has_api_error() ) {
+			self::$ffl_ui_rendered = true;
 			self::get_api_unavailable_notice();
 			return;
 		}
@@ -332,6 +348,7 @@ class Checkout {
 
 		// Firearms present (with or without ammo) - always show FFL selection.
 		if ( $analyzer->has_firearms() ) {
+			self::$ffl_ui_rendered = true;
 			self::get_js();
 			self::get_map();
 			self::disable_enter_key();

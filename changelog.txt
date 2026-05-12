@@ -1,5 +1,11 @@
 *** Automatic FFL for WooCommerce ***
 
+2026-05-12 - Version 1.0.20
+* Added a fallback classic checkout render hook so Divi and billing-only checkout templates still display the FFL dealer selector when the shipping form hook does not fire
+* Added duplicate-render protection for the classic FFL dealer selector and API-unavailable notice
+* Added hidden shipping-field fallbacks for classic checkout templates that omit normal shipping address fields, preserving selected dealer shipping data on order creation
+* Added billing-name fallback when creating FFL dealer shipping addresses
+
 2026-04-28 - Version 1.0.19
 * Refactored WooCommerce Blocks dealer selection to use the documented child-block API (registerCheckoutBlock + parent metadata + lock attribute for forced auto-insertion)
 * Removed React createPortal targeting of .wp-block-woocommerce-checkout-shipping-address-block

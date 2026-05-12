@@ -43,6 +43,31 @@ defined( 'ABSPATH' ) || exit;
 			return phone.replace(/(\d{3})(\d{3})(\d{4})/, '($1)-$2-$3');
 		}
 
+		// Some classic checkout templates skip visible shipping fields. Keep
+		// posting the fields WooCommerce expects by appending hidden fallbacks.
+		function getCheckoutField(fieldId, fieldName) {
+			var $field = $('#' + fieldId);
+			if ($field.length) {
+				return $field;
+			}
+
+			$field = $('[name="' + fieldName + '"]').first();
+			if ($field.length) {
+				return $field;
+			}
+
+			var $form = $('form.checkout').first();
+			if (!$form.length) {
+				return $();
+			}
+
+			return $('<input>', {
+				type: 'hidden',
+				id: fieldId,
+				name: fieldName
+			}).appendTo($form);
+		}
+
 		// Allowed origins for postMessage security
 		const allowedOrigins = <?php echo wp_json_encode( $allowed_origins ); ?>;
 
@@ -70,23 +95,35 @@ defined( 'ABSPATH' ) || exit;
 				// billing_first_name / billing_last_name so the order has a
 				// shipping name and the server-side validator doesn't block
 				// checkout with no obvious field for the customer to fix.
-				if ( ! ($('#shipping_first_name').val() || '').trim() ) {
-					$('#shipping_first_name').val($('#billing_first_name').val() || '');
+				var $shippingFirstName = getCheckoutField('shipping_first_name', 'shipping_first_name');
+				var $shippingLastName = getCheckoutField('shipping_last_name', 'shipping_last_name');
+				var $shippingCompany = getCheckoutField('shipping_company', 'shipping_company');
+				var $shippingPhone = getCheckoutField('shipping_phone', 'shipping_phone');
+				var $shippingCountry = getCheckoutField('shipping_country', 'shipping_country');
+				var $shippingState = getCheckoutField('shipping_state', 'shipping_state');
+				var $shippingAddress1 = getCheckoutField('shipping_address_1', 'shipping_address_1');
+				var $shippingAddress2 = getCheckoutField('shipping_address_2', 'shipping_address_2');
+				var $shippingCity = getCheckoutField('shipping_city', 'shipping_city');
+				var $shippingPostcode = getCheckoutField('shipping_postcode', 'shipping_postcode');
+
+				if ( ! ($shippingFirstName.val() || '').trim() ) {
+					$shippingFirstName.val($('#billing_first_name').val() || '');
 				}
-				if ( ! ($('#shipping_last_name').val() || '').trim() ) {
-					$('#shipping_last_name').val($('#billing_last_name').val() || '');
+				if ( ! ($shippingLastName.val() || '').trim() ) {
+					$shippingLastName.val($('#billing_last_name').val() || '');
 				}
-				$('#shipping_company').val(dealer.company || '');
+				$shippingCompany.val(dealer.company || '');
 				$('#ffl_license_field').val(dealer.fflID || '');
 				$('#ffl_expiration_date').val(dealer.expirationDate || '');
 				$('#ffl_uuid').val(dealer.uuid || '');
 				$('#ffl_company_name').val(dealer.company || '');
-				$('#shipping_phone').val(dealer.phone || '');
-				$('#shipping_country').val(dealer.countryCode || 'US');
-				$('#shipping_state').val(dealer.stateOrProvinceCode || '');
-				$('#shipping_address_1').val(dealer.address1 || '');
-				$('#shipping_city').val(dealer.city || '');
-				$('#shipping_postcode').val(dealer.postalCode || '');
+				$shippingPhone.val(dealer.phone || '');
+				$shippingCountry.val(dealer.countryCode || 'US');
+				$shippingState.val(dealer.stateOrProvinceCode || '');
+				$shippingAddress1.val(dealer.address1 || '');
+				$shippingAddress2.val(dealer.address2 || '');
+				$shippingCity.val(dealer.city || '');
+				$shippingPostcode.val(dealer.postalCode || '');
 
 				// Update button text
 				$('#automaticffl-select-dealer').text("Change Dealer");
@@ -97,8 +134,8 @@ defined( 'ABSPATH' ) || exit;
 				const formattedPhone = formatPhone(dealer.phone || '');
 
 				const $cardTemplate = $('#automaticffl-dealer-card-template').clone();
-				var firstName = $('#shipping_first_name').val() || '';
-				var lastName = $('#shipping_last_name').val() || '';
+				var firstName = $shippingFirstName.val() || '';
+				var lastName = $shippingLastName.val() || '';
 				$cardTemplate.find('.customer-name').text(firstName + ' ' + lastName);
 				$cardTemplate.find('.dealer-name').text(dealer.company || '');
 				$cardTemplate.find('.dealer-address').text(formattedAddress);
