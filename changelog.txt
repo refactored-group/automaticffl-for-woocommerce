@@ -1,5 +1,9 @@
 *** Automatic FFL for WooCommerce ***
 
+2026-05-13 - Version 1.0.21
+* Changed classic checkout FFL metadata fields to semantic hidden inputs
+* Added targeted CSS to keep FFL metadata field wrappers hidden when checkout builders override the generic hidden class
+
 2026-05-12 - Version 1.0.20
 * Added a fallback classic checkout render hook so Divi and billing-only checkout templates still display the FFL dealer selector when the shipping form hook does not fire
 * Added duplicate-render protection for the classic FFL dealer selector and API-unavailable notice

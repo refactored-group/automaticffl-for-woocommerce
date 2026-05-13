@@ -63,6 +63,14 @@
   display: none;
 }
 
+/* FunnelKit/WooFunnels checkout can override .hidden on field wrappers. */
+#ffl_license_field_field,
+#ffl_expiration_date_field,
+#ffl_uuid_field,
+#ffl_company_name_field {
+  display: none !important;
+}
+
 .dealer-phone {
   color: #512a74;
   margin: 0;
@@ -678,4 +686,3 @@ body.automaticffl-ffl-required select[id^="shipping-"]:not([id="shipping-first_n
   color: #666;
   font-style: italic;
 }
-

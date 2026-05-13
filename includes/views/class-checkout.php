@@ -182,7 +182,7 @@ class Checkout {
 		if ( self::needs_ffl_checkout() ) {
 			$analyzer = self::get_analyzer();
 			woocommerce_form_field('ffl_license_field', array(
-				'type' => 'text',
+				'type' => 'hidden',
 				'class' => array('hidden'),
 				'label' => __('FFL License', 'automaticffl-for-wc'),
 				'placeholder' => __('FFL License', 'automaticffl-for-wc'),
@@ -191,7 +191,7 @@ class Checkout {
 
 			// Hidden field for FFL expiration date.
 			woocommerce_form_field('ffl_expiration_date', array(
-				'type' => 'text',
+				'type' => 'hidden',
 				'class' => array('hidden'),
 				'label' => __('FFL Expiration Date', 'automaticffl-for-wc'),
 				'required' => false,
@@ -199,7 +199,7 @@ class Checkout {
 
 			// Hidden field for FFL UUID (for certificate link).
 			woocommerce_form_field('ffl_uuid', array(
-				'type' => 'text',
+				'type' => 'hidden',
 				'class' => array('hidden'),
 				'label' => __('FFL UUID', 'automaticffl-for-wc'),
 				'required' => false,
@@ -207,7 +207,7 @@ class Checkout {
 
 			// Hidden field for FFL dealer company name.
 			woocommerce_form_field('ffl_company_name', array(
-				'type' => 'text',
+				'type' => 'hidden',
 				'class' => array('hidden'),
 				'label' => __('FFL Company Name', 'automaticffl-for-wc'),
 				'required' => false,
