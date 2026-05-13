@@ -51,6 +51,13 @@ class Plugin {
 	);
 
 	/**
+	 * Session key for the selected FFL dealer shipping destination.
+	 *
+	 * @var string
+	 */
+	const SESSION_FFL_DESTINATION = '_affl_ffl_destination';
+
+	/**
 	 * Instance of Plugin
 	 *
 	 * @var Plugin
@@ -174,13 +181,20 @@ class Plugin {
 		add_action( 'woocommerce_checkout_order_processed', array( $this, 'restore_shipping_after_ffl_classic' ), 20 );
 		add_action( 'woocommerce_store_api_checkout_order_processed', array( $this, 'restore_shipping_after_ffl_blocks' ), 20 );
 
+		// Final order address normalization for classic FFL checkouts.
+		add_action( 'woocommerce_checkout_order_processed', array( $this, 'normalize_ffl_order_addresses_after_classic_checkout' ), 30, 3 );
+
 		// Hide "ship to different address" when FFL dealer handles shipping.
 		add_action( 'wp_enqueue_scripts', array( $this, 'maybe_hide_ship_to_different_address' ), 20 );
+
+		// Capture dealer destination before WooCommerce recalculates checkout shipping.
+		add_action( 'woocommerce_checkout_update_order_review', array( $this, 'capture_ffl_destination_for_shipping_rates' ), 20 );
 
 		// Clear session state when cart is emptied.
 		add_action( 'woocommerce_cart_emptied', function() {
 			if ( WC()->session ) {
 				WC()->session->set( 'automaticffl_ammo_state', '' );
+				$this->clear_ffl_destination_session();
 			}
 		});
 
@@ -195,34 +209,7 @@ class Plugin {
 		// the customer's real address that WooCommerce just populated from
 		// $data. has_ffl_products() returns true for any cart with ammo, so
 		// gating on cart shape alone is not sufficient.
-		add_action('woocommerce_checkout_create_order', function($order, $data) {
-			$analyzer = new Cart_Analyzer();
-			if ( ! $analyzer->has_ffl_products() || $analyzer->is_mixed_ffl_regular() ) {
-				return;
-			}
-			// phpcs:disable WordPress.Security.NonceVerification.Missing -- nonce verified by WC_Checkout::process_checkout().
-			if ( empty( $_POST['ffl_license_field'] ) ) {
-				return;
-			}
-			$shipping_first_name = ! empty( $_POST['shipping_first_name'] )
-				? $_POST['shipping_first_name']
-				: ( $_POST['billing_first_name'] ?? '' );
-			$shipping_last_name  = ! empty( $_POST['shipping_last_name'] )
-				? $_POST['shipping_last_name']
-				: ( $_POST['billing_last_name'] ?? '' );
-
-			$order->set_shipping_first_name( sanitize_text_field( wp_unslash( $shipping_first_name ) ) );
-			$order->set_shipping_last_name( sanitize_text_field( wp_unslash( $shipping_last_name ) ) );
-			$order->set_shipping_company( sanitize_text_field( wp_unslash( $_POST['ffl_company_name'] ?? '' ) ) );
-			$order->set_shipping_country( sanitize_text_field( wp_unslash( $_POST['shipping_country'] ?? '' ) ) );
-			$order->set_shipping_address_1( sanitize_text_field( wp_unslash( $_POST['shipping_address_1'] ?? '' ) ) );
-			$order->set_shipping_address_2( sanitize_text_field( wp_unslash( $_POST['shipping_address_2'] ?? '' ) ) );
-			$order->set_shipping_city( sanitize_text_field( wp_unslash( $_POST['shipping_city'] ?? '' ) ) );
-			$order->set_shipping_state( sanitize_text_field( wp_unslash( $_POST['shipping_state'] ?? '' ) ) );
-			$order->set_shipping_postcode( sanitize_text_field( wp_unslash( $_POST['shipping_postcode'] ?? '' ) ) );
-			$order->set_shipping_phone( sanitize_text_field( wp_unslash( $_POST['shipping_phone'] ?? '' ) ) );
-			// phpcs:enable WordPress.Security.NonceVerification.Missing
-		}, 99, 2);
+		add_action( 'woocommerce_checkout_create_order', array( $this, 'override_classic_ffl_shipping_address' ), 99, 2 );
 	}
 
 	/**
@@ -243,12 +230,145 @@ class Plugin {
 		add_filter( 'woocommerce_checkout_update_customer_data', array( $this, 'maybe_update_customer_data' ), 10, 2 );
 		add_filter( 'woocommerce_checkout_fields', array(Checkout::class, 'automaticffl_custom_fields') );
 
+		// Use the selected FFL dealer destination for shipping rates.
+		add_filter( 'woocommerce_cart_shipping_packages', array( $this, 'use_ffl_dealer_destination_for_shipping_packages' ), 20 );
+
 		// Add spacing between paragraphs in order notes.
 		add_action( 'admin_head', function() {
 			echo '<style>
 				.note_content p { margin-bottom: 10px !important; }
 			</style>';
 		});
+	}
+
+	/**
+	 * Capture the selected FFL dealer destination before checkout shipping recalculates.
+	 *
+	 * WooCommerce's billing-only destination setting copies billing into shipping
+	 * during checkout AJAX. FFL orders are the exception: rates should use the
+	 * selected dealer destination once a dealer is picked.
+	 *
+	 * @since 1.0.22
+	 *
+	 * @param string $post_data Serialized checkout form data.
+	 * @return void
+	 */
+	public function capture_ffl_destination_for_shipping_rates( $post_data ) {
+		if ( ! WC()->session ) {
+			return;
+		}
+
+		$posted_data = array();
+		if ( is_string( $post_data ) && '' !== $post_data ) {
+			parse_str( $post_data, $posted_data );
+		}
+
+		if ( empty( $posted_data['ffl_license_field'] ) ) {
+			$this->clear_ffl_destination_session();
+			return;
+		}
+
+		$destination = self::get_ffl_destination_from_checkout_data( $posted_data );
+		if ( ! self::is_valid_ffl_destination( $destination ) ) {
+			$this->clear_ffl_destination_session();
+			return;
+		}
+
+		WC()->session->set( self::SESSION_FFL_DESTINATION, $destination );
+	}
+
+	/**
+	 * Use the selected FFL dealer address for shipping package calculations.
+	 *
+	 * @since 1.0.22
+	 *
+	 * @param array $packages Shipping packages.
+	 * @return array
+	 */
+	public function use_ffl_dealer_destination_for_shipping_packages( $packages ) {
+		if ( ! WC()->session || ! is_array( $packages ) ) {
+			return $packages;
+		}
+
+		$analyzer = new Cart_Analyzer();
+		if ( ! $analyzer->has_ffl_products() || $analyzer->is_mixed_ffl_regular() ) {
+			$this->clear_ffl_destination_session();
+			return $packages;
+		}
+
+		$destination = WC()->session->get( self::SESSION_FFL_DESTINATION );
+		if ( ! self::is_valid_ffl_destination( $destination ) ) {
+			return $packages;
+		}
+
+		foreach ( $packages as $index => $package ) {
+			if ( ! is_array( $package ) ) {
+				continue;
+			}
+
+			$packages[ $index ]['destination'] = array_merge(
+				isset( $package['destination'] ) && is_array( $package['destination'] )
+					? $package['destination']
+					: array(),
+				$destination
+			);
+		}
+
+		return $packages;
+	}
+
+	/**
+	 * Override classic checkout shipping fields before the order is initially saved.
+	 *
+	 * @since 1.0.22
+	 *
+	 * @param \WC_Order $order Order object.
+	 * @param array     $data  Posted checkout data.
+	 * @return void
+	 */
+	public function override_classic_ffl_shipping_address( $order, $data ) {
+		if ( ! self::should_handle_posted_ffl_order() ) {
+			return;
+		}
+
+		self::set_order_shipping_from_posted_ffl_dealer( $order, is_array( $data ) ? $data : array() );
+	}
+
+	/**
+	 * Normalize billing and shipping on completed classic checkout order creation.
+	 *
+	 * This runs after WooCommerce and checkout builders have created the order.
+	 * It keeps customer billing as billing and selected dealer address as shipping
+	 * for FFL orders, even when WooCommerce's global shipping destination is
+	 * billing-only.
+	 *
+	 * @since 1.0.22
+	 *
+	 * @param int       $order_id    Order ID.
+	 * @param array     $posted_data Posted checkout data.
+	 * @param \WC_Order $order       Order object.
+	 * @return void
+	 */
+	public function normalize_ffl_order_addresses_after_classic_checkout( $order_id, $posted_data = array(), $order = null ) {
+		$order = $order instanceof \WC_Order ? $order : wc_get_order( $order_id );
+		if ( ! $order ) {
+			return;
+		}
+
+		if ( empty( $order->get_meta( '_ffl_license_field' ) ) && ! self::has_posted_ffl_selection() ) {
+			return;
+		}
+
+		$posted_data = is_array( $posted_data ) ? $posted_data : array();
+
+		self::set_order_billing_from_checkout_data( $order, $posted_data );
+
+		if ( self::has_posted_ffl_selection() ) {
+			self::set_order_shipping_from_posted_ffl_dealer( $order, $posted_data );
+		}
+
+		$order->save();
+		$this->clear_ffl_destination_session();
 	}
 
 	/**
@@ -622,6 +742,241 @@ class Plugin {
 		foreach ( self::SHIPPING_FIELDS as $field ) {
 			update_user_meta( $user_id, 'shipping_' . $field, $address[ $field ] ?? '' );
 		}
+	}
+
+	/**
+	 * Clear the selected FFL dealer destination from the WooCommerce session.
+	 *
+	 * @since 1.0.22
+	 *
+	 * @return void
+	 */
+	private function clear_ffl_destination_session() {
+		if ( WC()->session ) {
+			WC()->session->set( self::SESSION_FFL_DESTINATION, null );
+		}
+	}
+
+	/**
+	 * Determine whether the current classic checkout post contains a selected FFL dealer.
+	 *
+	 * @since 1.0.22
+	 *
+	 * @return bool
+	 */
+	private static function has_posted_ffl_selection() {
+		// phpcs:ignore WordPress.Security.NonceVerification.Missing -- WooCommerce verifies the checkout nonce before these hooks run.
+		return ! empty( $_POST['ffl_license_field'] );
+	}
+
+	/**
+	 * Determine whether the current classic checkout should receive FFL address handling.
+	 *
+	 * @since 1.0.22
+	 *
+	 * @return bool
+	 */
+	private static function should_handle_posted_ffl_order() {
+		if ( ! self::has_posted_ffl_selection() ) {
+			return false;
+		}
+
+		$analyzer = new Cart_Analyzer();
+		return $analyzer->has_ffl_products() && ! $analyzer->is_mixed_ffl_regular();
+	}
+
+	/**
+	 * Set order billing fields from WooCommerce checkout data.
+	 *
+	 * @since 1.0.22
+	 *
+	 * @param \WC_Order $order Order object.
+	 * @param array     $data  Posted checkout data.
+	 * @return void
+	 */
+	private static function set_order_billing_from_checkout_data( $order, array $data ) {
+		$fields = array(
+			'first_name',
+			'last_name',
+			'company',
+			'country',
+			'address_1',
+			'address_2',
+			'city',
+			'state',
+			'postcode',
+			'phone',
+			'email',
+		);
+
+		foreach ( $fields as $field ) {
+			$key = 'billing_' . $field;
+			if ( ! self::checkout_data_has_field( $data, $key ) ) {
+				continue;
+			}
+
+			$value  = self::get_checkout_field_value( $data, $key );
+			$setter = 'set_billing_' . $field;
+			if ( is_callable( array( $order, $setter ) ) ) {
+				$order->$setter( 'email' === $field ? sanitize_email( $value ) : $value );
+			}
+		}
+	}
+
+	/**
+	 * Set order shipping fields from the selected FFL dealer hidden checkout fields.
+	 *
+	 * @since 1.0.22
+	 *
+	 * @param \WC_Order $order Order object.
+	 * @param array     $data  Posted checkout data.
+	 * @return void
+	 */
+	private static function set_order_shipping_from_posted_ffl_dealer( $order, array $data ) {
+		$shipping_first_name = self::get_posted_checkout_field_value( 'shipping_first_name' );
+		if ( '' === $shipping_first_name ) {
+			$shipping_first_name = self::get_checkout_field_value( $data, 'billing_first_name' );
+		}
+
+		$shipping_last_name = self::get_posted_checkout_field_value( 'shipping_last_name' );
+		if ( '' === $shipping_last_name ) {
+			$shipping_last_name = self::get_checkout_field_value( $data, 'billing_last_name' );
+		}
+
+		$shipping_company = self::get_posted_checkout_field_value( 'ffl_company_name' );
+		if ( '' === $shipping_company ) {
+			$shipping_company = self::get_posted_checkout_field_value( 'shipping_company' );
+		}
+
+		$shipping_values = array(
+			'first_name' => $shipping_first_name,
+			'last_name'  => $shipping_last_name,
+			'company'    => $shipping_company,
+			'country'    => self::get_posted_checkout_field_value( 'shipping_country' ),
+			'address_1'  => self::get_posted_checkout_field_value( 'shipping_address_1' ),
+			'address_2'  => self::get_posted_checkout_field_value( 'shipping_address_2' ),
+			'city'       => self::get_posted_checkout_field_value( 'shipping_city' ),
+			'state'      => self::get_posted_checkout_field_value( 'shipping_state' ),
+			'postcode'   => self::get_posted_checkout_field_value( 'shipping_postcode' ),
+			'phone'      => self::get_posted_checkout_field_value( 'shipping_phone' ),
+		);
+
+		foreach ( $shipping_values as $field => $value ) {
+			$setter = 'set_shipping_' . $field;
+			if ( is_callable( array( $order, $setter ) ) ) {
+				$order->$setter( $value );
+			}
+		}
+	}
+
+	/**
+	 * Build a WooCommerce shipping package destination from checkout data.
+	 *
+	 * @since 1.0.22
+	 *
+	 * @param array $data Parsed checkout form data.
+	 * @return array
+	 */
+	private static function get_ffl_destination_from_checkout_data( array $data ) {
+		$address_1 = self::get_checkout_field_value( $data, 'shipping_address_1' );
+
+		return array(
+			'country'   => self::get_checkout_field_value( $data, 'shipping_country' ) ?: 'US',
+			'state'     => self::get_checkout_field_value( $data, 'shipping_state' ),
+			'postcode'  => self::get_checkout_field_value( $data, 'shipping_postcode' ),
+			'city'      => self::get_checkout_field_value( $data, 'shipping_city' ),
+			'address'   => $address_1,
+			'address_1' => $address_1,
+			'address_2' => self::get_checkout_field_value( $data, 'shipping_address_2' ),
+		);
+	}
+
+	/**
+	 * Determine whether a selected FFL dealer destination is usable.
+	 *
+	 * @since 1.0.22
+	 *
+	 * @param mixed $destination Potential destination array.
+	 * @return bool
+	 */
+	private static function is_valid_ffl_destination( $destination ) {
+		if ( ! is_array( $destination ) || empty( $destination['country'] ) ) {
+			return false;
+		}
+
+		return ! empty( $destination['address_1'] )
+			|| ! empty( $destination['postcode'] )
+			|| ! empty( $destination['city'] )
+			|| ! empty( $destination['state'] );
+	}
+
+	/**
+	 * Check whether checkout data contains a field.
+	 *
+	 * @since 1.0.22
+	 *
+	 * @param array  $data Checkout data.
+	 * @param string $key  Field key.
+	 * @return bool
+	 */
+	private static function checkout_data_has_field( array $data, $key ) {
+		if ( array_key_exists( $key, $data ) ) {
+			return true;
+		}
+
+		// phpcs:ignore WordPress.Security.NonceVerification.Missing -- WooCommerce verifies the checkout nonce before these hooks run.
+		return isset( $_POST[ $key ] );
+	}
+
+	/**
+	 * Read and sanitize a checkout field from WooCommerce data or $_POST fallback.
+	 *
+	 * @since 1.0.22
+	 *
+	 * @param array  $data Checkout data.
+	 * @param string $key  Field key.
+	 * @return string
+	 */
+	private static function get_checkout_field_value( array $data, $key ) {
+		if ( array_key_exists( $key, $data ) ) {
+			return self::sanitize_checkout_value( $data[ $key ] );
+		}
+
+		return self::get_posted_checkout_field_value( $key );
+	}
+
+	/**
+	 * Read and sanitize a checkout field from $_POST.
+	 *
+	 * @since 1.0.22
+	 *
+	 * @param string $key Field key.
+	 * @return string
+	 */
+	private static function get_posted_checkout_field_value( $key ) {
+		// phpcs:ignore WordPress.Security.NonceVerification.Missing -- WooCommerce verifies the checkout nonce before these hooks run.
+		if ( ! isset( $_POST[ $key ] ) ) {
+			return '';
+		}
+
+		// phpcs:ignore WordPress.Security.NonceVerification.Missing -- WooCommerce verifies the checkout nonce before these hooks run.
+		return self::sanitize_checkout_value( $_POST[ $key ] );
+	}
+
+	/**
+	 * Sanitize scalar checkout values.
+	 *
+	 * @since 1.0.22
+	 *
+	 * @param mixed $value Raw value.
+	 * @return string
+	 */
+	private static function sanitize_checkout_value( $value ) {
+		if ( ! is_scalar( $value ) ) {
+			return '';
+		}
+
+		return sanitize_text_field( wp_unslash( (string) $value ) );
 	}
 
 	/**

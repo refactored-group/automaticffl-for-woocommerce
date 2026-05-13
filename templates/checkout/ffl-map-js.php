@@ -68,6 +68,18 @@ defined( 'ABSPATH' ) || exit;
 			}).appendTo($form);
 		}
 
+		function forceShipToDifferentAddress() {
+			var $shipToDifferent = getCheckoutField('ship_to_different_address', 'ship_to_different_address');
+			if (!$shipToDifferent.length) {
+				return;
+			}
+
+			$shipToDifferent.val('1');
+			if ($shipToDifferent.is(':checkbox')) {
+				$shipToDifferent.prop('checked', true);
+			}
+		}
+
 		// Allowed origins for postMessage security
 		const allowedOrigins = <?php echo wp_json_encode( $allowed_origins ); ?>;
 
@@ -105,6 +117,8 @@ defined( 'ABSPATH' ) || exit;
 				var $shippingAddress2 = getCheckoutField('shipping_address_2', 'shipping_address_2');
 				var $shippingCity = getCheckoutField('shipping_city', 'shipping_city');
 				var $shippingPostcode = getCheckoutField('shipping_postcode', 'shipping_postcode');
+
+				forceShipToDifferentAddress();
 
 				if ( ! ($shippingFirstName.val() || '').trim() ) {
 					$shippingFirstName.val($('#billing_first_name').val() || '');

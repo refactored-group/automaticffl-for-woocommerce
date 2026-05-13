@@ -27,6 +27,20 @@ let persistedCustomerAddress = null;
 
 const BODY_CLASS_FFL_REQUIRED = 'automaticffl-ffl-required';
 
+const getDealerExtensionData = ( dealer = {} ) => ( {
+	fflLicense: dealer.fflID || '',
+	fflExpirationDate: dealer.expirationDate || '',
+	fflUuid: dealer.uuid || '',
+	fflCompanyName: dealer.company || '',
+	fflDealerAddress1: dealer.address1 || '',
+	fflDealerAddress2: dealer.address2 || '',
+	fflDealerCity: dealer.city || '',
+	fflDealerState: dealer.stateOrProvinceCode || '',
+	fflDealerPostcode: dealer.postalCode || '',
+	fflDealerCountry: dealer.countryCode || '',
+	fflDealerPhone: dealer.phone || '',
+} );
+
 const getSettings = () => {
 	let settings = getSetting( 'automaticffl_data', null );
 
@@ -223,16 +237,12 @@ const Block = () => {
 				setAmmoFflLocked( true );
 			}
 
-			setExtensionData( 'automaticffl', {
-				fflLicense: dealer.fflID || '',
-				fflExpirationDate: dealer.expirationDate || '',
-				fflUuid: dealer.uuid || '',
-				fflCompanyName: dealer.company || '',
-			} );
+			setExtensionData( 'automaticffl', getDealerExtensionData( dealer ) );
 
 			setShippingAddress( {
 				first_name: currentShipping.first_name || '',
 				last_name: currentShipping.last_name || '',
+				company: dealer.company || '',
 				address_1: dealer.address1 || '',
 				address_2: dealer.address2 || '',
 				city: dealer.city || '',
@@ -431,12 +441,7 @@ const Block = () => {
 
 		setSelectedDealer( null );
 		setAmmoFflLocked( false );
-		setExtensionData( 'automaticffl', {
-			fflLicense: '',
-			fflExpirationDate: '',
-			fflUuid: '',
-			fflCompanyName: '',
-		} );
+		setExtensionData( 'automaticffl', getDealerExtensionData() );
 
 		if ( persistedCustomerAddress ) {
 			setShippingAddress( {

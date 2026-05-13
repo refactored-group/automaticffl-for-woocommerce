@@ -2,7 +2,7 @@
 Contributors: refactoredgroup
 Tags: woocommerce, ffl, firearms, ammunition, checkout
 Tested up to: 6.9.4
-Stable tag: 1.0.19
+Stable tag: 1.0.22
 Requires PHP: 5.6
 Requires at least: 4.7
 License: GPLv3
@@ -96,6 +96,11 @@ Yes. Automatic FFL is also available as a BigCommerce app and Magento extension.
 8. Allow us to automatically enable new Type 1 & 2 FFL dealers or take full control.
 
 == Changelog ==
+
+= 1.0.22 =
+* Preserves customer billing while shipping FFL orders to the selected dealer when WooCommerce is configured to ship only to billing addresses.
+* Uses the selected FFL dealer destination for classic checkout shipping-rate calculations.
+* Passes the full selected dealer address through WooCommerce Blocks Store API extension data and applies it server-side.
 
 = 1.0.19 =
 * Refactored WooCommerce Blocks dealer selection to use the documented child-block API. Drops React portal targeting and CSS hiding of WooCommerce internal classes.

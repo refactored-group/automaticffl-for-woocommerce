@@ -190,6 +190,13 @@ class Store_Api_Extension {
 			'fflExpirationDate' => '',
 			'fflUuid'           => '',
 			'fflCompanyName'    => '',
+			'fflDealerAddress1' => '',
+			'fflDealerAddress2' => '',
+			'fflDealerCity'     => '',
+			'fflDealerState'    => '',
+			'fflDealerPostcode' => '',
+			'fflDealerCountry'  => '',
+			'fflDealerPhone'    => '',
 		);
 	}
 
@@ -223,6 +230,55 @@ class Store_Api_Extension {
 			),
 			'fflCompanyName'    => array(
 				'description' => __( 'FFL dealer company name.', 'automaticffl-for-wc' ),
+				'type'        => 'string',
+				'context'     => array( 'view', 'edit' ),
+				'readonly'    => false,
+				'optional'    => true,
+			),
+			'fflDealerAddress1' => array(
+				'description' => __( 'FFL dealer address line 1.', 'automaticffl-for-wc' ),
+				'type'        => 'string',
+				'context'     => array( 'view', 'edit' ),
+				'readonly'    => false,
+				'optional'    => true,
+			),
+			'fflDealerAddress2' => array(
+				'description' => __( 'FFL dealer address line 2.', 'automaticffl-for-wc' ),
+				'type'        => 'string',
+				'context'     => array( 'view', 'edit' ),
+				'readonly'    => false,
+				'optional'    => true,
+			),
+			'fflDealerCity'     => array(
+				'description' => __( 'FFL dealer city.', 'automaticffl-for-wc' ),
+				'type'        => 'string',
+				'context'     => array( 'view', 'edit' ),
+				'readonly'    => false,
+				'optional'    => true,
+			),
+			'fflDealerState'    => array(
+				'description' => __( 'FFL dealer state.', 'automaticffl-for-wc' ),
+				'type'        => 'string',
+				'context'     => array( 'view', 'edit' ),
+				'readonly'    => false,
+				'optional'    => true,
+			),
+			'fflDealerPostcode' => array(
+				'description' => __( 'FFL dealer postal code.', 'automaticffl-for-wc' ),
+				'type'        => 'string',
+				'context'     => array( 'view', 'edit' ),
+				'readonly'    => false,
+				'optional'    => true,
+			),
+			'fflDealerCountry'  => array(
+				'description' => __( 'FFL dealer country.', 'automaticffl-for-wc' ),
+				'type'        => 'string',
+				'context'     => array( 'view', 'edit' ),
+				'readonly'    => false,
+				'optional'    => true,
+			),
+			'fflDealerPhone'    => array(
+				'description' => __( 'FFL dealer phone.', 'automaticffl-for-wc' ),
 				'type'        => 'string',
 				'context'     => array( 'view', 'edit' ),
 				'readonly'    => false,
@@ -266,12 +322,7 @@ class Store_Api_Extension {
 				$order->update_meta_data( '_ffl_uuid', $uuid );
 			}
 
-			// Explicitly set the dealer company name on shipping address.
-			// setShippingAddress() in JS may not persist the company field
-			// through WooCommerce's address form sync, so we set it here.
-			if ( ! empty( $ffl_data['fflCompanyName'] ) ) {
-				$order->set_shipping_company( sanitize_text_field( $ffl_data['fflCompanyName'] ) );
-			}
+			$this->set_order_shipping_from_ffl_data( $order, $ffl_data );
 
 			$order->save();
 
@@ -283,6 +334,89 @@ class Store_Api_Extension {
 			);
 			$order->add_order_note( $note );
 		}
+	}
+
+	/**
+	 * Set the order shipping address from selected FFL dealer Store API data.
+	 *
+	 * @since 1.0.22
+	 *
+	 * @param \WC_Order $order    Order object.
+	 * @param array     $ffl_data Automatic FFL extension data.
+	 * @return void
+	 */
+	private function set_order_shipping_from_ffl_data( $order, array $ffl_data ) {
+		$company = $this->get_extension_value( $ffl_data, 'fflCompanyName' );
+		if ( '' !== $company ) {
+			$order->set_shipping_company( $company );
+		}
+
+		if ( ! $this->has_dealer_address_data( $ffl_data ) ) {
+			return;
+		}
+
+		$shipping_first_name = $order->get_shipping_first_name();
+		if ( '' === $shipping_first_name ) {
+			$shipping_first_name = $order->get_billing_first_name();
+		}
+
+		$shipping_last_name = $order->get_shipping_last_name();
+		if ( '' === $shipping_last_name ) {
+			$shipping_last_name = $order->get_billing_last_name();
+		}
+
+		$order->set_shipping_first_name( $shipping_first_name );
+		$order->set_shipping_last_name( $shipping_last_name );
+		$order->set_shipping_company( $company );
+		$order->set_shipping_address_1( $this->get_extension_value( $ffl_data, 'fflDealerAddress1' ) );
+		$order->set_shipping_address_2( $this->get_extension_value( $ffl_data, 'fflDealerAddress2' ) );
+		$order->set_shipping_city( $this->get_extension_value( $ffl_data, 'fflDealerCity' ) );
+		$order->set_shipping_state( $this->get_extension_value( $ffl_data, 'fflDealerState' ) );
+		$order->set_shipping_postcode( $this->get_extension_value( $ffl_data, 'fflDealerPostcode' ) );
+		$order->set_shipping_country( $this->get_extension_value( $ffl_data, 'fflDealerCountry' ) ?: 'US' );
+		$order->set_shipping_phone( $this->get_extension_value( $ffl_data, 'fflDealerPhone' ) );
+	}
+
+	/**
+	 * Determine whether extension data contains a dealer destination.
+	 *
+	 * @since 1.0.22
+	 *
+	 * @param array $ffl_data Automatic FFL extension data.
+	 * @return bool
+	 */
+	private function has_dealer_address_data( array $ffl_data ) {
+		$keys = array(
+			'fflDealerAddress1',
+			'fflDealerCity',
+			'fflDealerState',
+			'fflDealerPostcode',
+		);
+
+		foreach ( $keys as $key ) {
+			if ( '' !== $this->get_extension_value( $ffl_data, $key ) ) {
+				return true;
+			}
+		}
+
+		return false;
+	}
+
+	/**
+	 * Read a sanitized extension value.
+	 *
+	 * @since 1.0.22
+	 *
+	 * @param array  $data Extension data.
+	 * @param string $key  Data key.
+	 * @return string
+	 */
+	private function get_extension_value( array $data, $key ) {
+		if ( ! isset( $data[ $key ] ) || ! is_scalar( $data[ $key ] ) ) {
+			return '';
+		}
+
+		return sanitize_text_field( wp_unslash( (string) $data[ $key ] ) );
 	}
 
 	/**

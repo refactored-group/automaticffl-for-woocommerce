@@ -1,0 +1,8 @@
+{
+  "track_id": "ffl-billing-only-destination_20260513",
+  "type": "bugfix",
+  "status": "completed",
+  "created_at": "2026-05-13T00:00:00Z",
+  "updated_at": "2026-05-13T22:18:57Z",
+  "description": "Handle WooCommerce billing-only shipping destination for FFL orders by preserving customer billing, shipping FFL orders to the selected dealer, and using dealer destination for scoped shipping calculations."
+}
