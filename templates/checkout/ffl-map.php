@@ -13,6 +13,7 @@
 
 defined( 'ABSPATH' ) || exit;
 ?>
+<div class="automaticffl-classic-dealer-selection" style="clear: both; width: 100%;">
 <div class="woocommerce">
 	<div class="woocommerce-info" role="alert">
 		<?php echo esc_html__( 'You have a firearm in your cart and must choose a Licensed Firearm Dealer (FFL) for the Shipping Address.', 'automaticffl-for-wc' ); ?>
@@ -49,4 +50,5 @@ defined( 'ABSPATH' ) || exit;
 		<p class="dealer-address">{{dealer-address}}</p>
 		<a href="tel:{{dealer-phone}}"><p><span class="dealer-phone dealer-phone-formatted">{{dealer-phone}}</span></p></a>
 	</div>
+</div>
 </div>

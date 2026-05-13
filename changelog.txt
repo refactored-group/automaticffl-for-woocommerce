@@ -1,5 +1,8 @@
 *** Automatic FFL for WooCommerce ***
 
+2026-05-13 - Version 1.0.23
+* Fixed classic checkout layouts where the FFL firearm notice could wrap between floated shipping first/last name fields
+
 2026-05-13 - Version 1.0.22
 * Preserved customer billing while shipping FFL orders to the selected dealer when WooCommerce is configured to ship only to billing addresses
 * Used the selected FFL dealer destination for classic checkout shipping-rate calculations

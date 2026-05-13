@@ -9,6 +9,9 @@ This file tracks all major tracks for the project. Each track has its own detail
 - [x] **Track: FFL orders with billing-only shipping destination**
 *Link: [./tracks/ffl-billing-only-destination_20260513/](./tracks/ffl-billing-only-destination_20260513/)*
 
+- [x] **Track: Classic FFL notice layout clearing**
+*Link: [./tracks/classic-ffl-notice-layout_20260513/](./tracks/classic-ffl-notice-layout_20260513/)*
+
 ## Archived
 
 - [x] **Track: Migrate WooCommerce Blocks FFL dealer selection from React portal + private-class CSS hiding to the documented WC Blocks child-block API** _(archived 2026-04-29)_

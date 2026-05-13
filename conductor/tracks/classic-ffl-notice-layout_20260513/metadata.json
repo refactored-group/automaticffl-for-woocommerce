@@ -1,0 +1,8 @@
+{
+  "track_id": "classic-ffl-notice-layout_20260513",
+  "type": "bugfix",
+  "status": "completed",
+  "created_at": "2026-05-13T00:00:00Z",
+  "updated_at": "2026-05-13T22:49:01Z",
+  "description": "Fix classic checkout FFL notice layout when checkout builders leave floated shipping name fields uncleared before Automatic FFL renders the dealer selector."
+}
