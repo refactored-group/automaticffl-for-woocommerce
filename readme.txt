@@ -31,7 +31,7 @@ Selling firearms or ammunition through WooCommerce? Federal law requires those p
 
 = Pricing =
 
-Automatic FFL is **$75/month with a 30-day free trial**. Cancel anytime.
+Automatic FFL starts at **$99/month with a 30-day free trial**. Annual billing is available by request for **$1,079/year**. Firearms + Ammo coverage is **$164/month or $1,776/year**. Cancel anytime.
 
 Also available for BigCommerce and Magento — visit [automaticffl.com](https://www.automaticffl.com/) for details.
 
@@ -78,7 +78,7 @@ When a customer chooses to ship to an in-network FFL dealer, that dealer's licen
 
 = Is there a free trial? =
 
-Yes. Automatic FFL is $75/month with a 30-day free trial.
+Yes. Automatic FFL starts at $99/month with a 30-day free trial. Annual billing is available by request for $1,079/year; Firearms + Ammo is $164/month or $1,776/year.
 
 = Do you support BigCommerce or Magento? =
 
