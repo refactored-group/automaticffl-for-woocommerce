@@ -2,7 +2,7 @@
 Contributors: refactoredgroup
 Tags: woocommerce, ffl, firearms, ammunition, checkout
 Tested up to: 6.9.4
-Stable tag: 1.0.23
+Stable tag: 1.0.24
 Requires PHP: 5.6
 Requires at least: 4.7
 License: GPLv3
@@ -97,6 +97,10 @@ Yes. Automatic FFL is also available as a BigCommerce app and Magento extension.
 
 == Changelog ==
 
+= 1.0.24 =
+* Added a secure missing-certificate upload action to eligible WooCommerce orders.
+* Automatically attaches a valid matching certificate after server-side processing without changing order status or notifying the customer.
+
 = 1.0.23 =
 * Fixed classic checkout layouts where the FFL firearm notice could wrap between floated shipping first/last name fields.
 
@@ -156,6 +160,8 @@ Yes. Automatic FFL is also available as a BigCommerce app and Magento extension.
 * [Terms of service](https://cloud.google.com/maps-platform/terms)
 
 **AutomaticFFL:** provides FFL dealer data, an interactive map experience, and product restrictions
+
+Order certificate files selected by a store manager are uploaded to AutomaticFFL-managed Google Cloud Storage and processed by AutomaticFFL so a valid matching certificate can be attached to the WooCommerce order.
 
 * [AutomaticFFL](https://www.automaticffl.com/)
 * [Privacy Policy](https://www.automaticffl.com/privacy-policy/)

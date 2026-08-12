@@ -1,5 +1,10 @@
 *** Automatic FFL for WooCommerce ***
 
+2026-08-12 - Version 1.0.24
+* Added a secure missing-certificate upload action to eligible WooCommerce orders
+* Attached valid matching certificates asynchronously through a bounded server-side callback
+* Preserved private order notes, customer notifications, and order statuses
+
 2026-05-13 - Version 1.0.23
 * Fixed classic checkout layouts where the FFL firearm notice could wrap between floated shipping first/last name fields
 

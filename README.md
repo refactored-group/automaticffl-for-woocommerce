@@ -4,7 +4,7 @@ Contributors: refactoredgroup
 License: GPLv3
 License URI: http://www.gnu.org/licenses/gpl.html
 Tags: FFL Locator, Firearms, Search, FFL, Guns
-Stable tag: 1.0.23
+Stable tag: 1.0.24
 Tested up to: 6.9
 Requires PHP: 5.6
 
@@ -17,6 +17,8 @@ Automatic FFL is a powerful extension designed to simplify the process of shippi
 Automatic FFL for WooCommerce is a powerful extension designed to simplify the process of shipping firearms and ammunition to Federal Firearms License (FFL) dealers. The extension seamlessly integrates with both the classic and block-based WooCommerce checkouts, adding a user-friendly interface that allows customers to select an FFL dealer near them for order pickup. It automatically detects firearms and ammunition in the cart, enforces state-based shipping restrictions, and handles mixed carts containing both regulated and non-regulated items. With this extension, you can ensure compliance with firearms and ammunitions shipping regulations while providing a convenient experience for your customers.
 
 ## Features Include
+
+- **Missing-certificate order upload:** Store managers can upload certificate PDFs, images, or ZIPs from an eligible WooCommerce order. A valid certificate is attached after Automatic FFL finishes processing it.
 
 - **Simplified Firearms and Ammunitions Shipping:** With Automatic FFL for WooCommerce, you can streamline the complex process of shipping firearms and ammunitions to FFL dealers, making it easy to comply with federal regulations.
 
