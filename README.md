@@ -4,7 +4,7 @@ Contributors: refactoredgroup
 License: GPLv3
 License URI: http://www.gnu.org/licenses/gpl.html
 Tags: FFL Locator, Firearms, Search, FFL, Guns
-Stable tag: 1.0.24
+Stable tag: 1.0.26
 Tested up to: 6.9
 Requires PHP: 5.6
 
@@ -18,7 +18,7 @@ Automatic FFL for WooCommerce is a powerful extension designed to simplify the p
 
 ## Features Include
 
-- **Missing-certificate order upload:** Store managers can upload certificate PDFs, images, or ZIPs from an eligible WooCommerce order. A valid certificate is attached after Automatic FFL finishes processing it.
+- **Missing-certificate order upload:** A prominent order-page banner alerts store managers when an FFL certificate is missing and lets them upload PDFs, images, or ZIPs. A valid certificate is attached after Automatic FFL finishes processing it.
 
 - **Simplified Firearms and Ammunitions Shipping:** With Automatic FFL for WooCommerce, you can streamline the complex process of shipping firearms and ammunitions to FFL dealers, making it easy to comply with federal regulations.
 

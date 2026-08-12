@@ -1,3 +1,78 @@
+.automaticffl-certificate-banner {
+	align-items: center;
+	background: linear-gradient(135deg, #fbf8ff 0%, #f2e9ff 100%);
+	border: 1px solid #d4bdf0;
+	border-left: 5px solid #674399;
+	box-shadow: 0 2px 8px rgba(43, 24, 64, 0.12);
+	display: flex;
+	gap: 16px;
+	margin: 16px 0 20px;
+	padding: 16px 20px;
+}
+
+.automaticffl-certificate-banner__icon {
+	align-items: center;
+	background: #674399;
+	border-radius: 50%;
+	color: #fff;
+	display: flex;
+	flex: 0 0 44px;
+	height: 44px;
+	justify-content: center;
+	width: 44px;
+}
+
+.automaticffl-certificate-banner__icon .dashicons {
+	font-size: 24px;
+	height: 24px;
+	line-height: 24px;
+	width: 24px;
+}
+
+.automaticffl-certificate-banner__content {
+	flex: 1 1 auto;
+}
+
+.automaticffl-certificate-banner__content p {
+	font-size: 14px;
+	margin: 3px 0 0;
+}
+
+.automaticffl-certificate-banner__content .automaticffl-certificate-banner__title {
+	color: #2c1a3d;
+	font-size: 16px;
+	font-weight: 600;
+	margin: 0;
+}
+
+.automaticffl-certificate-banner__content .automaticffl-certificate-banner__formats {
+	color: #50575e;
+	font-size: 13px;
+	margin-top: 6px;
+}
+
+.automaticffl-certificate-banner__actions {
+	flex: 0 0 auto;
+	margin-left: auto;
+}
+
+.automaticffl-certificate-banner .button.button-primary.automaticffl-certificate-banner__button {
+	align-items: center;
+	background: #674399;
+	border-color: #674399;
+	display: inline-flex;
+	font-weight: 600;
+	justify-content: center;
+	min-height: 40px;
+	padding: 0 18px;
+}
+
+.automaticffl-certificate-banner .button.button-primary.automaticffl-certificate-banner__button:focus,
+.automaticffl-certificate-banner .button.button-primary.automaticffl-certificate-banner__button:hover {
+	background: #56367f;
+	border-color: #56367f;
+}
+
 .automaticffl-order-certificate-action {
 	margin-top: 12px;
 }
@@ -30,4 +105,21 @@
 
 #automaticffl-upload-status.automaticffl-error {
 	color: #b32d2e;
+}
+
+@media screen and (max-width: 782px) {
+
+	.automaticffl-certificate-banner {
+		align-items: flex-start;
+		flex-wrap: wrap;
+	}
+
+	.automaticffl-certificate-banner__actions {
+		flex-basis: 100%;
+		margin-left: 60px;
+	}
+
+	.automaticffl-certificate-banner .button.button-primary.automaticffl-certificate-banner__button {
+		width: 100%;
+	}
 }

@@ -2,7 +2,7 @@
 Contributors: refactoredgroup
 Tags: woocommerce, ffl, firearms, ammunition, checkout
 Tested up to: 6.9.4
-Stable tag: 1.0.24
+Stable tag: 1.0.26
 Requires PHP: 5.6
 Requires at least: 4.7
 License: GPLv3
@@ -96,6 +96,14 @@ Yes. Automatic FFL is also available as a BigCommerce app and Magento extension.
 8. Allow us to automatically enable new Type 1 & 2 FFL dealers or take full control.
 
 == Changelog ==
+
+= 1.0.26 =
+* Reworded the missing-certificate banner around saving time on this order and future orders.
+* Clarified support for multiple PDFs, images, and ZIP files.
+
+= 1.0.25 =
+* Added a prominent, non-dismissible banner to eligible orders that are missing an FFL certificate.
+* Kept the existing shipping-address upload action as a secondary option.
 
 = 1.0.24 =
 * Added a secure missing-certificate upload action to eligible WooCommerce orders.

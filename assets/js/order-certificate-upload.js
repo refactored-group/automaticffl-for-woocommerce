@@ -289,7 +289,7 @@
 			} );
 	}
 
-	$( document ).on( 'click', '#automaticffl-upload-certificate', function () {
+	$( document ).on( 'click', '.automaticffl-upload-certificate', function () {
 		orderId = Number( $( this ).data( 'order-id' ) );
 		new $.WCBackboneModal.View( {
 			target: 'automaticffl-certificate-upload-modal',

@@ -26,6 +26,7 @@ class Order_Certificate_Upload {
 	/** Register hooks. */
 	public function __construct() {
 		add_action( 'rest_api_init', array( $this, 'register_rest_routes' ) );
+		add_action( 'admin_notices', array( $this, 'render_missing_certificate_banner' ) );
 		add_action( 'woocommerce_admin_order_data_after_shipping_address', array( $this, 'render_order_action' ) );
 		add_action( 'admin_enqueue_scripts', array( $this, 'enqueue_assets' ) );
 	}
@@ -225,6 +226,39 @@ class Order_Certificate_Upload {
 		return $this->attachment_response( $uuid );
 	}
 
+	/** Render a prominent action banner at the top of an eligible order. */
+	public function render_missing_certificate_banner() {
+		$order = $this->get_current_order();
+		if ( ! $this->is_upload_eligible( $order ) || ! $this->user_can_edit_order( $order->get_id() ) ) {
+			return;
+		}
+
+		$title_id = 'automaticffl-certificate-banner-title-' . $order->get_id();
+		?>
+		<div class="notice automaticffl-certificate-banner" aria-labelledby="<?php echo esc_attr( $title_id ); ?>">
+			<div class="automaticffl-certificate-banner__icon" aria-hidden="true">
+				<span class="dashicons dashicons-media-document"></span>
+			</div>
+			<div class="automaticffl-certificate-banner__content">
+				<p class="automaticffl-certificate-banner__title" id="<?php echo esc_attr( $title_id ); ?>">
+					<?php esc_html_e( 'Upload once. Save time on future orders.', 'automaticffl-for-wc' ); ?>
+				</p>
+				<p>
+					<?php esc_html_e( 'The certificate link stays with this order and will automatically be available on future orders for this dealer.', 'automaticffl-for-wc' ); ?>
+				</p>
+				<p class="automaticffl-certificate-banner__formats">
+					<?php esc_html_e( 'Upload one or more PDFs, images, or ZIP files.', 'automaticffl-for-wc' ); ?>
+				</p>
+			</div>
+			<div class="automaticffl-certificate-banner__actions">
+				<button type="button" class="button button-primary automaticffl-upload-certificate automaticffl-certificate-banner__button" data-order-id="<?php echo esc_attr( $order->get_id() ); ?>">
+					<?php esc_html_e( 'Upload certificate(s)', 'automaticffl-for-wc' ); ?>
+				</button>
+			</div>
+		</div>
+		<?php
+	}
+
 	/** Render the action only for orders that selected an FFL and have no UUID. */
 	public function render_order_action( $order ) {
 		if ( ! $this->is_upload_eligible( $order ) || ! $this->user_can_edit_order( $order->get_id() ) ) {
@@ -232,7 +266,7 @@ class Order_Certificate_Upload {
 		}
 		?>
 		<p class="automaticffl-order-certificate-action">
-			<button type="button" class="button" id="automaticffl-upload-certificate" data-order-id="<?php echo esc_attr( $order->get_id() ); ?>">
+			<button type="button" class="button automaticffl-upload-certificate" data-order-id="<?php echo esc_attr( $order->get_id() ); ?>">
 				<?php esc_html_e( 'Upload FFL certificate(s)', 'automaticffl-for-wc' ); ?>
 			</button>
 		</p>
@@ -331,6 +365,22 @@ class Order_Certificate_Upload {
 			&& 'trash' !== $order->get_status()
 			&& '' !== trim( (string) $order->get_meta( '_ffl_license_field' ) )
 			&& '' === trim( (string) $order->get_meta( '_ffl_uuid' ) );
+	}
+
+	/** Return the order currently open in either the legacy or HPOS editor. */
+	private function get_current_order() {
+		$screen = get_current_screen();
+		if ( ! $screen || ! $this->is_order_screen( $screen->id ) ) {
+			return false;
+		}
+
+		// Read-only lookup used solely to decide whether the order banner is shown.
+		$order_id = isset( $_GET['id'] ) ? absint( wp_unslash( $_GET['id'] ) ) : 0; // phpcs:ignore WordPress.Security.NonceVerification.Recommended
+		if ( ! $order_id ) {
+			$order_id = isset( $_GET['post'] ) ? absint( wp_unslash( $_GET['post'] ) ) : 0; // phpcs:ignore WordPress.Security.NonceVerification.Recommended
+		}
+
+		return $order_id ? wc_get_order( $order_id ) : false;
 	}
 
 	private function sanitize_file_descriptors( $files ) {

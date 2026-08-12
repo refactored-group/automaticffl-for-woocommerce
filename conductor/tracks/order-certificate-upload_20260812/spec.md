@@ -11,6 +11,8 @@ An editable WooCommerce order with a selected FFL license but no certificate UUI
 ## Requirements
 
 - Show the upload control only when `_ffl_license_field` exists and `_ffl_uuid` is empty.
+- Make the missing-certificate action hard to miss with a prominent, non-dismissible order-page banner and keep the shipping-column action as a secondary entry point.
+- Use concise, merchant-focused banner copy that explains permanent order reference, future-order reuse, and multi-file or ZIP support.
 - Accept the existing PDF, image, and ZIP certificate formats and repeated multi-file batches.
 - Upload directly to one-time, backend-derived GCS sessions; do not send certificate bytes through WordPress.
 - Carry store, order, and expected-license context in the order-specific source path without adding application tables.
@@ -28,4 +30,4 @@ An editable WooCommerce order with a selected FFL license but no certificate UUI
 - Invalid, expired, unreadable, unsupported, and wrong-license files do not update the order or enqueue a callback.
 - Duplicate processing and callback delivery are idempotent.
 - The browser stops checking after attachment, authorization failure, page exit, or 18 checks.
-- WooCommerce plugin release metadata is synchronized at `1.0.24`.
+- WooCommerce plugin release metadata is synchronized at `1.0.26`.
