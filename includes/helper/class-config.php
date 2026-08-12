@@ -101,6 +101,17 @@ class Config {
 		return sprintf( '%s/%s/%s', self::get_ffl_api_url(), 'stores', self::get_store_hash() );
 	}
 
+	/**
+	 * Get the protected order certificate upload-session endpoint.
+	 *
+	 * @since 1.0.24
+	 *
+	 * @return string
+	 */
+	public static function get_order_certificate_uploads_url() {
+		return self::get_ffl_store_url() . '/order-certificate-uploads';
+	}
+
 
 	/**
 	 * Get the store hash

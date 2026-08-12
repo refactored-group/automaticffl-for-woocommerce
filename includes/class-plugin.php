@@ -16,6 +16,7 @@ use RefactoredGroup\AutomaticFFL\Helper\Saved_Cart;
 use RefactoredGroup\AutomaticFFL\Admin\Settings;
 use RefactoredGroup\AutomaticFFL\Admin\Product_FFL_Meta;
 use RefactoredGroup\AutomaticFFL\Admin\Review_Notice;
+use RefactoredGroup\AutomaticFFL\Admin\Order_Certificate_Upload;
 use RefactoredGroup\AutomaticFFL\Blocks\Blocks_Integration;
 use RefactoredGroup\AutomaticFFL\Blocks\Store_Api_Extension;
 use RefactoredGroup\AutomaticFFL\Helper\US_States;
@@ -79,6 +80,16 @@ class Plugin {
 	private $product_ffl_meta;
 
 	/**
+	 * Order certificate upload handler.
+	 *
+	 * Loaded on every request because its authenticated REST callback is invoked
+	 * by the Automatic FFL backend, outside wp-admin.
+	 *
+	 * @var \RefactoredGroup\AutomaticFFL\Admin\Order_Certificate_Upload
+	 */
+	private $order_certificate_upload;
+
+	/**
 	 * Constructor
 	 *
 	 * @since 1.0.0
@@ -86,6 +97,7 @@ class Plugin {
 	public function __construct() {
 		$this->add_hooks();
 		$this->add_filters();
+		$this->order_certificate_upload = new Order_Certificate_Upload();
 		// Note: Blocks integration is now registered early in AFFL_Loader to catch woocommerce_blocks_loaded
 
 		if ( is_admin() ) {

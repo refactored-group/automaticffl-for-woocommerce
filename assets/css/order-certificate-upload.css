@@ -1,0 +1,33 @@
+.automaticffl-order-certificate-action {
+	margin-top: 12px;
+}
+
+.automaticffl-certificate-modal article {
+	padding: 24px;
+}
+
+.automaticffl-certificate-modal input[type="file"] {
+	display: block;
+	margin-top: 8px;
+	max-width: 100%;
+}
+
+.automaticffl-certificate-modal progress {
+	display: block;
+	margin-top: 16px;
+	width: 100%;
+}
+
+.automaticffl-certificate-modal progress[hidden],
+.automaticffl-certificate-modal button[hidden] {
+	display: none;
+}
+
+#automaticffl-upload-status {
+	margin-top: 16px;
+	white-space: pre-line;
+}
+
+#automaticffl-upload-status.automaticffl-error {
+	color: #b32d2e;
+}

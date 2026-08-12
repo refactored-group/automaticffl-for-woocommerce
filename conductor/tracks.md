@@ -6,6 +6,9 @@ This file tracks all major tracks for the project. Each track has its own detail
 
 ## Active
 
+- [ ] **Track: WooCommerce missing-certificate order upload**
+*Link: [./tracks/order-certificate-upload_20260812/](./tracks/order-certificate-upload_20260812/)*
+
 - [x] **Track: FFL orders with billing-only shipping destination**
 *Link: [./tracks/ffl-billing-only-destination_20260513/](./tracks/ffl-billing-only-destination_20260513/)*
 
