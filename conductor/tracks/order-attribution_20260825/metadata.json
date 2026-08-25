@@ -1,0 +1,8 @@
+{
+  "track_id": "order-attribution_20260825",
+  "type": "feature",
+  "status": "in_progress",
+  "created_at": "2026-08-25T18:59:02Z",
+  "updated_at": "2026-08-25T18:59:02Z",
+  "description": "Report successfully placed WooCommerce FFL orders to the authenticated Automatic FFL attribution ledger without blocking checkout."
+}

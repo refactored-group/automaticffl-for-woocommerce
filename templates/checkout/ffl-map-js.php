@@ -127,6 +127,7 @@ defined( 'ABSPATH' ) || exit;
 					$shippingLastName.val($('#billing_last_name').val() || '');
 				}
 				$shippingCompany.val(dealer.company || '');
+				$('#ffl_dealer_id').val(dealer.id || '');
 				$('#ffl_license_field').val(dealer.fflID || '');
 				$('#ffl_expiration_date').val(dealer.expirationDate || '');
 				$('#ffl_uuid').val(dealer.uuid || '');

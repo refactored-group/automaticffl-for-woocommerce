@@ -4,7 +4,7 @@ Contributors: refactoredgroup
 License: GPLv3
 License URI: http://www.gnu.org/licenses/gpl.html
 Tags: FFL Locator, Firearms, Search, FFL, Guns
-Stable tag: 1.0.26
+Stable tag: 1.0.27
 Tested up to: 6.9
 Requires PHP: 5.6
 
@@ -54,6 +54,8 @@ For installation and setup, please follow the instructions [here](https://www.au
 - [Terms of service](https://cloud.google.com/maps-platform/terms)
 
 **AutomaticFFL:** provides FFL dealer data, an interactive map experience, and product restrictions
+
+When an order using a selected FFL dealer is placed, the plugin sends the WooCommerce order ID, canonical dealer ID, FFL license, and order creation time to Automatic FFL for aggregate order attribution. It does not send buyer information for this reporting.
 
 - [AutomaticFFL](https://www.automaticffl.com/)
 - [Privacy Policy](https://www.automaticffl.com/privacy-policy/)

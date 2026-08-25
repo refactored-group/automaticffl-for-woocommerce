@@ -2,7 +2,7 @@
 Contributors: refactoredgroup
 Tags: woocommerce, ffl, firearms, ammunition, checkout
 Tested up to: 6.9.4
-Stable tag: 1.0.26
+Stable tag: 1.0.27
 Requires PHP: 5.6
 Requires at least: 4.7
 License: GPLv3
@@ -97,6 +97,11 @@ Yes. Automatic FFL is also available as a BigCommerce app and Magento extension.
 
 == Changelog ==
 
+= 1.0.27 =
+* Preserves the selected Automatic FFL dealer ID on Classic and Blocks orders.
+* Reports successfully placed FFL orders asynchronously with bounded retries.
+* Keeps payment, status, cancellation, refund, and customer data outside order attribution.
+
 = 1.0.26 =
 * Reworded the missing-certificate banner around saving time on this order and future orders.
 * Clarified support for multiple PDFs, images, and ZIP files.
@@ -170,6 +175,8 @@ Yes. Automatic FFL is also available as a BigCommerce app and Magento extension.
 **AutomaticFFL:** provides FFL dealer data, an interactive map experience, and product restrictions
 
 Order certificate files selected by a store manager are uploaded to AutomaticFFL-managed Google Cloud Storage and processed by AutomaticFFL so a valid matching certificate can be attached to the WooCommerce order.
+
+When an order using a selected FFL dealer is placed, the plugin sends the WooCommerce order ID, canonical dealer ID, FFL license, and order creation time to Automatic FFL for aggregate order attribution. Buyer information is not sent for this reporting.
 
 * [AutomaticFFL](https://www.automaticffl.com/)
 * [Privacy Policy](https://www.automaticffl.com/privacy-policy/)

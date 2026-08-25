@@ -6,6 +6,9 @@ This file tracks all major tracks for the project. Each track has its own detail
 
 ## Active
 
+- [ ] **Track: Successful FFL order attribution**
+*Link: [./tracks/order-attribution_20260825/](./tracks/order-attribution_20260825/)*
+
 - [ ] **Track: WooCommerce missing-certificate order upload**
 *Link: [./tracks/order-certificate-upload_20260812/](./tracks/order-certificate-upload_20260812/)*
 

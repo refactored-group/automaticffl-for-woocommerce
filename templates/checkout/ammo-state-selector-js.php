@@ -147,6 +147,7 @@ jQuery(document).ready(function($) {
 	 * Clear the currently-selected dealer and reset the FFL UI.
 	 */
 	function clearDealer() {
+		$('#ffl_dealer_id').val('');
 		$('#ffl_license_field').val('');
 		$('#ffl_expiration_date').val('');
 		$('#ffl_uuid').val('');

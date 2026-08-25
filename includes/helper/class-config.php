@@ -112,6 +112,17 @@ class Config {
 		return self::get_ffl_store_url() . '/order-certificate-uploads';
 	}
 
+	/**
+	 * Get the protected placed-order attribution endpoint.
+	 *
+	 * @since 1.0.27
+	 *
+	 * @return string
+	 */
+	public static function get_order_attributions_url() {
+		return self::get_ffl_store_url() . '/order-attributions';
+	}
+
 
 	/**
 	 * Get the store hash

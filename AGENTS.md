@@ -64,7 +64,7 @@ To find a file (e.g., "**Product Definition**") within a specific context (Proje
 
 This is a WordPress/WooCommerce plugin that integrates FFL (Federal Firearms License) dealer selection into the checkout process. When customers purchase firearms, they must select a licensed FFL dealer for shipping compliance.
 
-**Current Version:** 1.0.26
+**Current Version:** 1.0.27
 **Requires:** WordPress 5.2+, WooCommerce 3.5+, PHP 7.0+
 
 ## Project Structure
@@ -120,6 +120,7 @@ automaticffl-for-woocommerce/
 - `_ffl_required` - Flag marking product as requiring FFL (`yes`/`no`)
 
 **Order Meta:**
+- `_ffl_dealer_id` - Canonical Automatic FFL dealer ID used for placed-order attribution
 - `_ffl_license_field` - Selected dealer's FFL license number
 
 **WordPress Options:**
@@ -137,6 +138,7 @@ automaticffl-for-woocommerce/
 **Endpoints:**
 - `GET /stores/{store-hash}` - Store configuration
 - `GET /{store-hash}/dealers?location={search}&radius={miles}` - Dealer search
+- `POST /stores/{store-hash}/order-attributions` - Authenticated placed-order attribution
 
 ### Google Maps API
 - Used for interactive dealer map on checkout
@@ -205,6 +207,7 @@ Ensure all version references reflect the same version number for consistency.
 
 ## Recent Changes
 
+- **v1.0.27:** Preserved canonical dealer IDs and asynchronously reported successfully placed FFL orders with bounded retries
 - **v1.0.26:** Reworded the missing-certificate banner to focus on saved time and future-order reuse
 - **v1.0.25:** Added a prominent order-page banner for eligible orders missing an FFL certificate
 - **v1.0.24:** Added secure order-level missing-certificate uploads and asynchronous attachment of valid matching certificates

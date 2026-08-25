@@ -28,6 +28,7 @@ let persistedCustomerAddress = null;
 const BODY_CLASS_FFL_REQUIRED = 'automaticffl-ffl-required';
 
 const getDealerExtensionData = ( dealer = {} ) => ( {
+	fflDealerId: dealer.id ? String( dealer.id ) : '',
 	fflLicense: dealer.fflID || '',
 	fflExpirationDate: dealer.expirationDate || '',
 	fflUuid: dealer.uuid || '',
