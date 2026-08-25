@@ -181,6 +181,13 @@ class Checkout {
 	public static function add_automaticffl_checkout_field($checkout) {
 		if ( self::needs_ffl_checkout() ) {
 			$analyzer = self::get_analyzer();
+			woocommerce_form_field('ffl_dealer_id', array(
+				'type' => 'hidden',
+				'class' => array('hidden'),
+				'label' => __('FFL Dealer ID', 'automaticffl-for-wc'),
+				'required' => false,
+			), $checkout->get_value('ffl_dealer_id'));
+
 			woocommerce_form_field('ffl_license_field', array(
 				'type' => 'hidden',
 				'class' => array('hidden'),
@@ -230,6 +237,13 @@ class Checkout {
 
 		$updated = false;
 
+		if ( ! empty( $_POST['ffl_dealer_id'] ) ) {
+			$dealer_id = absint( wp_unslash( $_POST['ffl_dealer_id'] ) );
+			if ( $dealer_id ) {
+				$order->update_meta_data( '_ffl_dealer_id', $dealer_id );
+				$updated = true;
+			}
+		}
 		if ( ! empty( $_POST['ffl_license_field'] ) ) {
 			$order->update_meta_data( '_ffl_license_field', sanitize_text_field( wp_unslash( $_POST['ffl_license_field'] ) ) );
 			$updated = true;

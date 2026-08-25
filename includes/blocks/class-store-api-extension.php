@@ -186,6 +186,7 @@ class Store_Api_Extension {
 	 */
 	public function get_schema_data() {
 		return array(
+			'fflDealerId'       => '',
 			'fflLicense'        => '',
 			'fflExpirationDate' => '',
 			'fflUuid'           => '',
@@ -207,6 +208,13 @@ class Store_Api_Extension {
 	 */
 	public function get_schema() {
 		return array(
+			'fflDealerId'       => array(
+				'description' => __( 'Canonical Automatic FFL dealer ID.', 'automaticffl-for-wc' ),
+				'type'        => 'string',
+				'context'     => array( 'view', 'edit' ),
+				'readonly'    => false,
+				'optional'    => true,
+			),
 			'fflLicense'        => array(
 				'description' => __( 'FFL License number for the selected dealer.', 'automaticffl-for-wc' ),
 				'type'        => 'string',
@@ -306,6 +314,12 @@ class Store_Api_Extension {
 
 		if ( ! empty( $ffl_data['fflLicense'] ) ) {
 			$ffl_license = sanitize_text_field( $ffl_data['fflLicense'] );
+
+			// Save the canonical dealer ID used for order attribution.
+			$dealer_id = absint( $this->get_extension_value( $ffl_data, 'fflDealerId' ) );
+			if ( $dealer_id ) {
+				$order->update_meta_data( '_ffl_dealer_id', $dealer_id );
+			}
 
 			// Save FFL license to order meta.
 			$order->update_meta_data( '_ffl_license_field', $ffl_license );

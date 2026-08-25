@@ -1,5 +1,11 @@
 *** Automatic FFL for WooCommerce ***
 
+2026-08-25 - Version 1.0.27
+* Preserved the selected Automatic FFL dealer ID on Classic and Blocks orders
+* Reported successfully placed FFL orders asynchronously with bounded retries
+* Kept payment, status, cancellation, refund, and customer data outside order attribution
+* Aligned the documented minimum requirements with WordPress 5.6 and PHP 7.0
+
 2026-08-12 - Version 1.0.26
 * Reworded the missing-certificate banner around saving time on this order and future orders
 * Clarified support for multiple PDFs, images, and ZIP files

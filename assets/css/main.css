@@ -64,6 +64,7 @@
 }
 
 /* FunnelKit/WooFunnels checkout can override .hidden on field wrappers. */
+#ffl_dealer_id_field,
 #ffl_license_field_field,
 #ffl_expiration_date_field,
 #ffl_uuid_field,

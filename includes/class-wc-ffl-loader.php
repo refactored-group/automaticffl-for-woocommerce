@@ -18,7 +18,7 @@ class AFFL_Loader {
 	const MINIMUM_PHP_VERSION = '7.0';
 
 	/** Minimum WordPress version required */
-	const MINIMUM_WP_VERSION = '5.2';
+	const MINIMUM_WP_VERSION = '5.6';
 
 	/** Minimum WooCommerce version required */
 	const MINIMUM_WC_VERSION = '3.5';

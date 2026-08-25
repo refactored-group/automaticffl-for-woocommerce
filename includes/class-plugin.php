@@ -17,6 +17,7 @@ use RefactoredGroup\AutomaticFFL\Admin\Settings;
 use RefactoredGroup\AutomaticFFL\Admin\Product_FFL_Meta;
 use RefactoredGroup\AutomaticFFL\Admin\Review_Notice;
 use RefactoredGroup\AutomaticFFL\Admin\Order_Certificate_Upload;
+use RefactoredGroup\AutomaticFFL\Api\Order_Attribution;
 use RefactoredGroup\AutomaticFFL\Blocks\Blocks_Integration;
 use RefactoredGroup\AutomaticFFL\Blocks\Store_Api_Extension;
 use RefactoredGroup\AutomaticFFL\Helper\US_States;
@@ -90,6 +91,13 @@ class Plugin {
 	private $order_certificate_upload;
 
 	/**
+	 * Placed-order attribution reporter.
+	 *
+	 * @var \RefactoredGroup\AutomaticFFL\Api\Order_Attribution
+	 */
+	private $order_attribution;
+
+	/**
 	 * Constructor
 	 *
 	 * @since 1.0.0
@@ -98,6 +106,7 @@ class Plugin {
 		$this->add_hooks();
 		$this->add_filters();
 		$this->order_certificate_upload = new Order_Certificate_Upload();
+		$this->order_attribution        = new Order_Attribution();
 		// Note: Blocks integration is now registered early in AFFL_Loader to catch woocommerce_blocks_loaded
 
 		if ( is_admin() ) {
