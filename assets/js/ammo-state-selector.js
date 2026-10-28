@@ -137,8 +137,11 @@
 
 			// Update notice class and icon
 			$notice.addClass('automaticffl-notice-' + newType).attr('data-banner-type', newType);
+			$notice.toggleClass('automaticffl-mixed-notice--separate', !!state && isRestricted);
 			$icon.html(this.icons[newType]);
 			$message.text(newMessage);
+			$notice.find('[data-mixed-heading]').text(isRestricted ? this.config.i18n.separateOrders : this.config.i18n.ammoShipping);
+			$notice.find('.automaticffl-mixed-help').toggle(!!state && isRestricted);
 		},
 
 		/**

@@ -342,6 +342,14 @@ class AFFL_Loader {
 			return;
 		}
 
+		// Register the cart and checkout integrations independently.
+		add_action(
+			'woocommerce_blocks_cart_block_registration',
+			function( $integration_registry ) {
+				$integration_registry->register( new \RefactoredGroup\AutomaticFFL\Blocks\Cart_Blocks_Integration() );
+			}
+		);
+
 		// Register the checkout block integration
 		add_action(
 			'woocommerce_blocks_checkout_block_registration',

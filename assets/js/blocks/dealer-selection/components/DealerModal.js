@@ -4,8 +4,43 @@
  * Modal overlay containing the FFL dealer selection iframe.
  */
 
-import { useEffect, useCallback } from '@wordpress/element';
+import { useEffect, useLayoutEffect, useCallback } from '@wordpress/element';
 import { createPortal } from 'react-dom';
+
+/** Freeze the page itself, including iframe-driven programmatic scrolling. */
+const lockPageScroll = () => {
+	const body = document.body;
+	const html = document.documentElement;
+	const x = window.scrollX;
+	const y = window.scrollY;
+	const width = body.getBoundingClientRect().width;
+	const properties = [ 'position', 'top', 'left', 'width', 'box-sizing', 'overflow' ];
+	const snapshot = ( style, property ) => [ property, style.getPropertyValue( property ), style.getPropertyPriority( property ) ];
+	const originalBody = properties.map( ( property ) => snapshot( body.style, property ) );
+	const originalOverflow = snapshot( html.style, 'overflow' );
+	const originalScrollBehavior = snapshot( html.style, 'scroll-behavior' );
+	const restore = ( style, [ property, value, priority ] ) => {
+		if ( value ) style.setProperty( property, value, priority );
+		else style.removeProperty( property );
+	};
+
+	html.style.setProperty( 'overflow', 'hidden', 'important' );
+	body.style.position = 'fixed';
+	body.style.top = `${ -y }px`;
+	body.style.left = `${ -x }px`;
+	body.style.width = width > 0 ? `${ width }px` : '100%';
+	body.style.boxSizing = 'border-box';
+	body.style.overflow = 'hidden';
+
+	return () => {
+		originalBody.forEach( ( property ) => restore( body.style, property ) );
+		restore( html.style, originalOverflow );
+		// Theme smooth scrolling must not animate restoration of the locked offset.
+		html.style.setProperty( 'scroll-behavior', 'auto', 'important' );
+		window.scrollTo( x, y );
+		restore( html.style, originalScrollBehavior );
+	};
+};
 
 /**
  * DealerModal Component
@@ -18,6 +53,9 @@ import { createPortal } from 'react-dom';
  * @return {JSX.Element} Modal component
  */
 const DealerModal = ( { iframeUrl, allowedOrigins, onSelect, onClose } ) => {
+	// Capture once per opening; checkout updates can change callback identities.
+	useLayoutEffect( lockPageScroll, [] );
+
 	/**
 	 * Handle postMessage from iframe
 	 */
@@ -83,22 +121,17 @@ const DealerModal = ( { iframeUrl, allowedOrigins, onSelect, onClose } ) => {
 	);
 
 	/**
-	 * Set up event listeners and body scroll lock
+	 * Set up event listeners independently of the page scroll lock.
 	 */
 	useEffect( () => {
 		// Add event listeners
 		window.addEventListener( 'message', handleMessage );
 		document.addEventListener( 'keydown', handleKeyDown );
 
-		// Prevent body scroll
-		const originalOverflow = document.body.style.overflow;
-		document.body.style.overflow = 'hidden';
-
 		// Cleanup
 		return () => {
 			window.removeEventListener( 'message', handleMessage );
 			document.removeEventListener( 'keydown', handleKeyDown );
-			document.body.style.overflow = originalOverflow;
 		};
 	}, [ handleMessage, handleKeyDown ] );
 

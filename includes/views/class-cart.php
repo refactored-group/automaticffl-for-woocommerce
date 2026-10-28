@@ -125,65 +125,50 @@ class Cart {
 	 * @return void
 	 */
 	private static function show_mixed_cart_error( Cart_Analyzer $analyzer ) {
-		$ffl_products = array_merge(
-			$analyzer->get_product_ids_by_category( 'firearms' ),
-			$analyzer->get_product_ids_by_category( 'ammo' )
-		);
-
-		if ( ! empty( $ffl_products ) ) :
-			// Determine appropriate message based on cart contents.
-			if ( $analyzer->has_firearms() ) {
-				$error_message = __( 'Firearms must be shipped to an FFL dealer and cannot be combined with regular products.', 'automaticffl-for-wc' );
-			} else {
-				$error_message = __( 'Ammunition and regular products cannot be purchased together. Ammunition may require shipping to an FFL dealer depending on your state.', 'automaticffl-for-wc' );
-			}
-
-			// Count items for buttons (total quantity, not line items).
-			$ffl_count     = $analyzer->get_quantity_by_category( 'firearms' ) + $analyzer->get_quantity_by_category( 'ammo' );
-			$regular_count = $analyzer->get_quantity_by_category( 'regular' );
-			?>
-			<script>
-				window.ffl_products_in_cart = <?php echo wp_json_encode( $ffl_products ); ?>;
-			</script>
-			<div class="automaticffl-notice automaticffl-notice-error" role="alert" id="ffl-mixed-cart-error">
-				<span class="automaticffl-notice-icon">
-					<?php echo self::get_notice_icon( 'error' ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped ?>
-				</span>
-				<div class="automaticffl-notice-content">
-					<p class="automaticffl-notice-message"><?php echo esc_html( $error_message ); ?></p>
-					<p class="automaticffl-save-prompt"><?php esc_html_e( 'Choose which items to save for your next order:', 'automaticffl-for-wc' ); ?></p>
-					<div class="automaticffl-save-buttons">
-						<button type="button" class="button automaticffl-save-btn" data-item-type="ffl">
-							<?php
-							printf(
-								/* translators: %d: number of FFL items */
-								esc_html( _n( 'FFL item (%d)', 'FFL items (%d)', $ffl_count, 'automaticffl-for-wc' ) ),
-								intval( $ffl_count )
-							);
-							?>
-						</button>
-						<button type="button" class="button automaticffl-save-btn" data-item-type="regular">
-							<?php
-							printf(
-								/* translators: %d: number of regular items */
-								esc_html( _n( 'Regular item (%d)', 'Regular items (%d)', $regular_count, 'automaticffl-for-wc' ) ),
-								intval( $regular_count )
-							);
-							?>
-						</button>
-					</div>
-					<p class="automaticffl-save-help"><?php esc_html_e( 'Saved items will be restored to your cart after checkout.', 'automaticffl-for-wc' ); ?></p>
-				</div>
+		$ffl_products = array_merge( $analyzer->get_product_ids_by_category( 'firearms' ), $analyzer->get_product_ids_by_category( 'ammo' ) );
+		if ( empty( $ffl_products ) ) {
+			return;
+		}
+		$ffl_count = $analyzer->get_quantity_by_category( 'firearms' ) + $analyzer->get_quantity_by_category( 'ammo' );
+		$regular_count = $analyzer->get_quantity_by_category( 'regular' );
+		?>
+		<script>window.ffl_products_in_cart = <?php echo wp_json_encode( $ffl_products ); ?>;</script>
+		<div class="automaticffl-notice automaticffl-notice-info automaticffl-mixed-notice automaticffl-mixed-notice--separate" role="alert" id="ffl-mixed-cart-error">
+			<span class="automaticffl-notice-icon"><?php echo self::get_notice_icon( 'info' ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped ?></span>
+			<div class="automaticffl-notice-content">
+				<p class="automaticffl-notice-message"><?php esc_html_e( 'These items need separate orders', 'automaticffl-for-wc' ); ?></p>
+				<p class="automaticffl-mixed-description"><?php esc_html_e( 'FFL items ship to your dealer. Regular items ship to you.', 'automaticffl-for-wc' ); ?></p>
+				<p class="automaticffl-mixed-help"><?php esc_html_e( 'The other items will be saved and put back in your cart after checkout.', 'automaticffl-for-wc' ); ?></p>
 			</div>
-			<style>
-				.wc-proceed-to-checkout {
-					display: none;
-				}
-			</style>
-			<?php
-			self::enqueue_save_for_later_script();
-			self::verify_cart_modified();
-		endif;
+			<?php self::render_checkout_choices( $ffl_count, $regular_count ); ?>
+		</div>
+		<style>.wc-proceed-to-checkout { display: none; }</style>
+		<?php
+		self::enqueue_save_for_later_script();
+		self::verify_cart_modified();
+	}
+
+	/** Render checkout groups; the browser saves the opposite group. */
+	public static function render_checkout_choices( int $ffl_count, int $regular_count, bool $is_ammo = false ) {
+		?>
+		<div class="automaticffl-mixed-actions">
+			<div class="automaticffl-save-buttons">
+				<button type="button" class="button automaticffl-save-btn automaticffl-checkout-primary" data-checkout-type="ffl">
+					<?php
+					/* translators: %d: total quantity of items being checked out. */
+					$ffl_label = $is_ammo ? _n( 'Check out ammo item (%d)', 'Check out ammo items (%d)', $ffl_count, 'automaticffl-for-wc' ) : _n( 'Check out FFL item (%d)', 'Check out FFL items (%d)', $ffl_count, 'automaticffl-for-wc' );
+					printf( esc_html( $ffl_label ), intval( $ffl_count ) );
+					?>
+				</button>
+				<button type="button" class="button automaticffl-save-btn automaticffl-checkout-secondary" data-checkout-type="regular">
+					<?php
+					/* translators: %d: total quantity of regular items being checked out. */
+					printf( esc_html( _n( 'Check out regular item (%d)', 'Check out regular items (%d)', $regular_count, 'automaticffl-for-wc' ) ), intval( $regular_count ) );
+					?>
+				</button>
+			</div>
+		</div>
+		<?php
 	}
 
 	/**
@@ -210,8 +195,9 @@ class Cart {
 			array(
 				'ajaxUrl' => admin_url( 'admin-ajax.php' ),
 				'nonce'   => wp_create_nonce( 'automaticffl_save_for_later' ),
+				'checkoutUrl' => wc_get_checkout_url(),
 				'i18n'    => array(
-					'saving' => __( 'Saving...', 'automaticffl-for-wc' ),
+					'saving' => __( 'Continuing...', 'automaticffl-for-wc' ),
 					'error'  => __( 'An error occurred. Please try again.', 'automaticffl-for-wc' ),
 				),
 			)
@@ -329,6 +315,8 @@ class Cart {
 			'usStates'         => US_States::get_all(),
 			'currentState'     => $selected_state,
 			'i18n'             => array(
+				'separateOrders'     => __( 'These items need separate orders', 'automaticffl-for-wc' ),
+				'ammoShipping'       => __( 'Ammunition shipping', 'automaticffl-for-wc' ),
 				'selectState'        => __( 'Your cart contains ammunition and regular products. Please select your shipping state to continue.', 'automaticffl-for-wc' ),
 				'restrictedPrefix'   => __( 'Ammunition requires shipping to an FFL dealer in', 'automaticffl-for-wc' ),
 				'restrictedSuffix'   => __( 'Ammunition and regular products cannot be combined.', 'automaticffl-for-wc' ),
@@ -341,12 +329,13 @@ class Cart {
 			window.ffl_products_in_cart = <?php echo wp_json_encode( $ffl_products ); ?>;
 		</script>
 
-		<div id="automaticffl-cart-state-selector" class="automaticffl-notice <?php echo esc_attr( $banner_class ); ?>" data-banner-type="<?php echo esc_attr( $banner_type ); ?>" data-config="<?php echo esc_attr( wp_json_encode( $js_config ) ); ?>" role="alert">
+		<div id="automaticffl-cart-state-selector" class="automaticffl-notice automaticffl-mixed-notice <?php echo esc_attr( $banner_class . ( $is_restricted ? ' automaticffl-mixed-notice--separate' : '' ) ); ?>" data-banner-type="<?php echo esc_attr( $banner_type ); ?>" data-config="<?php echo esc_attr( wp_json_encode( $js_config ) ); ?>" role="alert">
 			<span class="automaticffl-notice-icon">
 				<?php echo self::get_notice_icon( $banner_type ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped ?>
 			</span>
 			<div class="automaticffl-notice-content">
-				<p class="automaticffl-notice-message" id="automaticffl-cart-state-message"><?php echo esc_html( $banner_message ); ?></p>
+				<p class="automaticffl-notice-message" data-mixed-heading><?php echo esc_html( $is_restricted ? __( 'These items need separate orders', 'automaticffl-for-wc' ) : __( 'Ammunition shipping', 'automaticffl-for-wc' ) ); ?></p>
+				<p class="automaticffl-mixed-description" id="automaticffl-cart-state-message"><?php echo esc_html( $banner_message ); ?></p>
 
 				<p class="form-row automaticffl-state-row">
 					<label for="automaticffl-cart-state-select"><?php esc_html_e( 'Shipping State', 'automaticffl-for-wc' ); ?> <abbr class="required" title="required">*</abbr></label>
@@ -358,31 +347,10 @@ class Cart {
 					</select>
 				</p>
 
-				<!-- Save for later buttons (shown only when restricted state selected) -->
-				<div id="automaticffl-ammo-save-for-later" style="<?php echo $is_restricted ? '' : 'display: none;'; ?>">
-					<p class="automaticffl-save-prompt"><?php esc_html_e( 'Choose which items to save for your next order:', 'automaticffl-for-wc' ); ?></p>
-					<div class="automaticffl-save-buttons">
-						<button type="button" class="button automaticffl-save-btn" data-item-type="ffl">
-							<?php
-							printf(
-								/* translators: %d: number of ammo items */
-								esc_html( _n( 'Ammo item (%d)', 'Ammo items (%d)', $ffl_count, 'automaticffl-for-wc' ) ),
-								intval( $ffl_count )
-							);
-							?>
-						</button>
-						<button type="button" class="button automaticffl-save-btn" data-item-type="regular">
-							<?php
-							printf(
-								/* translators: %d: number of regular items */
-								esc_html( _n( 'Regular item (%d)', 'Regular items (%d)', $regular_count, 'automaticffl-for-wc' ) ),
-								intval( $regular_count )
-							);
-							?>
-						</button>
-					</div>
-					<p class="automaticffl-save-help"><?php esc_html_e( 'Saved items will be restored to your cart after checkout.', 'automaticffl-for-wc' ); ?></p>
-				</div>
+				<p class="automaticffl-mixed-help" <?php echo $is_restricted ? '' : 'style="display:none"'; ?>><?php esc_html_e( 'The other items will be saved and put back in your cart after checkout.', 'automaticffl-for-wc' ); ?></p>
+			</div>
+			<div id="automaticffl-ammo-save-for-later" style="<?php echo $is_restricted ? '' : 'display: none;'; ?>">
+				<?php self::render_checkout_choices( $ffl_count, $regular_count, true ); ?>
 			</div>
 		</div>
 

@@ -2,7 +2,7 @@
 Contributors: refactoredgroup
 Tags: woocommerce, ffl, firearms, ammunition, checkout
 Tested up to: 6.9.4
-Stable tag: 1.0.28
+Stable tag: 1.0.29
 Requires PHP: 7.0
 Requires at least: 5.6
 License: GPLv3
@@ -96,6 +96,17 @@ Yes. Automatic FFL is also available as a BigCommerce app and Magento extension.
 8. Allow us to automatically enable new Type 1 & 2 FFL dealers or take full control.
 
 == Changelog ==
+
+= 1.0.29 =
+* Kept selected dealer shipping rates when customers edit billing in billing-only Blocks checkout.
+* Restored Blocks dealer details under Shipping address, retaining Shipping options for billing-only stores and hiding the unused apartment control and its autofill helper.
+* Adds mixed-cart banners aligned above the Cart Block product list.
+* Uses compact, consistent firearm/ammunition notices with red attention accents in Classic and Blocks.
+* Lets shoppers choose which group to check out, saving the other group and restoring it after checkout.
+* Shows singular/plural labels with total item quantities.
+* Keeps checkout in place when the dealer picker is selected or canceled.
+* Keeps messages and quantity totals current after cart updates, including carts with an existing checkout draft.
+* Adds persisted ammunition shipping-state selection with retryable errors.
 
 = 1.0.28 =
 * Removes WordPress Application Passwords as a checkout-classification prerequisite.

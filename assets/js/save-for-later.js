@@ -9,13 +9,15 @@
 
 (function($) {
 	'use strict';
+	var isSaving = false;
 
 	/**
 	 * Initialize save for later functionality
 	 */
 	function init() {
 		// Bind click handlers to save buttons
-		$(document).on('click', '.automaticffl-save-btn', handleSaveClick);
+		$(document).off('click.automaticffl-checkout', '.automaticffl-save-btn')
+			.on('click.automaticffl-checkout', '.automaticffl-save-btn', handleSaveClick);
 	}
 
 	/**
@@ -27,14 +29,17 @@
 		e.preventDefault();
 
 		var $button = $(this);
-		var itemType = $button.data('item-type');
+		var checkoutType = $button.data('checkout-type');
+		var itemType = checkoutType === 'ffl' ? 'regular' : 'ffl';
 
-		if (!itemType) {
+		if (isSaving || (checkoutType !== 'ffl' && checkoutType !== 'regular')) {
 			return;
 		}
 
 		// Disable button and show loading state
-		$button.prop('disabled', true);
+		isSaving = true;
+		var $buttons = $('.automaticffl-save-btn');
+		$buttons.prop('disabled', true);
 		$button.addClass('loading');
 
 		var originalText = $button.text();
@@ -50,20 +55,22 @@
 				nonce: automaticfflSaveForLater.nonce
 			},
 			success: function(response) {
-				if (response.success) {
-					// Reload the page to show updated cart
-					window.location.reload();
+				if (response && response.success) {
+					// The opposite group is now saved; continue with the chosen group.
+					window.location.assign(automaticfflSaveForLater.checkoutUrl);
 				} else {
 					// Show error message
-					showError(response.data.message || automaticfflSaveForLater.i18n.error);
-					$button.prop('disabled', false);
+					showError((response && response.data && response.data.message) || automaticfflSaveForLater.i18n.error);
+					isSaving = false;
+					$buttons.prop('disabled', false);
 					$button.removeClass('loading');
 					$button.text(originalText);
 				}
 			},
 			error: function() {
 				showError(automaticfflSaveForLater.i18n.error);
-				$button.prop('disabled', false);
+				isSaving = false;
+				$buttons.prop('disabled', false);
 				$button.removeClass('loading');
 				$button.text(originalText);
 			}
@@ -81,7 +88,7 @@
 
 		if ($errorContainer.length === 0) {
 			$errorContainer = $('<div id="automaticffl-save-error" class="woocommerce-error" role="alert"></div>');
-			$('.automaticffl-save-for-later-actions').before($errorContainer);
+			$('.automaticffl-mixed-actions').first().prepend($errorContainer);
 		}
 
 		$errorContainer.text(message).show();

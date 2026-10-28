@@ -10,6 +10,7 @@ namespace RefactoredGroup\AutomaticFFL\Blocks;
 defined( 'ABSPATH' ) || exit;
 
 use Automattic\WooCommerce\StoreApi\Schemas\V1\CheckoutSchema;
+use Automattic\WooCommerce\StoreApi\Schemas\V1\CartSchema;
 use Automattic\WooCommerce\StoreApi\StoreApi;
 use Automattic\WooCommerce\StoreApi\Schemas\ExtendSchema;
 use RefactoredGroup\AutomaticFFL\Helper\Config;
@@ -66,6 +67,97 @@ class Store_Api_Extension {
 				'schema_type'     => ARRAY_A,
 			)
 		);
+
+		$this->extend_schema->register_endpoint_data(
+			array(
+				'endpoint'        => CartSchema::IDENTIFIER,
+				'namespace'       => self::NAMESPACE,
+				'data_callback'   => array( $this, 'get_cart_schema_data' ),
+				'schema_callback' => array( $this, 'get_cart_schema' ),
+				'schema_type'     => ARRAY_A,
+			)
+		);
+
+		$this->extend_schema->register_update_callback(
+			array(
+				'namespace' => 'automaticffl-cart-notice',
+				'callback'  => array( $this, 'update_cart_state' ),
+			)
+		);
+	}
+
+	/**
+	 * Current cart facts, refreshed with each Store API cart response.
+	 *
+	 * @return array
+	 */
+	public function get_cart_schema_data() {
+		$analyzer = new Cart_Analyzer();
+		$state    = WC()->session ? WC()->session->get( 'automaticffl_ammo_state', '' ) : '';
+		$states   = US_States::get_all();
+
+		return array(
+			'isApiAvailable'         => $analyzer->is_api_available(),
+			'isFirearmsRegularMixed' => $analyzer->is_firearms_regular_mixed(),
+			'isAmmoRegularMixed'     => $analyzer->is_ammo_regular_mixed(),
+			'fflItemCount'           => $analyzer->get_quantity_by_category( 'firearms' ) + $analyzer->get_quantity_by_category( 'ammo' ),
+			'regularItemCount'       => $analyzer->get_quantity_by_category( 'regular' ),
+			'ammoRestrictedStates'   => array_values( array_unique( $analyzer->get_ammo_restricted_states() ) ),
+			'selectedAmmoState'      => is_string( $state ) && isset( $states[ $state ] ) ? $state : '',
+		);
+	}
+
+	/**
+	 * Read-only cart extension schema; checkout dealer data stays separate.
+	 *
+	 * @return array
+	 */
+	public function get_cart_schema() {
+		$fields = array(
+			'isApiAvailable'         => array( 'type' => 'boolean' ),
+			'isFirearmsRegularMixed' => array( 'type' => 'boolean' ),
+			'isAmmoRegularMixed'     => array( 'type' => 'boolean' ),
+			'fflItemCount'           => array( 'type' => 'integer', 'minimum' => 0 ),
+			'regularItemCount'       => array( 'type' => 'integer', 'minimum' => 0 ),
+			'ammoRestrictedStates'   => array( 'type' => 'array', 'items' => array( 'type' => 'string' ) ),
+			'selectedAmmoState'      => array( 'type' => 'string' ),
+		);
+
+		foreach ( $fields as &$field ) {
+			$field['context']  = array( 'view' );
+			$field['readonly'] = true;
+		}
+		unset( $field );
+
+		return $fields;
+	}
+
+	/**
+	 * Persist a confirmed ammunition state through the nonce-protected cart API.
+	 *
+	 * @param array $data Extension update data.
+	 * @return void
+	 * @throws \Automattic\WooCommerce\StoreApi\Exceptions\RouteException Invalid state or session.
+	 */
+	public function update_cart_state( $data ) {
+		$states = US_States::get_all();
+		if ( ! is_array( $data ) || ! isset( $data['state'] ) || ! is_string( $data['state'] ) || ( '' !== $data['state'] && ! isset( $states[ $data['state'] ] ) ) ) {
+			throw new \Automattic\WooCommerce\StoreApi\Exceptions\RouteException(
+				'automaticffl_invalid_state',
+				__( 'Please select a valid shipping state.', 'automaticffl-for-wc' ),
+				400
+			);
+		}
+
+		if ( ! WC()->session ) {
+			throw new \Automattic\WooCommerce\StoreApi\Exceptions\RouteException(
+				'automaticffl_session_unavailable',
+				__( 'Your cart session is unavailable. Please reload the page and try again.', 'automaticffl-for-wc' ),
+				400
+			);
+		}
+
+		WC()->session->set( 'automaticffl_ammo_state', $data['state'] );
 	}
 
 	/**
@@ -449,6 +541,14 @@ class Store_Api_Extension {
 		// Customer was shown notice to contact store after placing order.
 		if ( $analyzer->has_api_error() ) {
 			return;
+		}
+
+		if ( $analyzer->is_firearms_regular_mixed() ) {
+			throw new \Automattic\WooCommerce\StoreApi\Exceptions\RouteException(
+				'ffl_regular_mixed',
+				__( 'Firearms must be shipped to an FFL dealer and cannot be combined with regular products.', 'automaticffl-for-wc' ),
+				400
+			);
 		}
 
 		// Ammo + regular mixed cart in restricted state - block checkout.

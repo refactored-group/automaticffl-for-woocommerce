@@ -93,7 +93,9 @@ class Checkout {
 	 * @since 1.0.0
 	 */
 	public static function verify_mixed_cart() {
-		if ( is_admin() ) {
+		// Store API cart updates can initialize WC_Checkout for a draft order.
+		// Those requests need JSON; order submission is validated separately.
+		if ( is_admin() || ( defined( 'REST_REQUEST' ) && REST_REQUEST ) ) {
 			return;
 		}
 
@@ -583,36 +585,17 @@ class Checkout {
 		$icon_error = Cart::get_notice_icon( 'error' );
 
 		?>
-		<div id="automaticffl-ammo-regular-message" class="automaticffl-notice automaticffl-notice-error" role="alert">
+		<div id="automaticffl-ammo-regular-message" class="automaticffl-notice automaticffl-notice-error automaticffl-mixed-notice automaticffl-mixed-notice--separate" role="alert">
 			<span class="automaticffl-notice-icon">
 				<?php echo $icon_error; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped ?>
 			</span>
 			<div class="automaticffl-notice-content">
-				<p class="automaticffl-notice-message" id="automaticffl-checkout-ammo-message"></p>
-				<div id="automaticffl-checkout-save-for-later" style="display: none;">
-					<p class="automaticffl-save-prompt"><?php esc_html_e( 'Choose which items to save for your next order:', 'automaticffl-for-wc' ); ?></p>
-					<div class="automaticffl-save-buttons">
-						<button type="button" class="button automaticffl-save-btn" data-item-type="ffl">
-							<?php
-							printf(
-								/* translators: %d: number of ammo items */
-								esc_html( _n( 'Ammo item (%d)', 'Ammo items (%d)', $ffl_count, 'automaticffl-for-wc' ) ),
-								intval( $ffl_count )
-							);
-							?>
-						</button>
-						<button type="button" class="button automaticffl-save-btn" data-item-type="regular">
-							<?php
-							printf(
-								/* translators: %d: number of regular items */
-								esc_html( _n( 'Regular item (%d)', 'Regular items (%d)', $regular_count, 'automaticffl-for-wc' ) ),
-								intval( $regular_count )
-							);
-							?>
-						</button>
-					</div>
-					<p class="automaticffl-save-help"><?php esc_html_e( 'Saved items will be restored to your cart after checkout.', 'automaticffl-for-wc' ); ?></p>
-				</div>
+				<p class="automaticffl-notice-message"><?php esc_html_e( 'These items need separate orders', 'automaticffl-for-wc' ); ?></p>
+				<p class="automaticffl-mixed-description" id="automaticffl-checkout-ammo-message"></p>
+				<p class="automaticffl-mixed-help"><?php esc_html_e( 'The other items will be saved and put back in your cart after checkout.', 'automaticffl-for-wc' ); ?></p>
+			</div>
+			<div id="automaticffl-checkout-save-for-later" style="display: none;">
+				<?php Cart::render_checkout_choices( $ffl_count, $regular_count, true ); ?>
 			</div>
 		</div>
 		<script>

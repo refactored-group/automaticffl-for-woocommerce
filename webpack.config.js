@@ -11,6 +11,10 @@ const filteredPlugins = defaultConfig.plugins.filter(
 module.exports = {
 	...defaultConfig,
 	entry: {
+		'cart-notice-frontend': path.resolve(
+			__dirname,
+			'assets/js/blocks/cart-notice/frontend.js'
+		),
 		'dealer-selection-frontend': path.resolve(
 			__dirname,
 			'assets/js/blocks/dealer-selection/frontend.js'

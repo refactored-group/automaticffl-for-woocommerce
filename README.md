@@ -4,7 +4,7 @@ Contributors: refactoredgroup
 License: GPLv3
 License URI: http://www.gnu.org/licenses/gpl.html
 Tags: FFL Locator, Firearms, Search, FFL, Guns
-Stable tag: 1.0.28
+Stable tag: 1.0.29
 Tested up to: 6.9
 Requires at least: 5.6
 Requires PHP: 7.0
@@ -12,6 +12,8 @@ Requires PHP: 7.0
 [![Automatic FFL for WooCommerce](https://www.automaticffl.com/img/logos/logo.png)](https://www.automaticffl.com/)
 
 Automatic FFL is a powerful extension designed to simplify the process of shipping firearms to Federal Firearms License (FFL) dealers.
+
+Mixed-cart banners in Classic and Blocks let shoppers choose which group to check out. The other group is saved and put back in the cart after checkout. Buttons show total quantities with singular/plural wording, and firearm/ammunition notices share a compact design.
 
 ## Overview
 
@@ -33,7 +35,7 @@ Automatic FFL for WooCommerce is a powerful extension designed to simplify the p
 
 - **Validated by the ATF:** Our dealers database updates daily directly from the Bureau of Alcohol, Tobacco, Firearms and Explosives, commonly referred to as the ATF.
 
-- **Mixed Cart Handling & Save for Later:** When a cart contains both FFL-required and non-FFL-required items, customers can save either group for later, and have their saved items automatically restored to the cart after the order is placed.
+- **Mixed Cart Handling & Save for Later:** Classic carts and WooCommerce Cart Blocks display the mixed-cart banner above the full cart and let customers save either group for their next order. Cart Block messages and quantities update with the cart, and ammunition carts include shipping-state selection. Saved items are automatically restored after the order is placed.
 
 - **Ammunition & State Restrictions:** Automatically enforces state-based compliance for ammunition purchases. When a customer's shipping state requires an FFL transfer for ammunition, the extension will prompt dealer selection at checkout.
 

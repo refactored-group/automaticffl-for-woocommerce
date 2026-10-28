@@ -1,8 +1,7 @@
 /**
  * FFL Dealer Selection — Editor Entry
  *
- * Registers the block as a forced child of
- * woocommerce/checkout-shipping-methods-block. The block auto-inserts
+ * Registers the block under the same parent as the frontend. The block auto-inserts
  * into every checkout via the lock.default.{remove,move} flags in
  * block.json — no merchant action required.
  *
@@ -13,7 +12,9 @@
 import { registerBlockType } from '@wordpress/blocks';
 import { useBlockProps } from '@wordpress/block-editor';
 import { __ } from '@wordpress/i18n';
-import metadata from './block.json';
+import { getDealerSelectionMetadata } from './registration';
+
+const metadata = getDealerSelectionMetadata();
 
 const Edit = () => {
 	const blockProps = useBlockProps();

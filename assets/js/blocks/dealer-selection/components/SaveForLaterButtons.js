@@ -1,14 +1,13 @@
 /**
  * Save for Later Buttons Component
  *
- * Renders save for later buttons for mixed cart scenarios in the
- * WooCommerce Blocks checkout.
+ * Renders checkout-group choices for mixed carts; the opposite group is saved.
  *
  * @since 1.0.14
  */
 
-import { useState } from '@wordpress/element';
-import { __ } from '@wordpress/i18n';
+import { useRef, useState } from '@wordpress/element';
+import { __, _n, sprintf } from '@wordpress/i18n';
 import apiFetch from '@wordpress/api-fetch';
 
 /**
@@ -21,16 +20,21 @@ import apiFetch from '@wordpress/api-fetch';
  *
  * @return {JSX.Element} Component output.
  */
-const SaveForLaterButtons = ( { fflCount, regularCount, onSaved } ) => {
+const SaveForLaterButtons = ( { fflCount, regularCount, checkoutUrl, isAmmo = false, disabled = false, onSaved } ) => {
 	const [ isSaving, setIsSaving ] = useState( false );
 	const [ error, setError ] = useState( null );
+	const saving = useRef( false );
 
 	/**
 	 * Handle save button click
 	 *
-	 * @param {string} itemType Type of items to save: 'ffl' or 'regular'
+	 * @param {string} checkoutType Group to check out: 'ffl' or 'regular'
 	 */
-	const handleSave = async ( itemType ) => {
+	const handleCheckout = async ( checkoutType ) => {
+		if ( saving.current || disabled ) {
+			return;
+		}
+		saving.current = true;
 		setIsSaving( true );
 		setError( null );
 
@@ -38,89 +42,44 @@ const SaveForLaterButtons = ( { fflCount, regularCount, onSaved } ) => {
 			const response = await apiFetch( {
 				path: '/automaticffl/v1/save-for-later',
 				method: 'POST',
-				data: { item_type: itemType },
+				// The API names the group being saved, opposite the checkout choice.
+				data: { item_type: checkoutType === 'ffl' ? 'regular' : 'ffl' },
 			} );
 
 			if ( response.success ) {
-				// Reload the page to refresh cart data
 				if ( typeof onSaved === 'function' ) {
 					onSaved( response );
 				}
-				window.location.reload();
+				window.location.assign( checkoutUrl );
 			} else {
 				setError( response.message || __( 'Failed to save items.', 'automaticffl-for-wc' ) );
 				setIsSaving( false );
+				saving.current = false;
 			}
 		} catch ( err ) {
 			setError( err.message || __( 'An error occurred. Please try again.', 'automaticffl-for-wc' ) );
 			setIsSaving( false );
+			saving.current = false;
 		}
 	};
 
-	/**
-	 * Get button text for FFL items
-	 *
-	 * @return {string} Button text.
-	 */
-	const getFflButtonText = () => {
-		if ( isSaving ) {
-			return __( 'Saving...', 'automaticffl-for-wc' );
-		}
-		return fflCount === 1
-			? __( 'FFL item (1)', 'automaticffl-for-wc' )
-			: `${ __( 'FFL items', 'automaticffl-for-wc' ) } (${ fflCount })`;
-	};
-
-	/**
-	 * Get button text for regular items
-	 *
-	 * @return {string} Button text.
-	 */
-	const getRegularButtonText = () => {
-		if ( isSaving ) {
-			return __( 'Saving...', 'automaticffl-for-wc' );
-		}
-		return regularCount === 1
-			? __( 'Regular item (1)', 'automaticffl-for-wc' )
-			: `${ __( 'Regular items', 'automaticffl-for-wc' ) } (${ regularCount })`;
-	};
+	// Translators: %d is the total quantity in the selected checkout group.
+	const fflText = isAmmo
+		? sprintf( _n( 'Check out ammo item (%d)', 'Check out ammo items (%d)', fflCount, 'automaticffl-for-wc' ), fflCount )
+		: sprintf( _n( 'Check out FFL item (%d)', 'Check out FFL items (%d)', fflCount, 'automaticffl-for-wc' ), fflCount );
+	const regularText = sprintf( _n( 'Check out regular item (%d)', 'Check out regular items (%d)', regularCount, 'automaticffl-for-wc' ), regularCount );
 
 	return (
-		<div className="automaticffl-blocks-save-for-later">
-			<p className="automaticffl-blocks-save-prompt">
-				{ __( 'Choose which items to save for your next order:', 'automaticffl-for-wc' ) }
-			</p>
-
-			{ error && (
-				<div className="wc-block-components-notice-banner is-error" style={ { marginBottom: '12px' } }>
-					<div className="wc-block-components-notice-banner__content">
-						{ error }
-					</div>
-				</div>
-			) }
-
+		<div className="automaticffl-mixed-actions" aria-busy={ isSaving }>
+			{ error && <div className="automaticffl-cart-notice-error" role="alert">{ error }</div> }
 			<div className="automaticffl-blocks-save-buttons">
-				<button
-					type="button"
-					className="wc-block-components-button wp-element-button automaticffl-blocks-save-btn automaticffl-blocks-save-btn--primary"
-					onClick={ () => handleSave( 'ffl' ) }
-					disabled={ isSaving }
-				>
-					{ getFflButtonText() }
+				<button type="button" className="wc-block-components-button wp-element-button automaticffl-blocks-save-btn automaticffl-blocks-save-btn--primary" onClick={ () => handleCheckout( 'ffl' ) } disabled={ isSaving || disabled }>
+					{ isSaving ? __( 'Continuing...', 'automaticffl-for-wc' ) : fflText }
 				</button>
-				<button
-					type="button"
-					className="wc-block-components-button wp-element-button automaticffl-blocks-save-btn automaticffl-blocks-save-btn--secondary"
-					onClick={ () => handleSave( 'regular' ) }
-					disabled={ isSaving }
-				>
-					{ getRegularButtonText() }
+				<button type="button" className="wc-block-components-button wp-element-button automaticffl-blocks-save-btn automaticffl-blocks-save-btn--secondary" onClick={ () => handleCheckout( 'regular' ) } disabled={ isSaving || disabled }>
+					{ isSaving ? __( 'Continuing...', 'automaticffl-for-wc' ) : regularText }
 				</button>
 			</div>
-
-			<p className="automaticffl-blocks-save-help">
-				{ __( 'Saved items will be restored to your cart after checkout.', 'automaticffl-for-wc' ) }
-			</p>
 		</div>
 	);
 };

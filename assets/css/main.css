@@ -144,6 +144,13 @@ body {
  * (Aug 2022), Firefox 121+ (Dec 2023). Within WC Blocks' modern
  * baseline.
  */
+/* Some Blocks versions omit input names. Limit this fallback to direct
+ * form-field wrappers: the form also contains a hidden address-2 helper.
+ * Hide that helper itself too; theme input sizing can otherwise give it a row. */
+body.automaticffl-ffl-required #shipping-fields .wc-block-components-address-form > div:has(> input[id^="shipping-"]:not([id="shipping-first_name"]):not([id="shipping-last_name"])),
+body.automaticffl-ffl-required #shipping-fields div:has(> select[id^="shipping-"]),
+body.automaticffl-ffl-required #shipping-fields .wc-block-components-address-form__address_2-toggle,
+body.automaticffl-ffl-required #shipping-fields .wc-block-components-address-form__address_2-hidden-input,
 body.automaticffl-ffl-required div:has(> input[name="shipping_address_1"]),
 body.automaticffl-ffl-required div:has(> input[name="shipping_address_2"]),
 body.automaticffl-ffl-required div:has(> input[name="shipping_city"]),
@@ -634,6 +641,43 @@ body.automaticffl-ffl-required select[id^="shipping-"]:not([id="shipping-first_n
  * Blocks Checkout - Save for Later
  */
 
+/* The mixed-cart banner renders above the entire Cart Block. */
+body.automaticffl-cart-blocked .wp-block-woocommerce-cart .wc-block-cart__submit-container {
+	display: none;
+}
+
+.automaticffl-cart-notice-root {
+	width: 100%;
+}
+
+.automaticffl-cart-notice-root:empty {
+	display: none;
+}
+
+.automaticffl-cart-notice {
+	margin: 0 0 16px;
+	box-sizing: border-box;
+	width: 100%;
+	padding: 10px 14px;
+}
+
+.automaticffl-cart-notice-controls {
+	border: 0;
+	padding: 0;
+	margin: 0;
+	min-width: 0;
+}
+
+.automaticffl-cart-notice label,
+.automaticffl-cart-notice select {
+	display: block;
+	width: 100%;
+}
+
+.automaticffl-cart-notice-error {
+	color: #b32d2e;
+}
+
 .automaticffl-blocks-save-for-later {
   margin-top: 15px;
   padding-top: 15px;
@@ -686,4 +730,185 @@ body.automaticffl-ffl-required select[id^="shipping-"]:not([id="shipping-first_n
   font-size: 13px;
   color: #666;
   font-style: italic;
+}
+
+/* Shared Native notice: Classic/Blocks cart and checkout mixed-item decisions. */
+.automaticffl-notice.automaticffl-mixed-notice {
+	display: flex !important;
+	flex-wrap: wrap;
+	position: relative;
+	gap: 12px !important;
+	align-items: start !important;
+	width: 100%;
+	margin: 0 0 20px;
+	padding: 14px 14px 14px 46px;
+	border: 1px solid #c5deed;
+	border-radius: 4px;
+	background: #f0f7fc;
+	color: #262626;
+	box-shadow: none;
+	font-size: 14px;
+	line-height: 1.45;
+}
+
+.automaticffl-mixed-notice .automaticffl-notice-content {
+	flex: 1 1 330px !important;
+}
+
+.automaticffl-mixed-notice > .automaticffl-notice-icon {
+	position: absolute;
+	top: 14px;
+	left: 14px;
+}
+
+.automaticffl-mixed-notice .automaticffl-notice-icon,
+.automaticffl-mixed-notice .automaticffl-notice-icon svg {
+	width: 20px;
+	height: 20px;
+	margin-top: 0;
+	color: #086b9e;
+}
+
+.automaticffl-mixed-notice p.automaticffl-notice-message {
+	margin: 0;
+	padding: 0;
+	color: #262626;
+	font-size: 14px;
+	font-weight: 600;
+	line-height: 1.45;
+}
+
+.automaticffl-mixed-notice p.automaticffl-mixed-description {
+	margin: 3px 0 0;
+	padding: 0;
+	font-size: 13px;
+	line-height: 1.45;
+}
+
+.automaticffl-mixed-notice p.automaticffl-mixed-help {
+	margin: 5px 0 0;
+	padding: 0;
+	color: #666;
+	font-size: 12px;
+	font-style: normal;
+	line-height: 1.5;
+}
+
+.automaticffl-mixed-notice > .automaticffl-mixed-actions,
+.automaticffl-mixed-notice > #automaticffl-ammo-save-for-later,
+.automaticffl-mixed-notice > #automaticffl-checkout-save-for-later {
+	align-self: center;
+	flex: 0 1 auto;
+	min-width: 0;
+	max-width: 100%;
+}
+
+.automaticffl-mixed-notice .automaticffl-save-buttons,
+.automaticffl-mixed-notice .automaticffl-blocks-save-buttons {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 8px;
+	margin: 0;
+}
+
+.automaticffl-mixed-notice .automaticffl-save-buttons .automaticffl-save-btn,
+.automaticffl-mixed-notice .automaticffl-blocks-save-buttons .automaticffl-blocks-save-btn {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	flex: 0 1 auto;
+	width: auto;
+	max-width: 100%;
+	min-width: 0;
+	min-height: 36px;
+	height: auto;
+	margin: 0;
+	padding: 8px 12px;
+	border: 1px solid #292929;
+	border-radius: 4px;
+	background: #292929;
+	color: #fff;
+	font-size: 13px;
+	font-weight: 500;
+	line-height: 1.35;
+	text-align: center;
+	text-decoration: none;
+	text-transform: none;
+	box-shadow: none;
+}
+
+.automaticffl-mixed-notice .automaticffl-save-buttons .automaticffl-checkout-secondary,
+.automaticffl-mixed-notice .automaticffl-blocks-save-buttons .automaticffl-blocks-save-btn--secondary {
+	background: #fff;
+	color: #262626;
+}
+
+.automaticffl-mixed-notice .automaticffl-save-btn:hover,
+.automaticffl-mixed-notice .automaticffl-blocks-save-btn:hover {
+	filter: brightness(.93);
+}
+
+.automaticffl-mixed-notice .automaticffl-save-btn:disabled,
+.automaticffl-mixed-notice .automaticffl-blocks-save-btn:disabled {
+	opacity: .6;
+	cursor: wait;
+}
+
+.automaticffl-mixed-notice p.automaticffl-state-row {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	gap: 6px 10px;
+	margin: 8px 0 0;
+	padding: 0;
+	float: none;
+	width: 100%;
+}
+
+.automaticffl-mixed-notice .automaticffl-state-row label,
+.automaticffl-mixed-notice .automaticffl-state-row select {
+	width: auto;
+	max-width: 100%;
+	margin: 0;
+	font-size: 13px;
+}
+
+.automaticffl-mixed-notice .automaticffl-state-row select {
+	min-height: 36px;
+	padding: 6px 10px;
+	border: 1px solid #ccc;
+	border-radius: 4px;
+	background: #fff;
+	color: #262626;
+}
+
+.automaticffl-mixed-notice .automaticffl-cart-notice-error {
+	margin: 0 0 6px;
+	color: #b32d2e;
+	font-size: 13px;
+}
+
+/* Keep the attention accent on decisions that require separate orders. */
+.automaticffl-notice.automaticffl-mixed-notice--separate {
+	border-color: #edc7ca;
+	border-top: 3px solid #b81c23;
+	background: #fdf5f5;
+}
+
+.automaticffl-mixed-notice--separate .automaticffl-notice-icon,
+.automaticffl-mixed-notice--separate .automaticffl-notice-icon svg {
+	color: #b81c23;
+}
+
+/* Variables are measured from the actual product column, including after stacking. */
+.automaticffl-notice.automaticffl-cart-notice {
+	width: var(--automaticffl-cart-notice-width, 100%);
+	margin-inline-start: var(--automaticffl-cart-notice-offset, 0px);
+}
+
+@media (pointer: coarse) {
+	.automaticffl-mixed-notice .automaticffl-save-buttons .automaticffl-save-btn,
+	.automaticffl-mixed-notice .automaticffl-blocks-save-buttons .automaticffl-blocks-save-btn {
+		min-height: 44px;
+	}
 }

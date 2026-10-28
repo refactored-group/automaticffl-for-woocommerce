@@ -1,5 +1,18 @@
 *** Automatic FFL for WooCommerce ***
 
+2026-10-28 - Version 1.0.29
+* Added mixed-cart banners aligned above the Cart Block product list
+* Unified firearm/ammunition mixed notices across Classic and Blocks with compact Native styling and red attention accents
+* Added quantity-aware checkout choices that save the opposite group before opening checkout
+* Clarified that other items are put back in the cart after checkout
+* Restored Blocks dealer details under Shipping address, retaining Shipping options for billing-only stores and hiding the unused apartment control and its autofill helper
+* Kept selected dealer shipping rates when customers edit billing in billing-only Blocks checkout
+* Preserved the checkout page position when selecting a dealer or canceling the Blocks dealer picker
+* Kept notice messages and item counts current after quantity changes and removals
+* Kept Cart API updates working after checkout creates a draft order, with server-side mixed-cart order validation
+* Added persisted ammunition shipping-state selection with restricted/unrestricted notices and retryable failures
+* Preserved existing classic cart and checkout behavior
+
 2026-10-27 - Version 1.0.28
 * Removed WordPress Application Passwords as a checkout-classification prerequisite
 * Added bounded product-fact batching with strict mixed-version fallback behavior

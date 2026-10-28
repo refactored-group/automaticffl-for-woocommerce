@@ -51,3 +51,17 @@ unset AUTOMATICFFL_FIXTURE_CLEANUP
 ```
 
 Cleanup removes the fixture products, pages, categories, shipping zone, and MU plugin. Remove the disposable WordPress site and disposable plugin copy after evidence is recorded. The test-only API/iframe overrides and MU plugin must not enter a release package.
+
+## Checkout-choice regression checks
+
+After `npm install`, the Classic handler harness accepts the jQuery asset from a local WordPress installation and makes no network/cart requests:
+
+```sh
+node tests/integration/checkout-choice-handlers.cjs "$WC_TEST_ROOT/wp-includes/js/jquery/jquery.js"
+```
+
+The saved-cart integration check targets the disposable Cart Block acceptance fixture (`wc_ffl_store_hash=local-cart-blocks-only`, option `affl_cart_fixture_ids`, loopback classification stubs). It refuses other hosts/stores. It creates and cleans up one test variable product, checks both checkout groups for firearm/ammo/variation carts, models completed checkout by emptying the remaining cart, then restores the saved group. It submits no order or payment:
+
+```sh
+wp --path="$WC_TEST_ROOT" eval-file "$PWD/tests/integration/checkout-choice-saved-cart.php"
+```

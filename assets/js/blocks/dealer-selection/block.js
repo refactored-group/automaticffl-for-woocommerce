@@ -16,7 +16,7 @@ import { CART_STORE_KEY } from '@woocommerce/block-data';
 import { getSetting } from '@woocommerce/settings';
 import DealerModal from './components/DealerModal';
 import SelectedDealerCard from './components/SelectedDealerCard';
-import SaveForLaterButtons from './components/SaveForLaterButtons';
+import MixedCartNotice from './components/MixedCartNotice';
 
 // Survives React remounts caused by WC re-rendering the checkout tree.
 let persistedAmmoFflLocked = false;
@@ -70,6 +70,7 @@ const getSettings = () => {
 		isFirearmsRegularMixed: settings.isFirearmsRegularMixed || false,
 		selectedAmmoState: settings.selectedAmmoState || '',
 		cartUrl: settings.cartUrl || '',
+		checkoutUrl: settings.checkoutUrl || '',
 		fflItemCount: settings.fflItemCount || 0,
 		regularItemCount: settings.regularItemCount || 0,
 		hasSavedItems: settings.hasSavedItems || false,
@@ -110,6 +111,9 @@ const ApiUnavailableNotice = ( { onDismiss } ) => (
 
 const Block = () => {
 	const settings = getSettings();
+	const liveCart = useSelect( ( select ) => select( CART_STORE_KEY ).getCartData?.()?.extensions?.automaticffl, [] );
+	const fflCount = liveCart?.fflItemCount ?? settings.fflItemCount;
+	const regularCount = liveCart?.regularItemCount ?? settings.regularItemCount;
 
 	const [ isModalOpen, setIsModalOpen ] = useState( false );
 	const [ selectedDealer, setSelectedDealer ] = useState( persistedDealer );
@@ -211,6 +215,46 @@ const Block = () => {
 			console.error( 'AutomaticFFL: Could not restore customer billing', e );
 		}
 	}, [ setBillingAddress ] );
+
+	// Billing-only Woo forms copy billing into shipping on each input change.
+	// Correct the store synchronously, before its debounced/blur-triggered push.
+	useEffect( () => {
+		if ( ! getSetting( 'forcedBillingAddress', false ) || settings.isMixedCart ||
+			! ( settings.hasFirearms || ( settings.isAmmoOnly && settings.isAmmoEnabled ) ) ) {
+			return;
+		}
+
+		return wp.data.subscribe( () => {
+			const cart = wp.data.select( CART_STORE_KEY );
+			const checkout = wp.data.select( 'wc/store/checkout' );
+			const dealer = checkout.getExtensionData?.()?.automaticffl;
+			const live = cart.getCartData?.()?.extensions?.automaticffl;
+			if ( ! dealer?.fflLicense || ! cart.getNeedsShipping?.() || checkout.prefersCollection?.() ||
+				live?.fflItemCount === 0 || live?.isFirearmsRegularMixed || live?.isAmmoRegularMixed ) {
+				return;
+			}
+			const { shippingAddress = {}, billingAddress = {} } = cart.getCustomerData();
+			// Let the existing ammo reset observe an unrestricted customer state.
+			if ( settings.isAmmoOnly && ! settings.ammoRestrictedStates.includes( billingAddress.state ) ) {
+				return;
+			}
+			// Read current extension data so dealer changes/clears take effect immediately.
+			const destination = {
+				company: dealer.fflCompanyName || '',
+				address_1: dealer.fflDealerAddress1 || '',
+				address_2: dealer.fflDealerAddress2 || '',
+				city: dealer.fflDealerCity || '',
+				state: dealer.fflDealerState || '',
+				postcode: dealer.fflDealerPostcode || '',
+				country: dealer.fflDealerCountry || 'US',
+				phone: dealer.fflDealerPhone || '',
+			};
+			if ( Object.keys( destination ).some( ( key ) => ( shippingAddress[ key ] || '' ) !== destination[ key ] ) ) {
+				// Partial updates preserve recipient names and additional shipping fields.
+				setShippingAddress( destination );
+			}
+		} );
+	}, [ settings.hasFirearms, settings.isMixedCart, settings.isAmmoOnly, settings.isAmmoEnabled, settings.ammoRestrictedStates, setShippingAddress ] );
 
 	const handleDealerSelect = useCallback(
 		( dealer ) => {
@@ -475,88 +519,17 @@ const Block = () => {
 	}
 
 	if ( settings.isFirearmsRegularMixed ) {
-		return (
-			<div className="wc-block-components-notices">
-				<div className="wc-block-components-notice-banner is-error">
-					<svg
-						xmlns="http://www.w3.org/2000/svg"
-						viewBox="0 0 24 24"
-						width="24"
-						height="24"
-						aria-hidden="true"
-						focusable="false"
-					>
-						<path d="M12 3.2c-4.8 0-8.8 3.9-8.8 8.8 0 4.8 3.9 8.8 8.8 8.8 4.8 0 8.8-3.9 8.8-8.8 0-4.8-4-8.8-8.8-8.8zm0 16c-4 0-7.2-3.2-7.2-7.2C4.8 8 8 4.8 12 4.8s7.2 3.2 7.2 7.2c0 4-3.2 7.2-7.2 7.2zM11 8h2v5h-2V8zm0 6h2v2h-2v-2z" />
-					</svg>
-					<div className="wc-block-components-notice-banner__content">
-						{ __( 'Firearms must be shipped to an FFL dealer and cannot be combined with regular products.', 'automaticffl-for-wc' ) }
-						<SaveForLaterButtons
-							fflCount={ settings.fflItemCount }
-							regularCount={ settings.regularItemCount }
-						/>
-					</div>
-				</div>
-			</div>
-		);
+		return <MixedCartNotice message={ __( 'FFL items ship to your dealer. Regular items ship to you.', 'automaticffl-for-wc' ) } fflCount={ fflCount } regularCount={ regularCount } checkoutUrl={ settings.checkoutUrl } />;
 	}
 
 	if ( settings.isAmmoRegularMixed && settings.isAmmoEnabled ) {
 		const isRestricted = shippingState && settings.ammoRestrictedStates.includes( shippingState );
 		const stateName = settings.usStates[ shippingState ] || shippingState;
-
-		if ( isRestricted ) {
-			return (
-				<div className="wc-block-components-notices">
-					<div className="wc-block-components-notice-banner is-error">
-						<svg
-							xmlns="http://www.w3.org/2000/svg"
-							viewBox="0 0 24 24"
-							width="24"
-							height="24"
-							aria-hidden="true"
-							focusable="false"
-						>
-							<path d="M12 3.2c-4.8 0-8.8 3.9-8.8 8.8 0 4.8 3.9 8.8 8.8 8.8 4.8 0 8.8-3.9 8.8-8.8 0-4.8-4-8.8-8.8-8.8zm0 16c-4 0-7.2-3.2-7.2-7.2C4.8 8 8 4.8 12 4.8s7.2 3.2 7.2 7.2c0 4-3.2 7.2-7.2 7.2zM11 8h2v5h-2V8zm0 6h2v2h-2v-2z" />
-						</svg>
-						<div className="wc-block-components-notice-banner__content">
-							{ __( 'Ammunition and regular products in your cart require separate orders for shipping to', 'automaticffl-for-wc' ) } { stateName }.
-							<SaveForLaterButtons
-								fflCount={ settings.fflItemCount }
-								regularCount={ settings.regularItemCount }
-							/>
-						</div>
-					</div>
-				</div>
-			);
-		}
-
-		return null;
+		return isRestricted ? <MixedCartNotice message={ `${ __( 'Ammunition and regular products in your cart require separate orders for shipping to', 'automaticffl-for-wc' ) } ${ stateName }.` } fflCount={ fflCount } regularCount={ regularCount } checkoutUrl={ settings.checkoutUrl } isAmmo /> : null;
 	}
 
 	if ( settings.isMixedCart && ! settings.isFirearmsRegularMixed && ! settings.isAmmoRegularMixed ) {
-		return (
-			<div className="wc-block-components-notices">
-				<div className="wc-block-components-notice-banner is-error">
-					<svg
-						xmlns="http://www.w3.org/2000/svg"
-						viewBox="0 0 24 24"
-						width="24"
-						height="24"
-						aria-hidden="true"
-						focusable="false"
-					>
-						<path d="M12 3.2c-4.8 0-8.8 3.9-8.8 8.8 0 4.8 3.9 8.8 8.8 8.8 4.8 0 8.8-3.9 8.8-8.8 0-4.8-4-8.8-8.8-8.8zm0 16c-4 0-7.2-3.2-7.2-7.2C4.8 8 8 4.8 12 4.8s7.2 3.2 7.2 7.2c0 4-3.2 7.2-7.2 7.2zM11 8h2v5h-2V8zm0 6h2v2h-2v-2z" />
-					</svg>
-					<div className="wc-block-components-notice-banner__content">
-						{ __( 'FFL products and regular products cannot be purchased together.', 'automaticffl-for-wc' ) }
-						<SaveForLaterButtons
-							fflCount={ settings.fflItemCount }
-							regularCount={ settings.regularItemCount }
-						/>
-					</div>
-				</div>
-			</div>
-		);
+		return <MixedCartNotice message={ __( 'FFL products and regular products cannot be purchased together.', 'automaticffl-for-wc' ) } fflCount={ fflCount } regularCount={ regularCount } checkoutUrl={ settings.checkoutUrl } />;
 	}
 
 	if ( settings.isAmmoOnly && settings.isAmmoEnabled && ! ammoFflLocked ) {

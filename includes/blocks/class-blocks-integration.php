@@ -91,16 +91,27 @@ class Blocks_Integration implements IntegrationInterface {
 	/**
 	 * Register the dealer-selection child block.
 	 *
-	 * Registered as a child of woocommerce/checkout-shipping-methods-block via
-	 * the parent metadata in block.json. This keeps the forced block mounted
-	 * when WooCommerce suppresses address fields in billing-only mode.
+	 * Keep names and dealer details in Shipping address. Billing-only stores
+	 * suppress that native section, so retain Shipping options as their fallback.
 	 *
 	 * @return void
 	 */
 	private function register_dealer_selection_block_type() {
 		register_block_type(
-			dirname( _AFFL_LOADER_ ) . '/assets/js/blocks/dealer-selection'
+			dirname( _AFFL_LOADER_ ) . '/assets/js/blocks/dealer-selection',
+			array( 'parent' => array( $this->get_dealer_selection_parent() ) )
 		);
+	}
+
+	/**
+	 * Resolve placement from merchant policy, independent of cart eligibility.
+	 *
+	 * @return string
+	 */
+	private function get_dealer_selection_parent() {
+		return 'billing_only' === get_option( 'woocommerce_ship_to_destination' )
+			? 'woocommerce/checkout-shipping-methods-block'
+			: 'woocommerce/checkout-shipping-address-block';
 	}
 
 	/**
@@ -204,12 +215,16 @@ class Blocks_Integration implements IntegrationInterface {
 			'isFirearmsRegularMixed' => $analyzer->is_firearms_regular_mixed(),
 			'selectedAmmoState'      => WC()->session ? WC()->session->get( 'automaticffl_ammo_state', '' ) : '',
 			'cartUrl'                => wc_get_cart_url(),
+			'checkoutUrl'            => wc_get_checkout_url(),
 
 			// Save for later fields
 			'fflItemCount'         => $ffl_count,
 			'regularItemCount'     => $regular_count,
 			'hasSavedItems'        => Saved_Cart::has_saved_items(),
 			'savedItemsCount'      => Saved_Cart::get_saved_items_count(),
+
+			// Match server block registration in both the frontend and editor.
+			'dealerSelectionParent' => $this->get_dealer_selection_parent(),
 
 			// Common fields
 			'iframeUrl'            => $iframe_url,
