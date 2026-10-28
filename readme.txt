@@ -2,7 +2,7 @@
 Contributors: refactoredgroup
 Tags: woocommerce, ffl, firearms, ammunition, checkout
 Tested up to: 6.9.4
-Stable tag: 1.0.27
+Stable tag: 1.0.28
 Requires PHP: 7.0
 Requires at least: 5.6
 License: GPLv3
@@ -96,6 +96,11 @@ Yes. Automatic FFL is also available as a BigCommerce app and Magento extension.
 8. Allow us to automatically enable new Type 1 & 2 FFL dealers or take full control.
 
 == Changelog ==
+
+= 1.0.28 =
+* Removes WordPress Application Passwords as a checkout-classification prerequisite.
+* Adds bounded product-fact batching and strict mixed-version fallback behavior.
+* Separates checkout API status from credentials used by category browsing, order-level certificate callbacks, and order reporting.
 
 = 1.0.27 =
 * Preserves the selected Automatic FFL dealer ID on Classic and Blocks orders.

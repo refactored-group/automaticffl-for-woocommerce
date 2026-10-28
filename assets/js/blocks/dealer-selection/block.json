@@ -15,7 +15,7 @@
 		"inserter": false
 	},
 	"parent": [
-		"woocommerce/checkout-shipping-address-block"
+		"woocommerce/checkout-shipping-methods-block"
 	],
 	"attributes": {
 		"lock": {

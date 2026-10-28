@@ -197,13 +197,14 @@ class Config {
 	public static function register_with_backend() {
 		$store_hash = self::get_store_hash();
 		if ( empty( $store_hash ) ) {
-			return;
+			return Connection_Status::save_registration( 'needs_attention', 'missing_store_hash' );
 		}
 
 		$credentials = Credentials::get_or_create_app_password();
 		if ( is_wp_error( $credentials ) ) {
-			error_log( 'AutomaticFFL: Failed to create credentials - ' . $credentials->get_error_message() );
-			return;
+			$code = 'unsupported' === $credentials->get_error_code() ? 'application_passwords_unavailable' : 'missing_credentials';
+			error_log( 'AutomaticFFL: Additional-feature credential setup failed (' . $code . ')' );
+			return Connection_Status::save_registration( 'needs_attention', $code );
 		}
 
 		$response = wp_remote_post(
@@ -221,16 +222,40 @@ class Config {
 		);
 
 		if ( is_wp_error( $response ) ) {
-			error_log( 'AutomaticFFL: Registration request failed - ' . $response->get_error_message() );
-			return;
+			error_log( 'AutomaticFFL: Additional-feature credential verification transport failed' );
+			return Connection_Status::save_registration( 'needs_attention', 'verification_transport_failure' );
 		}
 
 		$status_code = wp_remote_retrieve_response_code( $response );
+		$request_id  = self::sanitize_request_id( wp_remote_retrieve_header( $response, 'x-request-id' ) );
 		if ( $status_code === 200 ) {
 			update_option( 'automaticffl_registered_version', AFFL_VERSION );
+			return Connection_Status::save_registration( 'registered', null, 200, $request_id );
 		} else {
-			error_log( 'AutomaticFFL: Registration failed with status ' . $status_code );
+			$code = self::registration_failure_code( wp_remote_retrieve_body( $response ) );
+			error_log( 'AutomaticFFL: Additional-feature credential verification failed (' . $code . ', status ' . (int) $status_code . ')' );
+			return Connection_Status::save_registration( 'needs_attention', $code, (int) $status_code, $request_id );
 		}
+	}
+
+	/** Map only known backend reasons; arbitrary response text is discarded. */
+	private static function registration_failure_code( $body ) {
+		$decoded = json_decode( (string) $body, true );
+		$reason  = is_array( $decoded ) && isset( $decoded['error'] ) && is_string( $decoded['error'] ) ? $decoded['error'] : '';
+		$mapping = array(
+			'invalid_credentials' => 'invalid_credentials',
+			'site_url_mismatch'   => 'site_url_mismatch',
+			'missing_credentials' => 'missing_credentials',
+			'blank_credentials'   => 'missing_credentials',
+			'unsupported_platform'=> 'unsupported_platform',
+		);
+
+		return isset( $mapping[ $reason ] ) ? $mapping[ $reason ] : 'registration_failed';
+	}
+
+	private static function sanitize_request_id( $request_id ) {
+		return is_string( $request_id ) && strlen( $request_id ) <= 128 &&
+			1 === preg_match( '/^[A-Za-z0-9_-]+$/', $request_id ) ? $request_id : null;
 	}
 
 	/**

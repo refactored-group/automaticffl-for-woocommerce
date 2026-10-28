@@ -91,9 +91,9 @@ class Blocks_Integration implements IntegrationInterface {
 	/**
 	 * Register the dealer-selection child block.
 	 *
-	 * Registered as a child of woocommerce/checkout-shipping-address-block
-	 * via the parent metadata in block.json. Auto-inserts as a forced block
-	 * via the lock attribute.
+	 * Registered as a child of woocommerce/checkout-shipping-methods-block via
+	 * the parent metadata in block.json. This keeps the forced block mounted
+	 * when WooCommerce suppresses address fields in billing-only mode.
 	 *
 	 * @return void
 	 */

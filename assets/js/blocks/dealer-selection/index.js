@@ -2,7 +2,7 @@
  * FFL Dealer Selection — Editor Entry
  *
  * Registers the block as a forced child of
- * woocommerce/checkout-shipping-address-block. The block auto-inserts
+ * woocommerce/checkout-shipping-methods-block. The block auto-inserts
  * into every checkout via the lock.default.{remove,move} flags in
  * block.json — no merchant action required.
  *

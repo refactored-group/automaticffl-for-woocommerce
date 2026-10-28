@@ -5,3 +5,9 @@ node_modules/
 package-lock.json
 .wp-env.json
 my-readme.txt
+.DS_Store
+*.log
+*.cache
+.env*
+coverage/
+dist/

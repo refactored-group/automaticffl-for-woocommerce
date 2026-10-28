@@ -9,6 +9,8 @@ namespace RefactoredGroup\AutomaticFFL\Admin;
 
 use RefactoredGroup\AutomaticFFL\Admin\Screens;
 use RefactoredGroup\AutomaticFFL\Framework\Helper;
+use RefactoredGroup\AutomaticFFL\Api\Restrictions_Client;
+use RefactoredGroup\AutomaticFFL\Helper\Connection_Status;
 
 defined( 'ABSPATH' ) || exit;
 
@@ -40,7 +42,30 @@ class Settings {
 
 		add_action( 'admin_menu', array( $this, 'add_menu_item' ) );
 		add_action( 'wp_loaded', array( $this, 'save' ) );
+		add_action( 'admin_post_automaticffl_check_checkout_connection', array( $this, 'check_checkout_connection' ) );
 
+	}
+
+	/** Run the explicit, nonce-protected checkout connection check. */
+	public function check_checkout_connection() {
+		if ( ! current_user_can( 'manage_woocommerce' ) ) {
+			wp_die( esc_html__( 'You do not have permission to check this connection.', 'automaticffl-for-wc' ) );
+		}
+
+		check_admin_referer( 'automaticffl_check_checkout_connection' );
+		self::run_checkout_probe();
+		wp_safe_redirect( admin_url( 'admin.php?page=' . self::PAGE_ID . '&tab=general&connection_checked=1' ) );
+	}
+
+	/** Execute and persist only the checkout-service probe. */
+	public static function run_checkout_probe() {
+		$result = ( new Restrictions_Client() )->probe_checkout_connection();
+		return Connection_Status::save_checkout(
+			$result['state'],
+			$result['code'],
+			$result['http_status'],
+			$result['request_id']
+		);
 	}
 
 	/**
