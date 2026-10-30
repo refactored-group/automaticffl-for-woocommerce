@@ -93,9 +93,10 @@ class Checkout {
 	 * @since 1.0.0
 	 */
 	public static function verify_mixed_cart() {
-		// Store API cart updates can initialize WC_Checkout for a draft order.
-		// Those requests need JSON; order submission is validated separately.
-		if ( is_admin() || ( defined( 'REST_REQUEST' ) && REST_REQUEST ) ) {
+		// Shipping calculations and Store API cart updates can initialize
+		// WC_Checkout outside the checkout page. Those requests must finish
+		// normally; order submission has its own mixed-cart validation.
+		if ( is_admin() || ( defined( 'REST_REQUEST' ) && REST_REQUEST ) || wp_doing_ajax() || ! is_checkout() ) {
 			return;
 		}
 

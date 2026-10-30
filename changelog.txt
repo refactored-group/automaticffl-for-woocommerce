@@ -1,5 +1,10 @@
 *** Automatic FFL for WooCommerce ***
 
+2026-10-30 - Version 1.0.32
+* Fixed stuck add-to-cart requests when combining FFL and regular items with a saved shipping address
+* Limited mixed-cart redirects to checkout page visits so cart AJAX and other background requests can finish normally
+* Added explicit classic-checkout validation to reject mixed firearm orders even when a dealer is supplied
+
 2026-10-30 - Version 1.0.31
 * Removed placeholder WooCommerce Marketplace metadata that triggered misleading connection and subscription notices
 * Restored the Configure link when the installation folder name differs from the plugin filename

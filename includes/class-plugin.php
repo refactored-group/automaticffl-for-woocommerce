@@ -188,7 +188,7 @@ class Plugin {
 		// Validate checkout for ammo + regular mixed carts in restricted states.
 		add_action( 'woocommerce_checkout_process', array( $this, 'validate_ammo_regular_checkout' ) );
 
-		// Validate FFL license and shipping name for firearms carts.
+		// Validate mixed firearm carts, FFL license, and shipping name.
 		add_action( 'woocommerce_checkout_process', array( $this, 'validate_ffl_checkout' ) );
 
 		// Stash customer shipping address before blocks checkout overwrites user meta.
@@ -443,7 +443,7 @@ class Plugin {
 	}
 
 	/**
-	 * Validate FFL license and shipping name fields during classic checkout.
+	 * Validate firearm cart separation, FFL license, and names at classic checkout.
 	 *
 	 * @since 1.0.18
 	 *
@@ -451,6 +451,16 @@ class Plugin {
 	 */
 	public function validate_ffl_checkout() {
 		$analyzer = new Cart_Analyzer();
+
+		// AJAX checkout must reject mixed firearm orders with a WooCommerce
+		// error instead of relying on the checkout-page redirect.
+		if ( $analyzer->is_firearms_regular_mixed() ) {
+			wc_add_notice(
+				__( 'Firearms must be shipped to an FFL dealer and cannot be combined with regular products.', 'automaticffl-for-wc' ),
+				'error'
+			);
+			return;
+		}
 
 		if ( ! $analyzer->has_ffl_products() || $analyzer->is_mixed_ffl_regular() ) {
 			return;

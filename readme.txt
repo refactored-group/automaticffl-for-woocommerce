@@ -2,7 +2,7 @@
 Contributors: refactoredgroup
 Tags: woocommerce, ffl, firearms, ammunition, checkout
 Tested up to: 7.1
-Stable tag: 1.0.31
+Stable tag: 1.0.32
 Requires PHP: 7.0
 Requires at least: 5.6
 License: GPLv3
@@ -96,6 +96,10 @@ Yes. Automatic FFL is also available as a BigCommerce app and Magento extension.
 8. Allow us to automatically enable new Type 1 & 2 FFL dealers or take full control.
 
 == Changelog ==
+
+= 1.0.32 =
+* Fixes stuck add-to-cart requests when combining FFL and regular items with a saved shipping address.
+* Limits mixed-cart redirects to checkout page visits and explicitly rejects mixed firearm orders during classic checkout submission.
 
 = 1.0.31 =
 * Removes placeholder WooCommerce Marketplace metadata that triggered misleading connection and subscription notices.
