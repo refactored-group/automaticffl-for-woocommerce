@@ -1171,8 +1171,7 @@ class Plugin {
 	 * @return string
 	 */
 	public function get_plugin_file() {
-		$slug = dirname( plugin_basename( _AFFL_LOADER_ ) );
-		return trailingslashit( $slug ) . $slug . '.php';
+		return _AFFL_LOADER_;
 	}
 
 	/**

@@ -64,7 +64,7 @@ To find a file (e.g., "**Product Definition**") within a specific context (Proje
 
 This is a WordPress/WooCommerce plugin that integrates FFL (Federal Firearms License) dealer selection into the checkout process. When customers purchase firearms, they must select a licensed FFL dealer for shipping compliance.
 
-**Current Version:** 1.0.30
+**Current Version:** 1.0.31
 **Requires:** WordPress 5.6+, WooCommerce 3.5+, PHP 7.0+
 
 ## Project Structure
@@ -203,6 +203,8 @@ When releasing a new version, the following files MUST be updated:
 Ensure all four files reflect the same version number for consistency.
 
 ## Recent Changes
+
+- **v1.0.31:** Removed misleading WooCommerce Marketplace notices and restored the Configure link for differently named installation folders
 
 - **v1.0.30:** Preserved the ammunition FFL workflow when selecting or changing to a dealer in an unrestricted state
 

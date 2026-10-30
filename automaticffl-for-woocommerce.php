@@ -5,7 +5,7 @@
  * Description: The official Automatic FFL for WooCommerce plugin
  * Author: Refactored Group
  * Author URI: http://refactored.group
- * Version: 1.0.30
+ * Version: 1.0.31
  * Requires at least: 5.6
  * Requires PHP: 7.0
  * Tested up to: 6.9
@@ -21,13 +21,11 @@
  * Copyright Copyright (c) 2023, Refactored Group.
  * License: GPLv3
  * License URI: https://www.gnu.org/licenses/gpl-3.0.html GPLv3
- *
- * Woo: 99999:00000000000000000000000000000000 @TODO: update this when the plugin is released
  */
 
 defined( 'ABSPATH' ) || exit;
 define( '_AFFL_LOADER_', __FILE__ );
-define( 'AFFL_VERSION', '1.0.30' );
+define( 'AFFL_VERSION', '1.0.31' );
 define( 'AFFL_TEMPLATES_PATH', plugin_dir_path( __FILE__ ) . 'templates/' );
 
 require_once 'includes/class-wc-ffl-loader.php';

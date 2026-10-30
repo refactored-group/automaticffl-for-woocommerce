@@ -1,5 +1,9 @@
 *** Automatic FFL for WooCommerce ***
 
+2026-10-30 - Version 1.0.31
+* Removed placeholder WooCommerce Marketplace metadata that triggered misleading connection and subscription notices
+* Restored the Configure link when the installation folder name differs from the plugin filename
+
 2026-10-29 - Version 1.0.30
 * Kept ammunition checkout in the FFL workflow when the selected dealer is in an unrestricted state
 * Preserved the dealer selection and destination through dealer changes and Blocks checkout updates
