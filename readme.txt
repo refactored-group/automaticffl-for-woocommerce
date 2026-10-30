@@ -1,7 +1,7 @@
 === Automatic FFL ===
 Contributors: refactoredgroup
 Tags: woocommerce, ffl, firearms, ammunition, checkout
-Tested up to: 6.9.4
+Tested up to: 7.1
 Stable tag: 1.0.31
 Requires PHP: 7.0
 Requires at least: 5.6

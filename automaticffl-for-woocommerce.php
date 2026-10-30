@@ -8,7 +8,7 @@
  * Version: 1.0.31
  * Requires at least: 5.6
  * Requires PHP: 7.0
- * Tested up to: 6.9
+ * Tested up to: 7.1
  * WC requires at least: 3.5
  * WC tested up to: 10.4.3
  * Text Domain: automaticffl-for-wc
