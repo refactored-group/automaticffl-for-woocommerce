@@ -60,6 +60,12 @@ After `npm install`, the Classic handler harness accepts the jQuery asset from a
 node tests/integration/checkout-choice-handlers.cjs "$WC_TEST_ROOT/wp-includes/js/jquery/jquery.js"
 ```
 
+The ammunition dealer regression check executes the shipped Classic checkout templates in a local DOM. It verifies that normal and billing-only checkout retain dealers in unrestricted states through selection, replacement, and checkout updates, without making network requests:
+
+```sh
+node tests/integration/ammo-dealer-workflow.cjs "$WC_TEST_ROOT/wp-includes/js/jquery/jquery.js"
+```
+
 The saved-cart integration check targets the disposable Cart Block acceptance fixture (`wc_ffl_store_hash=local-cart-blocks-only`, option `affl_cart_fixture_ids`, loopback classification stubs). It refuses other hosts/stores. It creates and cleans up one test variable product, checks both checkout groups for firearm/ammo/variation carts, models completed checkout by emptying the remaining cart, then restores the saved group. It submits no order or payment:
 
 ```sh

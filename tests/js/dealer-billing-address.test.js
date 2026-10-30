@@ -102,6 +102,52 @@ test( 'before selection, native billing-only address copying remains unchanged',
 	render();billingInput( { ...customer, state: 'CA' }, () => expect( mockCustomer.shippingAddress.state ).toBe( 'CA' ) );
 } );
 
+test.each( [ false, true ] )( 'ammo keeps an unrestricted-state dealer through updates, replacement and remount (billing-only: %s)', ( forced ) => {
+	mockForced = forced;
+	mockSettings = { ...mockSettings, hasFirearms: false, hasAmmo: true, isAmmoOnly: true, isAmmoEnabled: true };
+	mockCustomer = { shippingAddress: { ...customer, state: 'CA' }, billingAddress: { ...customer, state: 'CA' } };
+	render();
+	expect( document.body.classList.contains( 'automaticffl-ffl-required' ) ).toBe( true );
+	choose( texas );
+
+	const expectDealer = ( dealer ) => {
+		expect( mockExtensions.automaticffl ).toMatchObject( {
+			fflDealerId: String( dealer.id ), fflLicense: dealer.fflID, fflDealerState: dealer.stateOrProvinceCode,
+		} );
+		expect( mockCustomer.shippingAddress ).toMatchObject( { state: dealer.stateOrProvinceCode, address_1: dealer.address1 } );
+		expect( document.body.classList.contains( 'automaticffl-ffl-required' ) ).toBe( true );
+		expect( mount.textContent ).toContain( 'Change Dealer' );
+	};
+	expectDealer( texas );
+	act( () => { mockNotify();mockNotify(); } );
+	expectDealer( texas );
+
+	if ( forced ) {
+		billingInput( { ...customer, state: 'NY' } );
+	} else {
+		act( () => mockBilling( { ...customer, state: 'UT' } ) );
+	}
+	expectDealer( texas );
+
+	const colorado = { ...texas, id: 303, fflID: 'CO-license', stateOrProvinceCode: 'CO' };
+	choose( colorado );
+	expectDealer( colorado );
+	act( () => root.unmount() );
+	root = createRoot( mount );render();
+	expectDealer( colorado );
+} );
+
+test( 'ammo still allows an unrestricted destination before a dealer is chosen', () => {
+	mockForced = false;
+	mockSettings = { ...mockSettings, hasFirearms: false, hasAmmo: true, isAmmoOnly: true, isAmmoEnabled: true };
+	mockCustomer.shippingAddress.state = 'CA';
+	render();
+	expect( mount.textContent ).toContain( 'Find a Dealer' );
+	act( () => mockShipping( { state: 'UT' } ) );
+	expect( document.body.classList.contains( 'automaticffl-ffl-required' ) ).toBe( false );
+	expect( mount.textContent ).toBe( '' );
+} );
+
 test( 'ammo retains dealer for restricted billing edits and releases it for unrestricted billing', () => {
 	mockSettings = { ...mockSettings, hasFirearms: false, hasAmmo: true, isAmmoOnly: true, isAmmoEnabled: true };
 	mockCustomer = { shippingAddress: { ...customer, state: 'CA' }, billingAddress: { ...customer, state: 'CA' } };

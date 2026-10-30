@@ -117,6 +117,7 @@ const Block = () => {
 
 	const [ isModalOpen, setIsModalOpen ] = useState( false );
 	const [ selectedDealer, setSelectedDealer ] = useState( persistedDealer );
+	const selectedDealerRef = useRef( persistedDealer );
 	const [ noticeDismissed, setNoticeDismissed ] = useState( false );
 	const [ ammoFflLocked, setAmmoFflLocked ] = useState( persistedAmmoFflLocked );
 
@@ -275,6 +276,9 @@ const Block = () => {
 			};
 			persistedCustomerAddress = customerAddress;
 
+			// Store subscribers can render the new shipping address before React
+			// commits selectedDealer. Keep the reset guard on the current dealer.
+			selectedDealerRef.current = dealer;
 			setSelectedDealer( dealer );
 			setIsModalOpen( false );
 
@@ -453,8 +457,9 @@ const Block = () => {
 		}
 	}, [ selectedDealer ] );
 
-	// Clear the dealer when an ammo-only customer transitions to an
-	// unrestricted state.
+	// Clear the dealer when an ammo-only customer changes their destination
+	// to an unrestricted state. Selecting a dealer also writes shippingState,
+	// so the dealer's own state must keep the existing FFL workflow active.
 	//
 	// Runs even when ammoFflLocked is true: a user-driven switch to an
 	// unrestricted state authoritatively resets the FFL flow. Without
@@ -480,10 +485,14 @@ const Block = () => {
 		if ( settings.ammoRestrictedStates.includes( shippingState ) ) {
 			return;
 		}
+		if ( selectedDealerRef.current && shippingState === selectedDealerRef.current.stateOrProvinceCode ) {
+			return;
+		}
 		if ( ! selectedDealer && ! ammoFflLocked ) {
 			return;
 		}
 
+		selectedDealerRef.current = null;
 		setSelectedDealer( null );
 		setAmmoFflLocked( false );
 		setExtensionData( 'automaticffl', getDealerExtensionData() );
