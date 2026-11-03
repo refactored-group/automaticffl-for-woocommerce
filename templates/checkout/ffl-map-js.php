@@ -15,6 +15,7 @@ defined( 'ABSPATH' ) || exit;
 ?>
 <script>
 	jQuery(document).ready(function($) {
+		var destinationResolver = window.AutomaticFflAmmoDestination;
 		// Open modal when "Find a Dealer" button is clicked
 		$('#automaticffl-select-dealer').click(function() {
 			$('body').css('overflow', 'hidden');
@@ -132,9 +133,15 @@ defined( 'ABSPATH' ) || exit;
 				$('#ffl_expiration_date').val(dealer.expirationDate || '');
 				$('#ffl_uuid').val(dealer.uuid || '');
 				$('#ffl_company_name').val(dealer.company || '');
+				var dealerDestination = destinationResolver
+					? destinationResolver.toWooCommerce(dealer.countryCode || 'US', dealer.stateOrProvinceCode || '')
+					: { country: dealer.countryCode || 'US', state: dealer.stateOrProvinceCode || '' };
 				$shippingPhone.val(dealer.phone || '');
-				$shippingCountry.val(dealer.countryCode || 'US');
-				$shippingState.val(dealer.stateOrProvinceCode || '');
+				$shippingState.val(dealerDestination.state);
+				$shippingCountry.val(dealerDestination.country).trigger('change');
+				// Country changes can replace WooCommerce's state control.
+				$shippingState = getCheckoutField('shipping_state', 'shipping_state');
+				$shippingState.val(dealerDestination.state);
 				$shippingAddress1.val(dealer.address1 || '');
 				$shippingAddress2.val(dealer.address2 || '');
 				$shippingCity.val(dealer.city || '');

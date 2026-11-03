@@ -1,5 +1,10 @@
 *** Automatic FFL for WooCommerce ***
 
+2026-11-02 - Version 1.0.33
+* Added merchant-controlled ammunition routing for American Samoa, Guam, Northern Mariana Islands, Puerto Rico, and United States Virgin Islands using native WooCommerce country addresses
+* Preserved District of Columbia and ordinary state behavior across Classic and Blocks checkout
+* Preserved customer billing and selected-dealer shipping while rejecting unrelated foreign province collisions
+
 2026-10-30 - Version 1.0.32
 * Fixed stuck add-to-cart requests when combining FFL and regular items with a saved shipping address
 * Limited mixed-cart redirects to checkout page visits so cart AJAX and other background requests can finish normally

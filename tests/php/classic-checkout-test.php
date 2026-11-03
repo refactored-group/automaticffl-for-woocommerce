@@ -98,3 +98,20 @@ affl_test( 'classic ammo mixed submission uses the submitted destination instead
 	$plugin->validate_ammo_regular_checkout();
 	affl_assert_same( array(), $GLOBALS['affl_checkout_notices'] );
 } );
+
+affl_test( 'classic ammo mixed submission resolves WooCommerce territory countries', function () {
+	$restrictions = array( array( 'id' => 1, 'conditions' => array( array( 'type' => 'ship_state', 'states' => array( 'PR' ) ) ) ) );
+	$plugin = affl_classic_checkout_plugin();
+	affl_cart_blocks_fixture( $restrictions );
+	$_POST['billing_country'] = 'PR';
+	$_POST['billing_state']   = '';
+	$plugin->validate_ammo_regular_checkout();
+	affl_assert_same( 1, count( $GLOBALS['affl_checkout_notices'] ) );
+	affl_assert_contains( 'Puerto Rico', $GLOBALS['affl_checkout_notices'][0]['message'] );
+
+	$GLOBALS['affl_checkout_notices'] = array();
+	$_POST['billing_country'] = 'CA';
+	$_POST['billing_state']   = 'PR';
+	$plugin->validate_ammo_regular_checkout();
+	affl_assert_same( array(), $GLOBALS['affl_checkout_notices'] );
+} );

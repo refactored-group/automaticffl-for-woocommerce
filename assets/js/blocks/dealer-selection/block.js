@@ -18,6 +18,8 @@ import DealerModal from './components/DealerModal';
 import SelectedDealerCard from './components/SelectedDealerCard';
 import MixedCartNotice from './components/MixedCartNotice';
 
+const ammoDestination = require( '../../ammo-destination' );
+
 // Survives React remounts caused by WC re-rendering the checkout tree.
 let persistedAmmoFflLocked = false;
 let persistedDealer = null;
@@ -126,6 +128,9 @@ const Block = () => {
 	const shippingState = useSelect( ( select ) => {
 		return select( CART_STORE_KEY ).getCustomerData?.()?.shippingAddress?.state || '';
 	}, [] );
+	const shippingCountry = useSelect( ( select ) => {
+		return select( CART_STORE_KEY ).getCustomerData?.()?.shippingAddress?.country || '';
+	}, [] );
 	const shippingFirstName = useSelect( ( select ) => {
 		return select( CART_STORE_KEY ).getCustomerData?.()?.shippingAddress?.first_name || '';
 	}, [] );
@@ -137,11 +142,16 @@ const Block = () => {
 		[ shippingFirstName, shippingLastName ]
 	);
 
+	const shippingDestination = ammoDestination.resolve(
+		shippingCountry,
+		shippingState,
+		Object.keys( settings.usStates )
+	);
 	const requiresFfl =
 		settings.isAmmoOnly &&
 		settings.isAmmoEnabled &&
-		shippingState !== '' &&
-		settings.ammoRestrictedStates.includes( shippingState );
+		shippingDestination !== '' &&
+		settings.ammoRestrictedStates.includes( shippingDestination );
 
 	const fflStatusRef = useRef( { required: false, selected: false, isAmmoOnly: false } );
 
@@ -236,18 +246,27 @@ const Block = () => {
 			}
 			const { shippingAddress = {}, billingAddress = {} } = cart.getCustomerData();
 			// Let the existing ammo reset observe an unrestricted customer state.
-			if ( settings.isAmmoOnly && ! settings.ammoRestrictedStates.includes( billingAddress.state ) ) {
+			const billingDestination = ammoDestination.resolve(
+				billingAddress.country,
+				billingAddress.state,
+				Object.keys( settings.usStates )
+			);
+			if ( settings.isAmmoOnly && ! settings.ammoRestrictedStates.includes( billingDestination ) ) {
 				return;
 			}
 			// Read current extension data so dealer changes/clears take effect immediately.
+			const dealerDestination = ammoDestination.toWooCommerce(
+				dealer.fflDealerCountry || 'US',
+				dealer.fflDealerState || ''
+			);
 			const destination = {
 				company: dealer.fflCompanyName || '',
 				address_1: dealer.fflDealerAddress1 || '',
 				address_2: dealer.fflDealerAddress2 || '',
 				city: dealer.fflDealerCity || '',
-				state: dealer.fflDealerState || '',
+				state: dealerDestination.state,
 				postcode: dealer.fflDealerPostcode || '',
-				country: dealer.fflDealerCountry || 'US',
+				country: dealerDestination.country,
 				phone: dealer.fflDealerPhone || '',
 			};
 			if ( Object.keys( destination ).some( ( key ) => ( shippingAddress[ key ] || '' ) !== destination[ key ] ) ) {
@@ -255,7 +274,7 @@ const Block = () => {
 				setShippingAddress( destination );
 			}
 		} );
-	}, [ settings.hasFirearms, settings.isMixedCart, settings.isAmmoOnly, settings.isAmmoEnabled, settings.ammoRestrictedStates, setShippingAddress ] );
+	}, [ settings.hasFirearms, settings.isMixedCart, settings.isAmmoOnly, settings.isAmmoEnabled, settings.ammoRestrictedStates, settings.usStates, setShippingAddress ] );
 
 	const handleDealerSelect = useCallback(
 		( dealer ) => {
@@ -287,6 +306,10 @@ const Block = () => {
 			}
 
 			setExtensionData( 'automaticffl', getDealerExtensionData( dealer ) );
+			const dealerDestination = ammoDestination.toWooCommerce(
+				dealer.countryCode || 'US',
+				dealer.stateOrProvinceCode || ''
+			);
 
 			setShippingAddress( {
 				first_name: currentShipping.first_name || '',
@@ -295,9 +318,9 @@ const Block = () => {
 				address_1: dealer.address1 || '',
 				address_2: dealer.address2 || '',
 				city: dealer.city || '',
-				state: dealer.stateOrProvinceCode || '',
+				state: dealerDestination.state,
 				postcode: dealer.postalCode || '',
-				country: dealer.countryCode || 'US',
+				country: dealerDestination.country,
 				phone: dealer.phone || '',
 			} );
 
@@ -334,8 +357,8 @@ const Block = () => {
 		};
 
 		const isAmmoRegularBlocked = () => {
-			if ( settings.isAmmoRegularMixed && settings.isAmmoEnabled && shippingState ) {
-				return settings.ammoRestrictedStates.includes( shippingState );
+			if ( settings.isAmmoRegularMixed && settings.isAmmoEnabled && shippingDestination ) {
+				return settings.ammoRestrictedStates.includes( shippingDestination );
 			}
 			return false;
 		};
@@ -382,6 +405,8 @@ const Block = () => {
 		settings.ammoRestrictedStates,
 		settings.usStates,
 		shippingState,
+		shippingCountry,
+		shippingDestination,
 	] );
 
 	useEffect( () => {
@@ -479,13 +504,20 @@ const Block = () => {
 		if ( ! settings.isAmmoOnly || ! settings.isAmmoEnabled ) {
 			return;
 		}
-		if ( shippingState === '' ) {
+		if ( shippingCountry === '' && shippingState === '' ) {
 			return;
 		}
-		if ( settings.ammoRestrictedStates.includes( shippingState ) ) {
+		if ( settings.ammoRestrictedStates.includes( shippingDestination ) ) {
 			return;
 		}
-		if ( selectedDealerRef.current && shippingState === selectedDealerRef.current.stateOrProvinceCode ) {
+		const selectedDealerDestination = selectedDealerRef.current
+			? ammoDestination.resolve(
+				selectedDealerRef.current.countryCode || 'US',
+				selectedDealerRef.current.stateOrProvinceCode || '',
+				Object.keys( settings.usStates )
+			)
+			: '';
+		if ( selectedDealerDestination && shippingDestination === selectedDealerDestination ) {
 			return;
 		}
 		if ( ! selectedDealer && ! ammoFflLocked ) {
@@ -500,15 +532,19 @@ const Block = () => {
 		if ( persistedCustomerAddress ) {
 			setShippingAddress( {
 				...persistedCustomerAddress,
+				country: shippingCountry,
 				state: shippingState,
 			} );
 		}
 		persistedCustomerAddress = null;
 	}, [
 		shippingState,
+		shippingCountry,
+		shippingDestination,
 		settings.isAmmoOnly,
 		settings.isAmmoEnabled,
 		settings.ammoRestrictedStates,
+		settings.usStates,
 		selectedDealer,
 		ammoFflLocked,
 		setExtensionData,
@@ -532,8 +568,8 @@ const Block = () => {
 	}
 
 	if ( settings.isAmmoRegularMixed && settings.isAmmoEnabled ) {
-		const isRestricted = shippingState && settings.ammoRestrictedStates.includes( shippingState );
-		const stateName = settings.usStates[ shippingState ] || shippingState;
+		const isRestricted = shippingDestination && settings.ammoRestrictedStates.includes( shippingDestination );
+		const stateName = settings.usStates[ shippingDestination ] || shippingDestination;
 		return isRestricted ? <MixedCartNotice message={ `${ __( 'Ammunition and regular products in your cart require separate orders for shipping to', 'automaticffl-for-wc' ) } ${ stateName }.` } fflCount={ fflCount } regularCount={ regularCount } checkoutUrl={ settings.checkoutUrl } isAmmo /> : null;
 	}
 
@@ -542,7 +578,7 @@ const Block = () => {
 	}
 
 	if ( settings.isAmmoOnly && settings.isAmmoEnabled && ! ammoFflLocked ) {
-		if ( ! shippingState ) {
+		if ( ! shippingDestination ) {
 			return (
 				<div className="automaticffl-ammo-notice">
 					<div className="wc-block-components-notices">

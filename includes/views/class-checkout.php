@@ -605,6 +605,7 @@ class Checkout {
 
 			var restrictedStates = <?php echo wp_json_encode( $restricted_states ); ?>;
 			var usStates = <?php echo wp_json_encode( $us_states ); ?>;
+			var destinationResolver = window.AutomaticFflAmmoDestination;
 			var icons = {
 				error: <?php echo wp_json_encode( $icon_error ); ?>
 			};
@@ -616,10 +617,12 @@ class Checkout {
 
 			function getEffectiveState() {
 				var shipToDifferent = $('#ship-to-different-address-checkbox').is(':checked');
-				if (shipToDifferent) {
-					return ($('#shipping_state').val() || '').toUpperCase();
-				}
-				return ($('#billing_state').val() || '').toUpperCase();
+				var prefix = shipToDifferent ? 'shipping' : 'billing';
+				var country = ($('#' + prefix + '_country').val() || 'US').toUpperCase();
+				var state = ($('#' + prefix + '_state').val() || '').toUpperCase();
+				return destinationResolver
+					? destinationResolver.resolve(country, state, Object.keys(usStates))
+					: (country === 'US' ? state : '');
 			}
 
 			function update() {
@@ -654,7 +657,7 @@ class Checkout {
 			}
 
 			// Watch state fields and checkbox via event delegation.
-			$(document.body).on('change', '#billing_state, #shipping_state, #ship-to-different-address-checkbox', update);
+			$(document.body).on('change', '#billing_country, #billing_state, #shipping_country, #shipping_state, #ship-to-different-address-checkbox', update);
 
 			// WooCommerce events fired after AJAX checkout update and country/state field changes.
 			$(document.body).on('updated_checkout country_to_state_changed', update);

@@ -18,6 +18,7 @@ defined( 'ABSPATH' ) || exit;
 <script>
 jQuery(document).ready(function($) {
 	const restrictedStates = <?php echo wp_json_encode( $restricted_states ); ?>;
+	const destinationResolver = window.AutomaticFflAmmoDestination;
 	let fflRequired = false;
 
 	// State of the currently-picked dealer, captured from the dealerUpdate
@@ -59,12 +60,17 @@ jQuery(document).ready(function($) {
 	 */
 	function getEffectiveShippingState() {
 		const $shipDiffCheckbox = $('#ship-to-different-address-checkbox');
-		const shipToDifferent = $shipDiffCheckbox.length ? $shipDiffCheckbox.prop('checked') : false;
+		const $shipDiffFallback = $('#ship_to_different_address');
+		const shipToDifferent = $shipDiffCheckbox.length
+			? $shipDiffCheckbox.prop('checked')
+			: ($shipDiffFallback.val() === '1' || ($('#ffl_license_field').val() || '') !== '');
+		const prefix = shipToDifferent ? 'shipping' : 'billing';
+		const country = $('#' + prefix + '_country').val() || 'US';
+		const state = $('#' + prefix + '_state').val() || '';
 
-		if (shipToDifferent) {
-			return $('#shipping_state').val() || '';
-		}
-		return $('#billing_state').val() || '';
+		return destinationResolver
+			? destinationResolver.resolve(country, state)
+			: (String(country).toUpperCase() === 'US' ? String(state).toUpperCase() : '');
 	}
 
 	/**
@@ -264,7 +270,7 @@ jQuery(document).ready(function($) {
 	// The "dealer locked" early-return inside updateAmmoCheckout still
 	// protects against the post-pick updated_checkout event clobbering the
 	// dealer card — that path runs through updated_checkout, not change.
-	$(document.body).on('change', '#shipping_state, #billing_state', function() {
+	$(document.body).on('change', '#shipping_country, #shipping_state, #billing_country, #billing_state', function() {
 		var dealerSelected = ($('#ffl_license_field').val() || '') !== '';
 		if (dealerSelected && getEffectiveShippingState() !== pickedDealerState) {
 			clearDealer();
@@ -281,6 +287,9 @@ jQuery(document).ready(function($) {
 	$(document.body).on('updated_checkout', function() {
 		updateAmmoCheckout();
 	});
+	$(document.body).on('country_to_state_changed', function() {
+		updateAmmoCheckout();
+	});
 
 	// When a dealer is chosen, hide the "FFL required" banner.
 	// The decluttered UI (hidden shipping fields, name fields in the FFL
@@ -288,7 +297,9 @@ jQuery(document).ready(function($) {
 	$(window).on('message', function(e) {
 		var event = e.originalEvent;
 		if (event.data && event.data.type === 'dealerUpdate' && event.data.value) {
-			pickedDealerState = event.data.value.stateOrProvinceCode || '';
+			pickedDealerState = destinationResolver
+				? destinationResolver.resolve(event.data.value.countryCode || 'US', event.data.value.stateOrProvinceCode || '')
+				: (event.data.value.stateOrProvinceCode || '');
 			if (fflRequired) {
 				$('#automaticffl-state-message').hide();
 			}
@@ -306,7 +317,7 @@ jQuery(document).ready(function($) {
 	// to compare against (otherwise the first change event would always look
 	// like a divergence and clear the dealer).
 	if (($('#ffl_license_field').val() || '') !== '') {
-		pickedDealerState = $('#shipping_state').val() || '';
+		pickedDealerState = getEffectiveShippingState();
 	}
 
 	// Run initial check

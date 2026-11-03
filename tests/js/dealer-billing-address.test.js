@@ -42,6 +42,7 @@ let root, mount, Block;
 const customer = { first_name: 'Alex', last_name: 'Shopper', company: '', city: 'Customer city', phone: '8015550100', address_1: 'Customer street', state: 'UT', country: 'US', postcode: '84101', custom_field: 'keep' };
 const texas = { id: 101, fflID: 'TX-license', company: 'Texas dealer', address1: 'Dealer street', city: 'Dallas', stateOrProvinceCode: 'TX', countryCode: 'US', postalCode: '75201', phone: '2145550100' };
 const california = { ...texas, id: 202, fflID: 'CA-license', company: 'CA dealer', stateOrProvinceCode: 'CA', postalCode: '90001' };
+const puertoRico = { ...texas, id: 404, fflID: 'PR-license', company: 'PR dealer', stateOrProvinceCode: 'PR', countryCode: 'US', postalCode: '00901' };
 
 beforeEach( () => {
 	global.IS_REACT_ACT_ENVIRONMENT = true;
@@ -146,6 +147,34 @@ test( 'ammo still allows an unrestricted destination before a dealer is chosen',
 	act( () => mockShipping( { state: 'UT' } ) );
 	expect( document.body.classList.contains( 'automaticffl-ffl-required' ) ).toBe( false );
 	expect( mount.textContent ).toBe( '' );
+} );
+
+test( 'ammo uses WooCommerce native territory countries for rules and dealer shipping', () => {
+	mockSettings = {
+		...mockSettings,
+		hasFirearms: false,
+		hasAmmo: true,
+		isAmmoOnly: true,
+		isAmmoEnabled: true,
+		ammoRestrictedStates: [ 'PR' ],
+		usStates: { PR: 'Puerto Rico' },
+	};
+	mockCustomer = {
+		shippingAddress: { ...customer, country: 'PR', state: '' },
+		billingAddress: { ...customer, country: 'PR', state: '' },
+	};
+	render();
+	expect( mount.textContent ).toContain( 'Find a Dealer' );
+	choose( puertoRico );
+	expect( mockExtensions.automaticffl ).toMatchObject( {
+		fflDealerCountry: 'US',
+		fflDealerState: 'PR',
+	} );
+	expect( mockCustomer.shippingAddress ).toMatchObject( {
+		country: 'PR',
+		state: '',
+		address_1: puertoRico.address1,
+	} );
 } );
 
 test( 'ammo retains dealer for restricted billing edits and releases it for unrestricted billing', () => {

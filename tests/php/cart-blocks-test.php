@@ -108,6 +108,43 @@ affl_test( 'cart extension preserves confirmed ammunition state and restrictions
 	affl_assert_same( '', WC()->session->get( 'automaticffl_ammo_state' ) );
 } );
 
+affl_test( 'cart extension accepts D.C. and all five territory rule codes', function () {
+	$extension = affl_cart_blocks_fixture();
+	foreach ( array( 'DC', 'AS', 'GU', 'MP', 'PR', 'VI' ) as $code ) {
+		$extension->update_cart_state( array( 'state' => $code ) );
+		affl_assert_same( $code, $extension->get_cart_schema_data()['selectedAmmoState'] );
+	}
+} );
+
+affl_test( 'Store API enforces native territory countries and ignores foreign collisions', function () {
+	$territory_order = new class {
+		public $meta = '';
+		public function get_shipping_country() { return 'PR'; }
+		public function get_shipping_state() { return ''; }
+		public function get_billing_country() { return 'US'; }
+		public function get_billing_state() { return 'UT'; }
+		public function get_meta( $key ) { return $this->meta; }
+	};
+	$restrictions = array( array( 'id' => 1, 'conditions' => array( array( 'type' => 'ship_state', 'states' => array( 'PR' ) ) ) ) );
+	$extension = affl_cart_blocks_fixture( $restrictions );
+	try {
+		$extension->validate_order( $territory_order );
+		affl_fail( 'Native Puerto Rico country did not activate the mixed-cart rule.' );
+	} catch ( AFFL_Test_Route_Exception $error ) {
+		affl_assert_contains( 'Puerto Rico', $error->getMessage() );
+	}
+
+	$foreign_order = new class {
+		public function get_shipping_country() { return 'CA'; }
+		public function get_shipping_state() { return 'PR'; }
+		public function get_billing_country() { return 'CA'; }
+		public function get_billing_state() { return 'PR'; }
+		public function get_meta( $key ) { return ''; }
+	};
+	$extension = affl_cart_blocks_fixture( $restrictions );
+	$extension->validate_order( $foreign_order );
+} );
+
 affl_test( 'cart state rejects invalid data without changing the session', function () {
 	$extension = affl_cart_blocks_fixture();
 	WC()->session->set( 'automaticffl_ammo_state', 'CA' );

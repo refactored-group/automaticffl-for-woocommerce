@@ -2,7 +2,7 @@
 Contributors: refactoredgroup
 Tags: woocommerce, ffl, firearms, ammunition, checkout
 Tested up to: 7.1
-Stable tag: 1.0.32
+Stable tag: 1.0.33
 Requires PHP: 7.0
 Requires at least: 5.6
 License: GPLv3
@@ -96,6 +96,11 @@ Yes. Automatic FFL is also available as a BigCommerce app and Magento extension.
 8. Allow us to automatically enable new Type 1 & 2 FFL dealers or take full control.
 
 == Changelog ==
+
+= 1.0.33 =
+* Adds merchant-controlled ammunition routing for the five U.S. territories using WooCommerce's native country addresses.
+* Keeps District of Columbia and ordinary state routing unchanged across Classic and Blocks checkout.
+* Preserves customer billing and selected-dealer shipping while rejecting unrelated foreign province collisions.
 
 = 1.0.32 =
 * Fixes stuck add-to-cart requests when combining FFL and regular items with a saved shipping address.

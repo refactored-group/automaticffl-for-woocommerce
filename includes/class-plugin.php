@@ -418,18 +418,25 @@ class Plugin {
 		// if the user changed their address on the checkout form.
 		$ship_to_different = ! empty( $_POST['ship_to_different_address'] );
 
-		if ( $ship_to_different && ! empty( $_POST['shipping_state'] ) ) {
-			$shipping_state = sanitize_text_field( wp_unslash( $_POST['shipping_state'] ) );
-		} elseif ( ! empty( $_POST['billing_state'] ) ) {
-			$shipping_state = sanitize_text_field( wp_unslash( $_POST['billing_state'] ) );
+		if ( $ship_to_different && ( ! empty( $_POST['shipping_country'] ) || ! empty( $_POST['shipping_state'] ) ) ) {
+			$shipping_country = ! empty( $_POST['shipping_country'] ) ? sanitize_text_field( wp_unslash( $_POST['shipping_country'] ) ) : 'US';
+			$shipping_state   = ! empty( $_POST['shipping_state'] ) ? sanitize_text_field( wp_unslash( $_POST['shipping_state'] ) ) : '';
+		} elseif ( ! empty( $_POST['billing_country'] ) || ! empty( $_POST['billing_state'] ) ) {
+			$shipping_country = ! empty( $_POST['billing_country'] ) ? sanitize_text_field( wp_unslash( $_POST['billing_country'] ) ) : 'US';
+			$shipping_state   = ! empty( $_POST['billing_state'] ) ? sanitize_text_field( wp_unslash( $_POST['billing_state'] ) ) : '';
 		} else {
 			// Fallback to session state (e.g., if POST data is missing).
-			$shipping_state = WC()->session ? WC()->session->get( 'automaticffl_ammo_state', '' ) : '';
+			$shipping_country = '';
+			$shipping_state   = WC()->session ? WC()->session->get( 'automaticffl_ammo_state', '' ) : '';
 		}
 
+		$shipping_destination = $shipping_country
+			? US_States::resolve_destination( $shipping_country, $shipping_state )
+			: $shipping_state;
+
 		// If state is restricted, block checkout.
-		if ( ! empty( $shipping_state ) && in_array( $shipping_state, $restricted_states, true ) ) {
-			$state_name = US_States::get_name( $shipping_state );
+		if ( ! empty( $shipping_destination ) && in_array( $shipping_destination, $restricted_states, true ) ) {
+			$state_name = US_States::get_name( $shipping_destination );
 
 			wc_add_notice(
 				sprintf(
@@ -879,15 +886,20 @@ class Plugin {
 			$shipping_company = self::get_posted_checkout_field_value( 'shipping_company' );
 		}
 
+		$destination = US_States::to_woocommerce_destination(
+			self::get_posted_checkout_field_value( 'shipping_country' ),
+			self::get_posted_checkout_field_value( 'shipping_state' )
+		);
+
 		$shipping_values = array(
 			'first_name' => $shipping_first_name,
 			'last_name'  => $shipping_last_name,
 			'company'    => $shipping_company,
-			'country'    => self::get_posted_checkout_field_value( 'shipping_country' ),
+			'country'    => $destination['country'],
 			'address_1'  => self::get_posted_checkout_field_value( 'shipping_address_1' ),
 			'address_2'  => self::get_posted_checkout_field_value( 'shipping_address_2' ),
 			'city'       => self::get_posted_checkout_field_value( 'shipping_city' ),
-			'state'      => self::get_posted_checkout_field_value( 'shipping_state' ),
+			'state'      => $destination['state'],
 			'postcode'   => self::get_posted_checkout_field_value( 'shipping_postcode' ),
 			'phone'      => self::get_posted_checkout_field_value( 'shipping_phone' ),
 		);
@@ -910,10 +922,14 @@ class Plugin {
 	 */
 	private static function get_ffl_destination_from_checkout_data( array $data ) {
 		$address_1 = self::get_checkout_field_value( $data, 'shipping_address_1' );
+		$destination = US_States::to_woocommerce_destination(
+			self::get_checkout_field_value( $data, 'shipping_country' ),
+			self::get_checkout_field_value( $data, 'shipping_state' )
+		);
 
 		return array(
-			'country'   => self::get_checkout_field_value( $data, 'shipping_country' ) ?: 'US',
-			'state'     => self::get_checkout_field_value( $data, 'shipping_state' ),
+			'country'   => $destination['country'],
+			'state'     => $destination['state'],
 			'postcode'  => self::get_checkout_field_value( $data, 'shipping_postcode' ),
 			'city'      => self::get_checkout_field_value( $data, 'shipping_city' ),
 			'address'   => $address_1,
@@ -1076,6 +1092,19 @@ class Plugin {
 		// Classic cart/checkout pages: enqueue normally.
 		if ( is_cart() || is_checkout() ) {
 			wp_enqueue_style( 'automaticffl-main', $css_url, array(), $css_version );
+		}
+
+		// Classic inline checkout handlers and the Blocks bundle share this
+		// WooCommerce country/state normalization contract.
+		if ( is_checkout() ) {
+			$destination_path = dirname( _AFFL_LOADER_ ) . '/assets/js/ammo-destination.js';
+			wp_enqueue_script(
+				'automaticffl-ammo-destination',
+				self::get_plugin_url() . '/assets/js/ammo-destination.js',
+				array(),
+				filemtime( $destination_path ),
+				false
+			);
 		}
 
 		// Blocks cart/checkout: register the stylesheet against the block

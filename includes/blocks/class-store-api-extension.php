@@ -476,10 +476,15 @@ class Store_Api_Extension {
 		$order->set_shipping_company( $company );
 		$order->set_shipping_address_1( $this->get_extension_value( $ffl_data, 'fflDealerAddress1' ) );
 		$order->set_shipping_address_2( $this->get_extension_value( $ffl_data, 'fflDealerAddress2' ) );
+		$destination = US_States::to_woocommerce_destination(
+			$this->get_extension_value( $ffl_data, 'fflDealerCountry' ),
+			$this->get_extension_value( $ffl_data, 'fflDealerState' )
+		);
+
 		$order->set_shipping_city( $this->get_extension_value( $ffl_data, 'fflDealerCity' ) );
-		$order->set_shipping_state( $this->get_extension_value( $ffl_data, 'fflDealerState' ) );
+		$order->set_shipping_state( $destination['state'] );
 		$order->set_shipping_postcode( $this->get_extension_value( $ffl_data, 'fflDealerPostcode' ) );
-		$order->set_shipping_country( $this->get_extension_value( $ffl_data, 'fflDealerCountry' ) ?: 'US' );
+		$order->set_shipping_country( $destination['country'] );
 		$order->set_shipping_phone( $this->get_extension_value( $ffl_data, 'fflDealerPhone' ) );
 	}
 
@@ -553,13 +558,13 @@ class Store_Api_Extension {
 
 		// Ammo + regular mixed cart in restricted state - block checkout.
 		if ( $analyzer->is_ammo_regular_mixed() ) {
-			$shipping_state = $order->get_shipping_state();
-			if ( empty( $shipping_state ) ) {
-				$shipping_state = $order->get_billing_state();
+			$shipping_destination = US_States::resolve_destination( $order->get_shipping_country(), $order->get_shipping_state() );
+			if ( empty( $shipping_destination ) ) {
+				$shipping_destination = US_States::resolve_destination( $order->get_billing_country(), $order->get_billing_state() );
 			}
 
-			if ( $analyzer->requires_ffl_for_state( $shipping_state ) ) {
-				$state_name = US_States::get_name( $shipping_state );
+			if ( $analyzer->requires_ffl_for_state( $shipping_destination ) ) {
+				$state_name = US_States::get_name( $shipping_destination );
 
 				throw new \Automattic\WooCommerce\StoreApi\Exceptions\RouteException(
 					'ammo_regular_mixed_restricted',
@@ -589,9 +594,9 @@ class Store_Api_Extension {
 
 		// Ammo only - check state restriction
 		if ( $analyzer->is_ammo_only() ) {
-			$shipping_state = $order->get_shipping_state();
+			$shipping_destination = US_States::resolve_destination( $order->get_shipping_country(), $order->get_shipping_state() );
 
-			if ( $analyzer->requires_ffl_for_state( $shipping_state ) ) {
+			if ( $analyzer->requires_ffl_for_state( $shipping_destination ) ) {
 				$ffl_license = $order->get_meta( '_ffl_license_field' );
 
 				if ( empty( $ffl_license ) ) {
