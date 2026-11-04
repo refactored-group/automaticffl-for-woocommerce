@@ -1,5 +1,10 @@
 *** Automatic FFL for WooCommerce ***
 
+2026-11-04 - Version 1.0.34
+* Kept WooCommerce's native saved-address card and initial ammunition routing available at Checkout Blocks
+* Made native Edit start a fresh names-only destination and pause ammunition routing until the replacement address is valid
+* Kept pre-dealer address editing unlocked, cleared stale dealer data after Edit, and preserved saved accounts, Classic checkout, and pickup behavior
+
 2026-11-02 - Version 1.0.33
 * Added merchant-controlled ammunition routing for American Samoa, Guam, Northern Mariana Islands, Puerto Rico, and United States Virgin Islands using native WooCommerce country addresses
 * Preserved District of Columbia and ordinary state behavior across Classic and Blocks checkout

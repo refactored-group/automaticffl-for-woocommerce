@@ -3,10 +3,14 @@
 
 use RefactoredGroup\AutomaticFFL\Blocks\Store_Api_Extension;
 use RefactoredGroup\AutomaticFFL\Api\Restrictions_Client;
+use RefactoredGroup\AutomaticFFL\Helper\Ammo_Destination_Edit;
+use RefactoredGroup\AutomaticFFL\Plugin;
 
 require_once dirname( __DIR__, 2 ) . '/includes/helper/class-cart-analyzer.php';
 require_once dirname( __DIR__, 2 ) . '/includes/helper/class-us-states.php';
+require_once dirname( __DIR__, 2 ) . '/includes/helper/class-ammo-destination-edit.php';
 require_once dirname( __DIR__, 2 ) . '/includes/blocks/class-store-api-extension.php';
+require_once dirname( __DIR__, 2 ) . '/includes/class-plugin.php';
 require_once __DIR__ . '/fixtures/blocks-interface.php';
 require_once dirname( __DIR__, 2 ) . '/includes/blocks/class-cart-blocks-integration.php';
 
@@ -58,12 +62,63 @@ class AFFL_Test_Session {
 	}
 }
 
+class AFFL_Test_Countries {
+	public function get_shipping_countries() { return array( 'US' => 'United States', 'PR' => 'Puerto Rico' ); }
+	public function get_allowed_countries() { return $this->get_shipping_countries(); }
+	public function get_address_fields( $country, $prefix ) {
+		$required = array( 'first_name', 'last_name', 'country', 'address_1', 'city', 'postcode' );
+		if ( 'PR' !== $country ) {
+			$required[] = 'state';
+		}
+		$fields = array();
+		foreach ( array( 'first_name', 'last_name', 'company', 'country', 'address_1', 'address_2', 'city', 'state', 'postcode', 'phone' ) as $name ) {
+			$fields[ $prefix . $name ] = array(
+				'required' => in_array( $name, $required, true ),
+				'hidden'   => false,
+			);
+		}
+		return $fields;
+	}
+}
+
+class AFFL_Test_Session_Customer {
+	public $shipping = array();
+	public $save_count = 0;
+
+	public function __construct( array $shipping ) {
+		$this->shipping = $shipping;
+	}
+
+	public function __call( $name, $arguments ) {
+		if ( 0 !== strpos( $name, 'set_shipping_' ) ) {
+			throw new BadMethodCallException( $name );
+		}
+		$field                    = substr( $name, strlen( 'set_shipping_' ) );
+		$this->shipping[ $field ] = isset( $arguments[0] ) ? $arguments[0] : '';
+	}
+
+	public function save() {
+		++$this->save_count;
+	}
+}
+
+class AFFL_Test_Request {
+	private $method;
+	private $params;
+	public function __construct( $method, array $params ) {
+		$this->method = $method;
+		$this->params = $params;
+	}
+	public function get_method() { return $this->method; }
+	public function get_param( $key ) { return isset( $this->params[ $key ] ) ? $this->params[ $key ] : null; }
+}
+
 function WC() {
 	return $GLOBALS['affl_wc'];
 }
 
 function affl_cart_blocks_fixture( array $restrictions = array() ) {
-	$GLOBALS['affl_wc'] = (object) array( 'cart' => new AFFL_Test_Cart(), 'session' => new AFFL_Test_Session() );
+	$GLOBALS['affl_wc'] = (object) array( 'cart' => new AFFL_Test_Cart(), 'session' => new AFFL_Test_Session(), 'countries' => new AFFL_Test_Countries() );
 	WC()->cart->items = array(
 		'a' => array( 'product_id' => 1, 'quantity' => 3 ),
 		'b' => array( 'product_id' => 2, 'quantity' => 2 ),
@@ -77,6 +132,87 @@ function affl_cart_blocks_fixture( array $restrictions = array() ) {
 	$GLOBALS['affl_http_queue'] = array( affl_http_response( 200, array( 'schema_version' => 1, 'restrictions' => $restrictions ) ) );
 	return new Store_Api_Extension();
 }
+
+affl_test( 'native ammo address editing is limited to signed-in shippable ammo carts', function () {
+	$ammo = new class {
+		public function has_api_error() { return false; }
+		public function has_ammo() { return true; }
+		public function has_firearms() { return false; }
+	};
+	$GLOBALS['affl_logged_in'] = true;
+	affl_assert_true( Ammo_Destination_Edit::is_eligible( $ammo ) );
+
+	$GLOBALS['affl_logged_in'] = false;
+	affl_assert_false( Ammo_Destination_Edit::is_eligible( $ammo ) );
+	$GLOBALS['affl_logged_in'] = true;
+	$GLOBALS['affl_options']['woocommerce_ship_to_destination'] = 'billing_only';
+	affl_assert_false( Ammo_Destination_Edit::is_eligible( $ammo ) );
+
+	$firearm = new class {
+		public function has_api_error() { return false; }
+		public function has_ammo() { return true; }
+		public function has_firearms() { return true; }
+	};
+	$GLOBALS['affl_options']['woocommerce_ship_to_destination'] = 'shipping';
+	affl_assert_false( Ammo_Destination_Edit::is_eligible( $firearm ) );
+} );
+
+affl_test( 'native ammo edit data clears destination fields and publishes country requirements', function () {
+	$restrictions = array( array( 'id' => 1, 'conditions' => array( array( 'type' => 'ship_state', 'states' => array( 'CA' ) ) ) ) );
+	affl_cart_blocks_fixture( $restrictions );
+	unset( WC()->cart->items['b'] );
+	$GLOBALS['affl_logged_in'] = true;
+	$data = Ammo_Destination_Edit::get_script_data();
+	affl_assert_true( $data['required'] );
+	affl_assert_same( array( 'company', 'address_1', 'address_2', 'city', 'state', 'postcode', 'phone' ), $data['physicalFields'] );
+	affl_assert_true( in_array( 'state', $data['requiredFields']['US'], true ) );
+	affl_assert_false( in_array( 'state', $data['requiredFields']['PR'], true ) );
+	affl_assert_false( isset( $data['savedAddress'] ) );
+} );
+
+affl_test( 'new blocks checkout restores persistent shipping before the stale session reaches the cart response', function () {
+	$restrictions = array( array( 'id' => 1, 'conditions' => array( array( 'type' => 'ship_state', 'states' => array( 'CA' ) ) ) ) );
+	affl_cart_blocks_fixture( $restrictions );
+	unset( WC()->cart->items['b'] );
+	$GLOBALS['affl_logged_in']          = true;
+	$GLOBALS['affl_is_checkout']        = true;
+	$GLOBALS['affl_has_checkout_block'] = true;
+	$GLOBALS['affl_user_meta'][1] = array(
+		'shipping_first_name' => 'Automatic FFL',
+		'shipping_last_name'  => 'QA Test Updated',
+		'shipping_company'    => '',
+		'shipping_address_1'  => '5916 Lost Valley Dr',
+		'shipping_address_2'  => '',
+		'shipping_city'       => 'The Colony',
+		'shipping_state'      => 'TX',
+		'shipping_postcode'   => '75056',
+		'shipping_country'    => 'US',
+		'shipping_phone'      => '14692071149',
+	);
+	$stale_dealer = array(
+		'first_name' => 'Giancarlo',
+		'last_name'  => 'Byrne',
+		'company'    => 'RIFLEGEAR',
+		'address_1'  => '4001 STATE HWY 121',
+		'address_2'  => '',
+		'city'       => 'THE COLONY',
+		'state'      => 'TX',
+		'postcode'   => '75056',
+		'country'    => 'US',
+		'phone'      => '9722927678',
+	);
+	WC()->customer = new AFFL_Test_Session_Customer( $stale_dealer );
+	WC()->session->set( Plugin::SESSION_FFL_DESTINATION, $stale_dealer );
+
+	$plugin = ( new ReflectionClass( Plugin::class ) )->newInstanceWithoutConstructor();
+	$plugin->restore_saved_shipping_for_ammo_checkout();
+
+	affl_assert_same( '5916 Lost Valley Dr', WC()->customer->shipping['address_1'] );
+	affl_assert_same( 'Automatic FFL', WC()->customer->shipping['first_name'] );
+	affl_assert_same( 1, WC()->customer->save_count );
+	affl_assert_same( null, WC()->session->get( Plugin::SESSION_FFL_DESTINATION ) );
+	affl_assert_same( '5916 Lost Valley Dr', $GLOBALS['affl_user_meta'][1]['shipping_address_1'] );
+} );
 
 affl_test( 'cart extension reflects classification and quantities on each response', function () {
 	$extension = affl_cart_blocks_fixture( array( array( 'id' => 1 ) ) );
@@ -188,7 +324,22 @@ affl_test( 'cart schema is read-only and leaves checkout dealer fields unchanged
 	affl_assert_same( 0, $schema['fflItemCount']['minimum'] );
 	affl_assert_same( 'array', $schema['ammoRestrictedStates']['type'] );
 	affl_assert_true( isset( $extension->get_schema()['fflDealerId'] ) );
+	affl_assert_false( isset( $extension->get_schema()['ammoDestinationEntered'] ) );
 	affl_assert_false( isset( $extension->get_schema()['isFirearmsRegularMixed'] ) );
+} );
+
+affl_test( 'Store API clears stale dealer draft data without a custom destination signal', function () {
+	$restrictions = array( array( 'id' => 1, 'conditions' => array( array( 'type' => 'ship_state', 'states' => array( 'CA' ) ) ) ) );
+	$extension = affl_cart_blocks_fixture( $restrictions );
+	$GLOBALS['affl_logged_in'] = true;
+	$order = new class {
+		public $deleted = array();
+		public function delete_meta_data( $key ) { $this->deleted[] = $key; }
+	};
+	$extensions = array( 'automaticffl' => array( 'fflLicense' => '' ) );
+	$extension->update_order_from_request( $order, new AFFL_Test_Request( 'PUT', array( 'extensions' => $extensions ) ) );
+	affl_assert_contains( '_ffl_license_field', implode( ',', $order->deleted ) );
+	$extension->update_order_from_request( $order, new AFFL_Test_Request( 'POST', array( 'extensions' => $extensions ) ) );
 } );
 
 affl_test( 'REST cart updates do not run the classic checkout page redirect', function () {

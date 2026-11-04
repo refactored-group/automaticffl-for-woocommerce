@@ -110,18 +110,16 @@ body {
  */
 
 /*
- * FR-4: Hide non-name shipping fields whenever an FFL is required.
+ * FR-4: Hide non-name shipping fields after the shipping destination is an FFL.
  *
  * The body class .automaticffl-ffl-required is added by the
- * dealer-selection child block whenever an FFL is required for the
- * cart (firearm present, or ammo bound for a restricted state).
- * Applied always — whether or not a dealer has been picked — so the
- * Edit-mode form behaves identically before and after selection.
+ * dealer-selection child block for firearm checkout, and for ammunition
+ * only after a dealer has actually been selected. Before an ammunition
+ * dealer is selected the native address editor remains fully usable.
  *
- * Pre-pick:  cart shipping is the customer's saved address. Edit
- *            shows only first/last name; other fields can't be
- *            changed because the FFL pick will overwrite them.
- * Post-pick: cart shipping is the dealer's address. Edit shows only
+ * Post-pick: cart shipping is the dealer's address. Edit first releases
+ *            the dealer lock and starts a fresh names-only destination.
+ *            While locked, the form shows only
  *            first/last name so the customer can fix typos without
  *            losing the dealer-set fields.
  *

@@ -2,7 +2,7 @@ import React, { act } from 'react';
 import { createRoot } from 'react-dom/client';
 
 const mockReact = React;
-let mockSettings, mockForced, mockCustomer, mockCart, mockExtensions, mockCollection, mockModal;
+let mockSettings, mockForced, mockCustomer, mockCart, mockExtensions, mockCollection, mockEditingShippingAddress, mockValidationErrors, mockModal, mockSessionShipping;
 const mockListeners = new Set();
 const mockNotify = () => [ ...mockListeners ].forEach( ( callback ) => callback() );
 const mockShipping = jest.fn( ( address ) => {
@@ -13,6 +13,12 @@ const mockBilling = jest.fn( ( address ) => {
 	mockCustomer = { ...mockCustomer, billingAddress: { ...mockCustomer.billingAddress, ...address } };
 	mockNotify();
 } );
+const mockUpdateCustomer = jest.fn( ( { shippingAddress } = {}, editing = true ) => {
+	if ( shippingAddress ) {
+		mockSessionShipping = { ...mockSessionShipping, ...shippingAddress };
+	}
+	return Promise.resolve( { editing } );
+} );
 const mockCartSelectors = {
 	getCustomerData: () => mockCustomer,
 	getCartData: () => mockCart,
@@ -21,10 +27,15 @@ const mockCartSelectors = {
 const mockCheckoutSelectors = {
 	getExtensionData: () => mockExtensions,
 	prefersCollection: () => mockCollection,
+	getEditingShippingAddress: () => mockEditingShippingAddress,
 	getUseShippingAsBilling: () => false,
 };
-const mockSelect = ( name ) => name === 'wc/store/cart' ? mockCartSelectors : mockCheckoutSelectors;
-const mockCartActions = { setShippingAddress: mockShipping, setBillingAddress: mockBilling };
+const mockSelect = ( name ) => {
+	if ( name === 'wc/store/cart' ) return mockCartSelectors;
+	if ( name === 'wc/store/validation' ) return { getValidationError: ( key ) => mockValidationErrors[ key ] };
+	return mockCheckoutSelectors;
+};
+const mockCartActions = { setShippingAddress: mockShipping, setBillingAddress: mockBilling, updateCustomerData: mockUpdateCustomer };
 const mockSubscribe = ( callback ) => { mockListeners.add( callback ); return () => mockListeners.delete( callback ); };
 jest.mock( '@wordpress/element', () => mockReact, { virtual: true } );
 jest.mock( '@wordpress/data', () => ( {
@@ -38,7 +49,7 @@ jest.mock( '../../assets/js/blocks/dealer-selection/components/DealerModal', () 
 jest.mock( '../../assets/js/blocks/dealer-selection/components/SelectedDealerCard', () => () => null );
 jest.mock( '../../assets/js/blocks/dealer-selection/components/MixedCartNotice', () => () => null );
 
-let root, mount, Block;
+let root, mount, nativeFields, Block;
 const customer = { first_name: 'Alex', last_name: 'Shopper', company: '', city: 'Customer city', phone: '8015550100', address_1: 'Customer street', state: 'UT', country: 'US', postcode: '84101', custom_field: 'keep' };
 const texas = { id: 101, fflID: 'TX-license', company: 'Texas dealer', address1: 'Dealer street', city: 'Dallas', stateOrProvinceCode: 'TX', countryCode: 'US', postalCode: '75201', phone: '2145550100' };
 const california = { ...texas, id: 202, fflID: 'CA-license', company: 'CA dealer', stateOrProvinceCode: 'CA', postalCode: '90001' };
@@ -49,18 +60,22 @@ beforeEach( () => {
 	mockSettings = { hasFirearms: true, isConfigured: true, isApiAvailable: true, iframeUrl: 'about:blank', ammoRestrictedStates: [ 'CA', 'NY' ] };
 	mockForced = true;
 	mockCollection = false;
+	mockEditingShippingAddress = false;
+	mockValidationErrors = {};
 	mockExtensions = {};
 	mockCustomer = { shippingAddress: { ...customer }, billingAddress: { ...customer } };
+	mockSessionShipping = { ...customer };
 	mockCart = { needsShipping: true, extensions: { automaticffl: { fflItemCount: 1, regularItemCount: 0 } } };
-	mockShipping.mockClear(); mockBilling.mockClear(); mockListeners.clear();
+	mockShipping.mockClear(); mockBilling.mockClear(); mockUpdateCustomer.mockClear(); mockListeners.clear();
 	global.wp = { data: { select: mockSelect, subscribe: mockSubscribe, dispatch: ( name ) => name === 'wc/store/cart' ? mockCartActions : {
 		setExtensionData: ( namespace, data ) => { mockExtensions = { ...mockExtensions, [ namespace ]: data }; mockNotify(); },
 		setValidationErrors: jest.fn(), clearValidationError: jest.fn(), removeNotice: jest.fn(),
 	} } };
 	jest.isolateModules( () => { Block = require( '../../assets/js/blocks/dealer-selection/block' ).default; } );
 	mount = document.createElement( 'div' );document.body.appendChild( mount );root = createRoot( mount );
+	nativeFields = document.createElement( 'div' );document.body.appendChild( nativeFields );
 } );
-afterEach( () => { act( () => root.unmount() );mount.remove();expect( mockListeners.size ).toBe( 0 );delete global.wp; } );
+afterEach( () => { act( () => root.unmount() );mount.remove();nativeFields.remove();expect( mockListeners.size ).toBe( 0 );delete global.wp; } );
 const render = () => act( () => root.render( <Block /> ) );
 const choose = ( dealer ) => {
 	act( () => [ ...mount.querySelectorAll( 'button' ) ].find( ( button ) => /Find a Dealer|Change Dealer/.test( button.textContent ) ).click() );
@@ -69,6 +84,186 @@ const choose = ( dealer ) => {
 const billingInput = ( values, verify ) => act( () => {
 	// Native Woo handler order, including a possible immediate blur before React effects.
 	mockBilling( values );mockShipping( values );verify?.();
+} );
+
+const nativeEditAmmoSettings = () => ( {
+	...mockSettings,
+	hasFirearms: false,
+	hasAmmo: true,
+	isAmmoOnly: true,
+	isAmmoEnabled: true,
+	usStates: { CA: 'California', TX: 'Texas', UT: 'Utah' },
+	ammoDestinationEdit: {
+		required: true,
+		customerId: 77,
+		physicalFields: [ 'company', 'address_1', 'address_2', 'city', 'state', 'postcode', 'phone' ],
+		requiredFields: {
+			US: [ 'first_name', 'last_name', 'country', 'address_1', 'city', 'state', 'postcode' ],
+		},
+	},
+} );
+
+const setNativeShippingEditing = ( editing ) => {
+	act( () => {
+		mockEditingShippingAddress = editing;
+		mockNotify();
+	} );
+};
+
+test( 'initial saved ammo address remains intact and routes without a pre-dealer lock', () => {
+	mockForced = false;
+	const savedShipping = { ...customer, state: 'CA', postcode: '90001' };
+	mockSettings = nativeEditAmmoSettings();
+	const savedBilling = { ...customer, address_1: 'Billing street', state: 'UT' };
+	mockCustomer = { shippingAddress: savedShipping, billingAddress: savedBilling };
+	render();
+
+	expect( mockCustomer.shippingAddress ).toEqual( savedShipping );
+	expect( mockCustomer.billingAddress ).toEqual( savedBilling );
+	expect( mount.textContent ).toContain( 'Find a Dealer' );
+	expect( document.body.classList.contains( 'automaticffl-ffl-required' ) ).toBe( false );
+} );
+
+test( 'server-corrected checkout does not launch a competing customer update on mount', () => {
+	mockForced = false;
+	const savedShipping = {
+		...customer,
+		first_name: 'Automatic FFL',
+		last_name: 'QA Test Updated',
+		address_1: '5916 Lost Valley Dr',
+		city: 'The Colony',
+		state: 'TX',
+		postcode: '75056',
+	};
+	const savedBilling = { ...customer, address_1: 'Separate billing street' };
+	mockSettings = nativeEditAmmoSettings();
+	mockCustomer = { shippingAddress: { ...savedShipping }, billingAddress: savedBilling };
+	mockExtensions = { automaticffl: { fflLicense: california.fflID } };
+
+	render();
+
+	expect( mockUpdateCustomer ).not.toHaveBeenCalled();
+	expect( mockCustomer.shippingAddress ).toMatchObject( savedShipping );
+	expect( mockCustomer.billingAddress ).toEqual( savedBilling );
+	expect( mockExtensions.automaticffl.fflLicense ).toBe( '' );
+	expect( mount.textContent ).toBe( '' );
+} );
+
+test( 'an initial saved unrestricted address remains intact and needs no dealer', () => {
+	mockForced = false;
+	mockSettings = nativeEditAmmoSettings();
+	mockCustomer = {
+		shippingAddress: { ...customer, state: 'UT', postcode: '84101' },
+		billingAddress: { ...customer },
+	};
+	render();
+	expect( mockCustomer.shippingAddress.address_1 ).toBe( customer.address_1 );
+	expect( mount.textContent ).toBe( '' );
+	expect( document.body.classList.contains( 'automaticffl-ffl-required' ) ).toBe( false );
+} );
+
+test.each( [ 'guest', 'billing-only', 'API-unavailable' ] )( 'native Edit does not reset %s checkout', ( mode ) => {
+	mockForced = mode === 'billing-only';
+	mockSettings = {
+		...nativeEditAmmoSettings(),
+		isApiAvailable: mode !== 'API-unavailable',
+		ammoDestinationEdit: { required: false },
+	};
+	const savedShipping = { ...customer, state: 'CA', postcode: '90001' };
+	mockCustomer = { shippingAddress: savedShipping, billingAddress: { ...customer } };
+	render();
+	setNativeShippingEditing( true );
+	expect( mockCustomer.shippingAddress ).toEqual( savedShipping );
+} );
+
+test( 'native Edit starts names-only guest-style entry and routes only after completion', () => {
+	mockForced = false;
+	mockSettings = nativeEditAmmoSettings();
+	mockCustomer = {
+		shippingAddress: { ...customer, state: 'CA', postcode: '90001' },
+		billingAddress: { ...customer },
+	};
+	render();
+	setNativeShippingEditing( true );
+
+	expect( mockCustomer.shippingAddress ).toMatchObject( {
+		first_name: customer.first_name,
+		last_name: customer.last_name,
+		country: 'US',
+		company: '', address_1: '', address_2: '', city: '', state: '', postcode: '', phone: '',
+	} );
+	expect( mockCustomer.billingAddress.address_1 ).toBe( customer.address_1 );
+	expect( mockExtensions.automaticffl.fflLicense ).toBe( '' );
+	expect( mount.textContent ).toBe( '' );
+
+	act( () => mockShipping( { address_1: 'New street' } ) );
+	expect( mount.textContent ).toBe( '' );
+
+	act( () => mockShipping( {
+		address_1: 'New street', city: 'Los Angeles', state: 'CA', postcode: '90001', country: 'US', phone: '8015550199',
+	} ) );
+	expect( mount.textContent ).toContain( 'Find a Dealer' );
+	expect( document.body.classList.contains( 'automaticffl-ffl-required' ) ).toBe( false );
+
+	act( () => root.unmount() );
+	root = createRoot( mount );
+	render();
+	expect( mockCustomer.shippingAddress.address_1 ).toBe( 'New street' );
+	expect( mount.textContent ).toContain( 'Find a Dealer' );
+} );
+
+test( 'native validation errors keep fresh entry pending after fields are populated', () => {
+	mockForced = false;
+	mockSettings = nativeEditAmmoSettings();
+	mockCustomer = {
+		shippingAddress: { ...customer, state: 'CA', postcode: '90001' },
+		billingAddress: { ...customer },
+	};
+	render();
+	setNativeShippingEditing( true );
+	mockValidationErrors.shipping_postcode = { message: 'Invalid ZIP' };
+	act( () => mockShipping( { address_1: 'New', city: 'LA', state: 'CA', postcode: 'bad', country: 'US' } ) );
+	expect( mount.textContent ).toBe( '' );
+	delete mockValidationErrors.shipping_postcode;
+	act( () => mockNotify() );
+	expect( mount.textContent ).toContain( 'Find a Dealer' );
+} );
+
+test( 'pickup keeps its native address semantics when the shipping editor opens', () => {
+	mockForced = false;
+	mockCollection = true;
+	mockSettings = nativeEditAmmoSettings();
+	mockCustomer = {
+		shippingAddress: { ...customer, address_1: 'Pickup contact street', state: 'CA' },
+		billingAddress: { ...customer },
+	};
+	render();
+	setNativeShippingEditing( true );
+	expect( mockCustomer.shippingAddress.address_1 ).toBe( 'Pickup contact street' );
+	expect( mount.textContent ).toBe( '' );
+} );
+
+test( 'native Edit after dealer selection clears the dealer and restarts fresh entry', () => {
+	mockForced = false;
+	const savedShipping = { ...customer, state: 'CA', postcode: '90001' };
+	mockSettings = nativeEditAmmoSettings();
+	mockCustomer = {
+		shippingAddress: savedShipping,
+		billingAddress: { ...customer },
+	};
+	render();
+	choose( california );
+	expect( mockExtensions.automaticffl.fflLicense ).toBe( 'CA-license' );
+
+	setNativeShippingEditing( true );
+	expect( mockExtensions.automaticffl.fflLicense ).toBe( '' );
+	expect( mockCustomer.shippingAddress ).toMatchObject( {
+		first_name: customer.first_name,
+		last_name: customer.last_name,
+		address_1: '', city: '', state: '', postcode: '', phone: '',
+	} );
+	expect( mount.textContent ).toBe( '' );
+	expect( document.body.classList.contains( 'automaticffl-ffl-required' ) ).toBe( false );
 } );
 
 test( 'billing copy is corrected synchronously before blur, without billing writes or idle loops', () => {
@@ -108,7 +303,8 @@ test.each( [ false, true ] )( 'ammo keeps an unrestricted-state dealer through u
 	mockSettings = { ...mockSettings, hasFirearms: false, hasAmmo: true, isAmmoOnly: true, isAmmoEnabled: true };
 	mockCustomer = { shippingAddress: { ...customer, state: 'CA' }, billingAddress: { ...customer, state: 'CA' } };
 	render();
-	expect( document.body.classList.contains( 'automaticffl-ffl-required' ) ).toBe( true );
+	// The native editor stays usable until a dealer has actually been selected.
+	expect( document.body.classList.contains( 'automaticffl-ffl-required' ) ).toBe( false );
 	choose( texas );
 
 	const expectDealer = ( dealer ) => {

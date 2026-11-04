@@ -26,7 +26,6 @@ affl_test( 'mixed carts do not redirect AJAX, REST, admin, cart, or product requ
 		}
 	}
 } );
-
 affl_test( 'checkout page redirects mixed carts only when separation is required', function () {
 	affl_assert_same( 'redirect:/cart/', affl_checkout_request_result( 'checkout', 'firearm-mixed' ) );
 	affl_assert_same( 'redirect:/cart/', affl_checkout_request_result( 'checkout', 'ammo-mixed', 'CA' ) );
@@ -98,7 +97,6 @@ affl_test( 'classic ammo mixed submission uses the submitted destination instead
 	$plugin->validate_ammo_regular_checkout();
 	affl_assert_same( array(), $GLOBALS['affl_checkout_notices'] );
 } );
-
 affl_test( 'classic ammo mixed submission resolves WooCommerce territory countries', function () {
 	$restrictions = array( array( 'id' => 1, 'conditions' => array( array( 'type' => 'ship_state', 'states' => array( 'PR' ) ) ) ) );
 	$plugin = affl_classic_checkout_plugin();
@@ -114,4 +112,14 @@ affl_test( 'classic ammo mixed submission resolves WooCommerce territory countri
 	$_POST['billing_state']   = 'PR';
 	$plugin->validate_ammo_regular_checkout();
 	affl_assert_same( array(), $GLOBALS['affl_checkout_notices'] );
+} );
+
+affl_test( 'classic ammo checkout preserves its native saved destination fields', function () {
+	$restrictions = array( array( 'id' => 1, 'conditions' => array( array( 'type' => 'ship_state', 'states' => array( 'CA' ) ) ) ) );
+	affl_cart_blocks_fixture( $restrictions );
+	unset( WC()->cart->items['b'] );
+	$plugin = affl_classic_checkout_plugin();
+
+	affl_assert_same( 'Saved street', $plugin->clear_shipping_address_fields( 'Saved street', 'shipping_address_1' ) );
+	affl_assert_same( 'CA', $plugin->clear_shipping_address_fields( 'CA', 'shipping_state' ) );
 } );

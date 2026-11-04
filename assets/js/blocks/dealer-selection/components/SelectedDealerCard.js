@@ -20,7 +20,10 @@ const formatPhone = ( phone ) => {
 	const digits = phone.replace( /\D/g, '' );
 	// Format as (XXX)-XXX-XXXX
 	if ( digits.length === 10 ) {
-		return `(${ digits.slice( 0, 3 ) })-${ digits.slice( 3, 6 ) }-${ digits.slice( 6 ) }`;
+		return `(${ digits.slice( 0, 3 ) })-${ digits.slice(
+			3,
+			6
+		) }-${ digits.slice( 6 ) }`;
 	}
 	return phone;
 };
@@ -28,8 +31,8 @@ const formatPhone = ( phone ) => {
 /**
  * SelectedDealerCard Component
  *
- * @param {Object} props Component props
- * @param {Object} props.dealer Selected dealer information
+ * @param {Object} props          Component props
+ * @param {Object} props.dealer   Selected dealer information
  * @param {Object} props.userName User name information
  * @return {JSX.Element} Selected dealer card
  */
@@ -50,7 +53,7 @@ const SelectedDealerCard = ( { dealer, userName } ) => {
 			id="automaticffl-dealer-selected"
 			className="automaticffl-dealer-selected"
 		>
-			<p>{ __( 'Your order will be shipped to', 'automaticffl-for-wc' ) }:</p>
+			<p>{ __( 'Selected FFL dealer', 'automaticffl-for-wc' ) }:</p>
 			<div id="ffl-selected-dealer" className="ffl-result-body">
 				<p className="customer-name">{ fullName }</p>
 				<p className="dealer-name">{ dealer.company || '' }</p>

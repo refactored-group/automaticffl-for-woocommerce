@@ -19,6 +19,7 @@ import SelectedDealerCard from './components/SelectedDealerCard';
 import MixedCartNotice from './components/MixedCartNotice';
 
 const ammoDestination = require( '../../ammo-destination' );
+const destinationEntry = require( '../../ammo-destination-entry' );
 
 // Survives React remounts caused by WC re-rendering the checkout tree.
 let persistedAmmoFflLocked = false;
@@ -26,6 +27,7 @@ let persistedDealer = null;
 // Snapshot of the customer's pre-dealer shipping so we can restore it
 // as billing when a dealer pick flips "use shipping as billing" off.
 let persistedCustomerAddress = null;
+let persistedAmmoDestinationEdit = destinationEntry.createEditState();
 
 const BODY_CLASS_FFL_REQUIRED = 'automaticffl-ffl-required';
 
@@ -78,6 +80,7 @@ const getSettings = () => {
 		hasSavedItems: settings.hasSavedItems || false,
 		savedItemsCount: settings.savedItemsCount || 0,
 		i18n: settings.i18n || {},
+		ammoDestinationEdit: settings.ammoDestinationEdit || { required: false },
 	};
 };
 
@@ -122,8 +125,41 @@ const Block = () => {
 	const selectedDealerRef = useRef( persistedDealer );
 	const [ noticeDismissed, setNoticeDismissed ] = useState( false );
 	const [ ammoFflLocked, setAmmoFflLocked ] = useState( persistedAmmoFflLocked );
+	const editSettings = settings.ammoDestinationEdit;
+	if ( editSettings.required && persistedAmmoDestinationEdit.customerId !== editSettings.customerId ) {
+		persistedAmmoDestinationEdit = destinationEntry.createEditState( editSettings.customerId );
+	}
+	const [ destinationFresh, setDestinationFresh ] = useState( persistedAmmoDestinationEdit.fresh );
+	const [ accountAddressReady, setAccountAddressReady ] = useState(
+		! editSettings.required || persistedAmmoDestinationEdit.accountRestored
+	);
 
 	const { setShippingAddress, setBillingAddress } = useDispatch( CART_STORE_KEY );
+	const customerData = useSelect( ( select ) => select( CART_STORE_KEY ).getCustomerData?.() || {}, [] );
+	const customerShippingAddress = customerData.shippingAddress || {};
+	const prefersCollection = useSelect( ( select ) => !! select( 'wc/store/checkout' )?.prefersCollection?.(), [] );
+	const editingShippingAddress = useSelect( ( select ) => !! select( 'wc/store/checkout' )?.getEditingShippingAddress?.(), [] );
+	const invalidAddressFields = useSelect( ( select ) => {
+		const validation = select( 'wc/store/validation' );
+		return destinationEntry.requiredFor( editSettings, customerShippingAddress.country || '' ).filter( ( field ) => {
+			const key = `shipping_${ field }`;
+			return !! validation?.getValidationError?.( key )?.message;
+		} ).join( '|' );
+	}, [ editSettings, customerShippingAddress.country ] );
+	const validationErrors = useMemo( () => invalidAddressFields.split( '|' ).filter( Boolean ).reduce( ( errors, field ) => {
+		errors[ `shipping_${ field }` ] = true;
+		return errors;
+	}, {} ), [ invalidAddressFields ] );
+	const destinationReady = prefersCollection || ! editSettings.required || (
+		accountAddressReady && (
+			! destinationFresh || destinationEntry.isComplete(
+				customerShippingAddress,
+				editSettings,
+				validationErrors,
+				'shipping'
+			)
+		)
+	);
 
 	const shippingState = useSelect( ( select ) => {
 		return select( CART_STORE_KEY ).getCustomerData?.()?.shippingAddress?.state || '';
@@ -142,11 +178,11 @@ const Block = () => {
 		[ shippingFirstName, shippingLastName ]
 	);
 
-	const shippingDestination = ammoDestination.resolve(
+	const shippingDestination = ! prefersCollection && ( destinationReady || ammoFflLocked ) ? ammoDestination.resolve(
 		shippingCountry,
 		shippingState,
 		Object.keys( settings.usStates )
-	);
+	) : '';
 	const requiresFfl =
 		settings.isAmmoOnly &&
 		settings.isAmmoEnabled &&
@@ -158,15 +194,12 @@ const Block = () => {
 	useEffect( () => { persistedAmmoFflLocked = ammoFflLocked; }, [ ammoFflLocked ] );
 	useEffect( () => { persistedDealer = selectedDealer; }, [ selectedDealer ] );
 
-	// FR-4: toggle the body class that drives the hide-fields CSS.
-	// Applied whenever an FFL is required (whether or not a dealer is
-	// picked yet) so Edit-mode shows only first/last name in both
-	// pre-pick and post-pick states. The customer can correct name
-	// typos at any time; other fields are either pending (pre-pick,
-	// will be set by the FFL) or locked to the dealer (post-pick).
+	// FR-4: toggle the body class that drives the hide-fields CSS. Firearm
+	// checkout keeps its established lock. Ammunition leaves the native
+	// editor usable until a dealer is actually selected.
 	const isFflRequiredForDisplay =
 		( settings.hasFirearms && ! settings.isMixedCart ) ||
-		( settings.isAmmoOnly && settings.isAmmoEnabled && ( ammoFflLocked || requiresFfl ) );
+		( settings.isAmmoOnly && settings.isAmmoEnabled && ammoFflLocked && !! selectedDealer );
 	useEffect( () => {
 		if ( isFflRequiredForDisplay ) {
 			document.body.classList.add( BODY_CLASS_FFL_REQUIRED );
@@ -197,6 +230,83 @@ const Block = () => {
 			console.error( 'AutomaticFFL: Could not set extension data', e );
 		}
 	}, [] );
+
+	// The full checkout page request restores WooCommerce's session-backed
+	// customer from persistent account shipping before the cart is hydrated.
+	// Finish the page-local reset here without launching a competing customer
+	// request that can race WooCommerce's own initial cart lifecycle.
+	useEffect( () => {
+		if ( ! editSettings.required || persistedAmmoDestinationEdit.accountRestored || prefersCollection ) {
+			return;
+		}
+
+		persistedAmmoDestinationEdit.accountRestored = true;
+		persistedAmmoDestinationEdit.fresh = false;
+		persistedAmmoDestinationEdit.ready = true;
+		persistedAmmoDestinationEdit.previousEditing = editingShippingAddress;
+		persistedDealer = null;
+		persistedAmmoFflLocked = false;
+		persistedCustomerAddress = null;
+		selectedDealerRef.current = null;
+		setSelectedDealer( null );
+		setAmmoFflLocked( false );
+		setDestinationFresh( false );
+		setExtensionData( 'automaticffl', getDealerExtensionData() );
+		setAccountAddressReady( true );
+	}, [
+		editSettings.required,
+		editingShippingAddress,
+		prefersCollection,
+		setExtensionData,
+	] );
+
+	// WooCommerce owns the native saved-address card and its Edit action. A
+	// collapsed-to-editing transition starts a fresh cart-local destination;
+	// no account/customer endpoint is called.
+	useEffect( () => {
+		if ( ! editSettings.required || ! accountAddressReady ) {
+			return;
+		}
+
+		const wasEditing = persistedAmmoDestinationEdit.previousEditing;
+		persistedAmmoDestinationEdit.previousEditing = editingShippingAddress;
+
+		if ( false !== wasEditing || ! editingShippingAddress || prefersCollection ) {
+			return;
+		}
+
+		persistedAmmoDestinationEdit.fresh = true;
+		persistedAmmoDestinationEdit.ready = false;
+		setDestinationFresh( true );
+		persistedDealer = null;
+		persistedAmmoFflLocked = false;
+		persistedCustomerAddress = null;
+		selectedDealerRef.current = null;
+		setSelectedDealer( null );
+		setAmmoFflLocked( false );
+		setExtensionData( 'automaticffl', getDealerExtensionData() );
+		setShippingAddress(
+			destinationEntry.blankForEdit(
+				customerShippingAddress,
+				editSettings.physicalFields || []
+			)
+		);
+	}, [
+		editSettings.required,
+		editSettings.physicalFields,
+		accountAddressReady,
+		editingShippingAddress,
+		prefersCollection,
+		customerShippingAddress,
+		setExtensionData,
+		setShippingAddress,
+	] );
+
+	useEffect( () => {
+		if ( editSettings.required && destinationFresh ) {
+			persistedAmmoDestinationEdit.ready = destinationReady;
+		}
+	}, [ editSettings.required, destinationFresh, destinationReady ] );
 
 	/**
 	 * FR-4a: when a dealer is selected and "use shipping as billing"
@@ -560,6 +670,18 @@ const Block = () => {
 	}
 
 	if ( ! settings.hasFirearms && ! settings.hasAmmo && ! settings.hasFflProducts ) {
+		return null;
+	}
+
+	if ( editSettings.required && prefersCollection ) {
+		return null;
+	}
+
+	if ( editSettings.required && ! accountAddressReady ) {
+		return null;
+	}
+
+	if ( editSettings.required && destinationFresh && ! destinationReady ) {
 		return null;
 	}
 

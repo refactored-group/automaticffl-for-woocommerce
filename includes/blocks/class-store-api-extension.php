@@ -17,6 +17,7 @@ use RefactoredGroup\AutomaticFFL\Helper\Config;
 use RefactoredGroup\AutomaticFFL\Helper\Cart_Analyzer;
 use RefactoredGroup\AutomaticFFL\Helper\Saved_Cart;
 use RefactoredGroup\AutomaticFFL\Helper\US_States;
+use RefactoredGroup\AutomaticFFL\Helper\Ammo_Destination_Edit;
 
 /**
  * Class Store_Api_Extension
@@ -397,12 +398,19 @@ class Store_Api_Extension {
 	 */
 	public function update_order_from_request( $order, $request ) {
 		$extensions = $request->get_param( 'extensions' );
+		$ffl_data   = is_array( $extensions ) && isset( $extensions[ self::NAMESPACE ] )
+			? $extensions[ self::NAMESPACE ]
+			: array();
 
 		if ( empty( $extensions ) || ! isset( $extensions[ self::NAMESPACE ] ) ) {
 			return;
 		}
 
-		$ffl_data = $extensions[ self::NAMESPACE ];
+		if ( Ammo_Destination_Edit::is_eligible() && array_key_exists( 'fflLicense', $ffl_data ) && empty( $ffl_data['fflLicense'] ) ) {
+			foreach ( array( '_ffl_dealer_id', '_ffl_license_field', '_ffl_expiration_date', '_ffl_uuid' ) as $meta_key ) {
+				$order->delete_meta_data( $meta_key );
+			}
+		}
 
 		if ( ! empty( $ffl_data['fflLicense'] ) ) {
 			$ffl_license = sanitize_text_field( $ffl_data['fflLicense'] );

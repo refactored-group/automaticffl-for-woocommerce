@@ -12,6 +12,7 @@ use RefactoredGroup\AutomaticFFL\Views\Checkout;
 use RefactoredGroup\AutomaticFFL\Views\Thank_You;
 use RefactoredGroup\AutomaticFFL\Helper\Config;
 use RefactoredGroup\AutomaticFFL\Helper\Cart_Analyzer;
+use RefactoredGroup\AutomaticFFL\Helper\Ammo_Destination_Edit;
 use RefactoredGroup\AutomaticFFL\Helper\Saved_Cart;
 use RefactoredGroup\AutomaticFFL\Admin\Settings;
 use RefactoredGroup\AutomaticFFL\Admin\Product_FFL_Meta;
@@ -194,6 +195,7 @@ class Plugin {
 		// Stash customer shipping address before blocks checkout overwrites user meta.
 		// Classic checkout doesn't need a stash (user meta is protected by maybe_update_customer_data),
 		// but blocks' sync_customer_data_with_order() writes the dealer address to user meta directly.
+		add_action( 'template_redirect', array( $this, 'restore_saved_shipping_for_ammo_checkout' ), 5 );
 		add_action( 'template_redirect', array( $this, 'stash_shipping_before_checkout' ) );
 
 		// Restore customer shipping address after FFL order.
@@ -586,6 +588,48 @@ class Plugin {
 
 		// Copy token from session to order meta for reliable retrieval.
 		Saved_Cart::save_token_to_order( $order_id );
+	}
+
+	/**
+	 * Restore persistent account shipping to the checkout customer session.
+	 *
+	 * WooCommerce loads a signed-in customer's persistent data and then overlays
+	 * its checkout-session snapshot. Dealer selection can leave that snapshot
+	 * containing the dealer address. Correct the session-backed customer during
+	 * the full checkout page request so the initial Store API response and native
+	 * address card both start from the persistent My Account shipping address.
+	 * Saving WC()->customer writes only to the WooCommerce session data store.
+	 *
+	 * @since 1.0.34
+	 *
+	 * @return void
+	 */
+	public function restore_saved_shipping_for_ammo_checkout() {
+		if ( ! function_exists( 'is_checkout' ) || ! is_checkout() ) {
+			return;
+		}
+
+		if ( ! function_exists( 'has_block' ) || ! has_block( 'woocommerce/checkout', wc_get_page_id( 'checkout' ) ) ) {
+			return;
+		}
+
+		if ( function_exists( 'is_wc_endpoint_url' ) && is_wc_endpoint_url( 'order-received' ) ) {
+			return;
+		}
+
+		if ( ! WC()->session || ! WC()->customer ) {
+			return;
+		}
+
+		$analyzer = new Cart_Analyzer();
+		if ( ! Ammo_Destination_Edit::is_eligible( $analyzer ) ) {
+			return;
+		}
+
+		$address = self::get_shipping_from_user_meta( get_current_user_id() );
+		self::set_customer_shipping( WC()->customer, $address );
+		WC()->customer->save();
+		$this->clear_ffl_destination_session();
 	}
 
 	/**

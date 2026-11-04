@@ -15,6 +15,7 @@ use RefactoredGroup\AutomaticFFL\Helper\Cart_Analyzer;
 use RefactoredGroup\AutomaticFFL\Helper\Messages;
 use RefactoredGroup\AutomaticFFL\Helper\Saved_Cart;
 use RefactoredGroup\AutomaticFFL\Helper\US_States;
+use RefactoredGroup\AutomaticFFL\Helper\Ammo_Destination_Edit;
 use RefactoredGroup\AutomaticFFL\Views\Checkout;
 
 /**
@@ -234,6 +235,7 @@ class Blocks_Integration implements IntegrationInterface {
 
 			// Centralized messages for consistency with classic checkout
 			'i18n'                 => Messages::get_all(),
+			'ammoDestinationEdit'  => Ammo_Destination_Edit::get_script_data( $analyzer ),
 		);
 
 		return $this->script_data_cache;

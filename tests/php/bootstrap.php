@@ -27,6 +27,11 @@ $GLOBALS['affl_can_manage_wc']  = true;
 $GLOBALS['affl_nonce_is_valid'] = true;
 $GLOBALS['affl_redirect']       = null;
 $GLOBALS['affl_site_url']       = 'http://localhost:8080';
+$GLOBALS['affl_logged_in']      = false;
+$GLOBALS['affl_user_meta']      = array();
+$GLOBALS['affl_is_checkout']    = false;
+$GLOBALS['affl_wc_endpoint']    = '';
+$GLOBALS['affl_has_checkout_block'] = false;
 
 /** Register a test case. */
 function affl_test( $name, callable $test ) {
@@ -77,6 +82,11 @@ function affl_reset_test_state() {
 	$GLOBALS['affl_nonce_is_valid'] = true;
 	$GLOBALS['affl_redirect']       = null;
 	$GLOBALS['affl_site_url']       = 'http://localhost:8080';
+	$GLOBALS['affl_logged_in']      = false;
+	$GLOBALS['affl_user_meta']      = array();
+	$GLOBALS['affl_is_checkout']    = false;
+	$GLOBALS['affl_wc_endpoint']    = '';
+	$GLOBALS['affl_has_checkout_block'] = false;
 }
 
 class WP_Error {
@@ -350,6 +360,35 @@ function add_submenu_page() {
 
 function get_current_user_id() {
 	return 1;
+}
+
+function get_user_meta( $user_id, $key = '', $single = false ) {
+	$value = isset( $GLOBALS['affl_user_meta'][ $user_id ][ $key ] )
+		? $GLOBALS['affl_user_meta'][ $user_id ][ $key ]
+		: '';
+
+	return $single ? $value : array( $value );
+}
+
+function is_user_logged_in() {
+	return ! empty( $GLOBALS['affl_logged_in'] );
+}
+
+function is_checkout() {
+	return ! empty( $GLOBALS['affl_is_checkout'] );
+}
+
+function is_wc_endpoint_url( $endpoint = '' ) {
+	return '' !== $endpoint && $endpoint === $GLOBALS['affl_wc_endpoint'];
+}
+
+function wc_get_page_id( $page ) {
+	return 'checkout' === $page ? 5 : 0;
+}
+
+function has_block( $block_name, $post = null ) {
+	unset( $post );
+	return 'woocommerce/checkout' === $block_name && ! empty( $GLOBALS['affl_has_checkout_block'] );
 }
 
 function user_can( $user_id, $capability ) {
