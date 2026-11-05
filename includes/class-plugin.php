@@ -192,9 +192,9 @@ class Plugin {
 		// Validate mixed firearm carts, FFL license, and shipping name.
 		add_action( 'woocommerce_checkout_process', array( $this, 'validate_ffl_checkout' ) );
 
-		// Stash customer shipping address before blocks checkout overwrites user meta.
-		// Classic checkout doesn't need a stash (user meta is protected by maybe_update_customer_data),
-		// but blocks' sync_customer_data_with_order() writes the dealer address to user meta directly.
+		// Restore persistent shipping before a fresh eligible ammo checkout so neither
+		// Classic nor Blocks can start from a stale dealer destination in the session.
+		// Then stash it before Blocks checkout can overwrite user meta.
 		add_action( 'template_redirect', array( $this, 'restore_saved_shipping_for_ammo_checkout' ), 5 );
 		add_action( 'template_redirect', array( $this, 'stash_shipping_before_checkout' ) );
 
@@ -596,8 +596,8 @@ class Plugin {
 	 * WooCommerce loads a signed-in customer's persistent data and then overlays
 	 * its checkout-session snapshot. Dealer selection can leave that snapshot
 	 * containing the dealer address. Correct the session-backed customer during
-	 * the full checkout page request so the initial Store API response and native
-	 * address card both start from the persistent My Account shipping address.
+	 * the full checkout page request so the initial Store API response or Classic
+	 * checkout fields start from the persistent My Account shipping address.
 	 * Saving WC()->customer writes only to the WooCommerce session data store.
 	 *
 	 * @since 1.0.34
@@ -606,10 +606,6 @@ class Plugin {
 	 */
 	public function restore_saved_shipping_for_ammo_checkout() {
 		if ( ! function_exists( 'is_checkout' ) || ! is_checkout() ) {
-			return;
-		}
-
-		if ( ! function_exists( 'has_block' ) || ! has_block( 'woocommerce/checkout', wc_get_page_id( 'checkout' ) ) ) {
 			return;
 		}
 

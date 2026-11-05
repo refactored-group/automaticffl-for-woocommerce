@@ -123,3 +123,47 @@ affl_test( 'classic ammo checkout preserves its native saved destination fields'
 	affl_assert_same( 'Saved street', $plugin->clear_shipping_address_fields( 'Saved street', 'shipping_address_1' ) );
 	affl_assert_same( 'CA', $plugin->clear_shipping_address_fields( 'CA', 'shipping_state' ) );
 } );
+
+affl_test( 'fresh classic ammo checkout restores persistent shipping over a stale dealer session', function () {
+	$restrictions = array( array( 'id' => 1, 'conditions' => array( array( 'type' => 'ship_state', 'states' => array( 'CA' ) ) ) ) );
+	affl_cart_blocks_fixture( $restrictions );
+	unset( WC()->cart->items['b'] );
+	$GLOBALS['affl_logged_in']          = true;
+	$GLOBALS['affl_is_checkout']        = true;
+	$GLOBALS['affl_has_checkout_block'] = false;
+	$GLOBALS['affl_user_meta'][1]       = array(
+		'shipping_first_name' => 'Automatic FFL',
+		'shipping_last_name'  => 'QA Test Updated',
+		'shipping_company'    => '',
+		'shipping_address_1'  => '5916 Lost Valley Dr',
+		'shipping_address_2'  => '',
+		'shipping_city'       => 'The Colony',
+		'shipping_state'      => 'TX',
+		'shipping_postcode'   => '75056',
+		'shipping_country'    => 'US',
+		'shipping_phone'      => '14692071149',
+	);
+	$stale_dealer = array(
+		'first_name' => 'Giancarlo',
+		'last_name'  => 'Byrne',
+		'company'    => 'GGD, LLC',
+		'address_1'  => '6310 SAN FERNANDO RD',
+		'address_2'  => '',
+		'city'       => 'GLENDALE',
+		'state'      => 'CA',
+		'postcode'   => '91201',
+		'country'    => 'US',
+		'phone'      => '8186491041',
+	);
+	WC()->customer = new AFFL_Test_Session_Customer( $stale_dealer );
+	WC()->session->set( Plugin::SESSION_FFL_DESTINATION, $stale_dealer );
+
+	$plugin = affl_classic_checkout_plugin();
+	$plugin->restore_saved_shipping_for_ammo_checkout();
+
+	affl_assert_same( '5916 Lost Valley Dr', WC()->customer->shipping['address_1'] );
+	affl_assert_same( 'Automatic FFL', WC()->customer->shipping['first_name'] );
+	affl_assert_same( 1, WC()->customer->save_count );
+	affl_assert_same( null, WC()->session->get( Plugin::SESSION_FFL_DESTINATION ) );
+	affl_assert_same( '5916 Lost Valley Dr', $GLOBALS['affl_user_meta'][1]['shipping_address_1'] );
+} );

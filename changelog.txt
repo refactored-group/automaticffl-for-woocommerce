@@ -1,7 +1,7 @@
 *** Automatic FFL for WooCommerce ***
 
 2026-11-04 - Version 1.0.34
-* Kept WooCommerce's native saved-address card and initial ammunition routing available at Checkout Blocks
+* Restored the saved account shipping address on fresh Classic and Blocks ammunition checkout visits instead of reusing the last selected dealer
 * Made native Edit start a fresh names-only destination and pause ammunition routing until the replacement address is valid
 * Kept pre-dealer address editing unlocked, cleared stale dealer data after Edit, and preserved saved accounts, Classic checkout, and pickup behavior
 

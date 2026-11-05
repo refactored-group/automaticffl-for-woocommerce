@@ -98,7 +98,7 @@ Yes. Automatic FFL is also available as a BigCommerce app and Magento extension.
 == Changelog ==
 
 = 1.0.34 =
-* Keeps WooCommerce's native saved-address card and initial ammunition routing available at Checkout Blocks.
+* Restores the saved account shipping address on fresh Classic and Blocks ammunition checkout visits instead of reusing the last selected dealer.
 * Makes native Edit start a fresh names-only destination and pauses routing until the replacement address is valid.
 * Keeps pre-dealer editing unlocked, clears stale dealer data after Edit, and preserves saved accounts, Classic checkout, and pickup behavior.
 
