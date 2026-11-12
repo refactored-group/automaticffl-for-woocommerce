@@ -1,5 +1,13 @@
 *** Automatic FFL for WooCommerce ***
 
+2026-11-12 - Version 1.0.35
+* Registered Classic dealer fields as native checkout data and synchronized one current selection into the submitted checkout form for builder and gateway compatibility
+* Validated and saved complete current dealer metadata and shipping from WooCommerce checkout data before payment without relying on the original browser request
+* Rejected missing, partial, or stale dealer data on final Blocks checkout while preserving draft updates and avoiding duplicate dealer notes
+* Replaced hidden dealer shipping-field errors with one actionable dealer-selection error whenever Classic checkout currently requires an FFL
+* Restored normal WooCommerce address validation for ordinary and unrestricted-ammunition destinations
+* Cleared the dealer-selection error banner when ammunition becomes unrestricted or a dealer is selected
+
 2026-11-04 - Version 1.0.34
 * Restored the saved account shipping address on fresh Classic and Blocks ammunition checkout visits instead of reusing the last selected dealer
 * Made native Edit start a fresh names-only destination and pause ammunition routing until the replacement address is valid

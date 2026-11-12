@@ -2,7 +2,7 @@
 Contributors: refactoredgroup
 Tags: woocommerce, ffl, firearms, ammunition, checkout
 Tested up to: 7.1
-Stable tag: 1.0.34
+Stable tag: 1.0.35
 Requires PHP: 7.0
 Requires at least: 5.6
 License: GPLv3
@@ -96,6 +96,14 @@ Yes. Automatic FFL is also available as a BigCommerce app and Magento extension.
 8. Allow us to automatically enable new Type 1 & 2 FFL dealers or take full control.
 
 == Changelog ==
+
+= 1.0.35 =
+* Registers Classic dealer fields as native checkout data and synchronizes one current selection for builder and gateway compatibility.
+* Validates and saves complete dealer metadata and shipping from WooCommerce checkout data before payment.
+* Rejects missing, partial, or stale dealer data on final Blocks checkout without duplicating dealer notes.
+* Shows one actionable dealer-selection error when Classic checkout currently requires an FFL.
+* Restores normal WooCommerce address validation for ordinary and unrestricted-ammunition destinations.
+* Clears the dealer-selection error when ammunition becomes unrestricted or a dealer is selected.
 
 = 1.0.34 =
 * Restores the saved account shipping address on fresh Classic and Blocks ammunition checkout visits instead of reusing the last selected dealer.

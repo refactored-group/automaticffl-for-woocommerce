@@ -39,6 +39,7 @@ include 'templates/checkout/ffl-map-js.php';
       for (const match of scripts.matchAll(/<script>([\s\S]*?)<\/script>/g)) w.eval(match[1]);
       await new Promise(resolve => $(resolve));
       assert.equal($('form.checkout').triggerHandler('checkout_place_order'), false, 'restricted ammo requires a dealer');
+      assert.equal($('.automaticffl-checkout-error').text(), 'Dealer required', 'restricted ammo shows one dealer error');
 
       for (const [id, state] of [[101, 'TX'], [202, 'CO'], [303, 'DC']]) {
         w.dispatchEvent(new w.MessageEvent('message', {
@@ -54,6 +55,7 @@ include 'templates/checkout/ffl-map-js.php';
         assert.notEqual($('#automaticffl-ffl-container').css('display'), 'none');
         assert.equal($('#automaticffl-dealer-selected .dealer-name').text(), `${state} dealer`);
         assert.equal($('form.checkout').triggerHandler('checkout_place_order'), true);
+        assert.equal($('.automaticffl-checkout-error').length, 0, 'dealer selection clears the dealer error');
         if (!billingOnly) assert.equal($('#shipping_address_1_field').css('display'), 'none');
       }
 
@@ -73,12 +75,14 @@ include 'templates/checkout/ffl-map-js.php';
         assert.equal($('#ffl_license_field').val(), `${territory}-license`);
         assert.equal($('#billing_first_name').val(), 'Alex', 'Dealer selection preserves billing');
         assert.equal($('form.checkout').triggerHandler('checkout_place_order'), true);
+        assert.equal($('.automaticffl-checkout-error').length, 0, `${territory} dealer selection clears the dealer error`);
       }
 
       $('#shipping_country').val('CA');
       $('#shipping_state').val('PR').trigger('change');
       assert.equal($('#ffl_license_field').val(), '', 'Foreign country change clears the previous dealer');
       assert.equal($('form.checkout').triggerHandler('checkout_place_order'), true, 'Foreign province collision does not activate Puerto Rico');
+      assert.equal($('.automaticffl-checkout-error').length, 0, 'unrestricted destination clears the dealer error');
       console.log(`PASS Classic ${billingOnly ? 'billing-only' : 'normal'}: restricted ammo retains unrestricted-state dealers across selection, replacement and checkout updates`);
     } finally {
       dom.window.close();

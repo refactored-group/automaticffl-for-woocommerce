@@ -285,6 +285,57 @@ test( 'reads the current dealer on change and stops immediately when extension d
 	billingInput( customer, () => expect( mockCustomer.shippingAddress.address_1 ).toBe( customer.address_1 ) );
 } );
 
+test( 'publishes one full current payload, clears replaced optional data, and restores only on same-page remount', () => {
+	const enrichedTexas = {
+		...texas,
+		expirationDate: '2030-01-01',
+		uuid: 'texas-certificate',
+		address2: 'Suite 2',
+	};
+	render();
+	choose( enrichedTexas );
+	expect( mockExtensions.automaticffl ).toEqual( {
+		fflDealerId: '101',
+		fflLicense: 'TX-license',
+		fflExpirationDate: '2030-01-01',
+		fflUuid: 'texas-certificate',
+		fflCompanyName: 'Texas dealer',
+		fflDealerAddress1: 'Dealer street',
+		fflDealerAddress2: 'Suite 2',
+		fflDealerCity: 'Dallas',
+		fflDealerState: 'TX',
+		fflDealerPostcode: '75201',
+		fflDealerCountry: 'US',
+		fflDealerPhone: '2145550100',
+	} );
+
+	choose( california );
+	expect( mockExtensions.automaticffl ).toMatchObject( {
+		fflDealerId: '202',
+		fflLicense: 'CA-license',
+		fflExpirationDate: '',
+		fflUuid: '',
+		fflDealerAddress2: '',
+	} );
+
+	act( () => root.unmount() );
+	root = createRoot( mount );
+	render();
+	expect( mount.textContent ).toContain( 'Change Dealer' );
+	expect( mockExtensions.automaticffl.fflLicense ).toBe( 'CA-license' );
+
+	// A page navigation creates a fresh JavaScript module and Store API state.
+	act( () => root.unmount() );
+	mockExtensions = {};
+	mockCustomer = { shippingAddress: { ...customer }, billingAddress: { ...customer } };
+	jest.resetModules();
+	jest.isolateModules( () => { Block = require( '../../assets/js/blocks/dealer-selection/block' ).default; } );
+	root = createRoot( mount );
+	render();
+	expect( mount.textContent ).toContain( 'Find a Dealer' );
+	expect( mockExtensions.automaticffl ).toBeUndefined();
+} );
+
 test.each( [ 'normal', 'pickup', 'no-shipping', 'non-ffl', 'mixed' ] )( 'leaves %s address updates alone', ( mode ) => {
 	mockForced = mode !== 'normal';render();choose( texas );
 	if ( mode === 'pickup' ) mockCollection = true;

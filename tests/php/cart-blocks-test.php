@@ -9,6 +9,7 @@ use RefactoredGroup\AutomaticFFL\Plugin;
 require_once dirname( __DIR__, 2 ) . '/includes/helper/class-cart-analyzer.php';
 require_once dirname( __DIR__, 2 ) . '/includes/helper/class-us-states.php';
 require_once dirname( __DIR__, 2 ) . '/includes/helper/class-ammo-destination-edit.php';
+require_once dirname( __DIR__, 2 ) . '/includes/helper/class-config.php';
 require_once dirname( __DIR__, 2 ) . '/includes/blocks/class-store-api-extension.php';
 require_once dirname( __DIR__, 2 ) . '/includes/class-plugin.php';
 require_once __DIR__ . '/fixtures/blocks-interface.php';
@@ -111,6 +112,74 @@ class AFFL_Test_Request {
 	}
 	public function get_method() { return $this->method; }
 	public function get_param( $key ) { return isset( $this->params[ $key ] ) ? $this->params[ $key ] : null; }
+}
+
+class AFFL_Test_Blocks_Order {
+	public $meta = array();
+	public $shipping = array(
+		'first_name' => 'Test',
+		'last_name'  => 'Customer',
+		'country'    => 'US',
+		'state'      => 'UT',
+	);
+	public $billing = array(
+		'first_name' => 'Test',
+		'last_name'  => 'Customer',
+		'country'    => 'US',
+		'state'      => 'UT',
+	);
+	public $notes = array();
+	public $save_count = 0;
+
+	public function update_meta_data( $key, $value ) { $this->meta[ $key ] = $value; }
+	public function delete_meta_data( $key ) { unset( $this->meta[ $key ] ); }
+	public function get_meta( $key ) { return isset( $this->meta[ $key ] ) ? $this->meta[ $key ] : ''; }
+	public function add_order_note( $note ) { $this->notes[] = $note; }
+	public function save() { ++$this->save_count; }
+	public function __call( $name, $arguments ) {
+		foreach ( array( 'shipping', 'billing' ) as $type ) {
+			$get_prefix = 'get_' . $type . '_';
+			$set_prefix = 'set_' . $type . '_';
+			if ( 0 === strpos( $name, $get_prefix ) ) {
+				$field = substr( $name, strlen( $get_prefix ) );
+				return isset( $this->{$type}[ $field ] ) ? $this->{$type}[ $field ] : '';
+			}
+			if ( 0 === strpos( $name, $set_prefix ) ) {
+				$field = substr( $name, strlen( $set_prefix ) );
+				$this->{$type}[ $field ] = isset( $arguments[0] ) ? $arguments[0] : '';
+				return;
+			}
+		}
+		throw new BadMethodCallException( $name );
+	}
+}
+
+function affl_complete_blocks_ffl_data() {
+	return array(
+		'fflDealerId'       => '42',
+		'fflLicense'        => 'fixture-license',
+		'fflExpirationDate' => '2030-01-01',
+		'fflUuid'           => 'fixture-uuid',
+		'fflCompanyName'    => 'Fixture Dealer',
+		'fflDealerAddress1' => '42 Dealer Street',
+		'fflDealerAddress2' => '',
+		'fflDealerCity'     => 'Orem',
+		'fflDealerState'    => 'UT',
+		'fflDealerPostcode' => '84057',
+		'fflDealerCountry'  => 'US',
+		'fflDealerPhone'    => '8015550100',
+	);
+}
+
+function affl_firearm_blocks_fixture() {
+	$extension = affl_cart_blocks_fixture( array( array( 'id' => 1 ) ) );
+	unset( WC()->cart->items['b'] );
+	return $extension;
+}
+
+function affl_blocks_checkout_request( $method, $ffl_data = null ) {
+	$extensions = null === $ffl_data ? array() : array( Store_Api_Extension::NAMESPACE => $ffl_data );
+	return new AFFL_Test_Request( $method, array( 'extensions' => $extensions ) );
 }
 
 function WC() {
@@ -340,6 +409,126 @@ affl_test( 'Store API clears stale dealer draft data without a custom destinatio
 	$extension->update_order_from_request( $order, new AFFL_Test_Request( 'PUT', array( 'extensions' => $extensions ) ) );
 	affl_assert_contains( '_ffl_license_field', implode( ',', $order->deleted ) );
 	$extension->update_order_from_request( $order, new AFFL_Test_Request( 'POST', array( 'extensions' => $extensions ) ) );
+} );
+
+affl_test( 'final Store API POST rejects missing and partial current dealer data before mutation', function () {
+	$cases = array(
+		'missing extension'   => null,
+		'blank license'       => array_merge( affl_complete_blocks_ffl_data(), array( 'fflLicense' => '' ) ),
+		'license only'        => array( 'fflLicense' => 'fixture-license' ),
+		'missing dealer ID'   => array_merge( affl_complete_blocks_ffl_data(), array( 'fflDealerId' => '' ) ),
+		'partial destination' => array_merge( affl_complete_blocks_ffl_data(), array( 'fflDealerCity' => '' ) ),
+	);
+
+	foreach ( $cases as $label => $data ) {
+		$extension = affl_firearm_blocks_fixture();
+		$order = new AFFL_Test_Blocks_Order();
+		$order->meta = array(
+			'_ffl_dealer_id'       => 999,
+			'_ffl_license_field'   => 'stale-license',
+			'_ffl_expiration_date' => 'stale-expiration',
+			'_ffl_uuid'            => 'stale-uuid',
+		);
+		$before = $order->meta;
+		try {
+			$extension->update_order_from_request( $order, affl_blocks_checkout_request( 'POST', $data ) );
+			affl_fail( $label . ' was accepted.' );
+		} catch ( AFFL_Test_Route_Exception $error ) {
+			affl_assert_contains( 'complete FFL dealer', $error->getMessage(), $label );
+		}
+		affl_assert_same( $before, $order->meta, $label . ' must not mutate stored draft data.' );
+		affl_assert_same( 0, $order->save_count, $label . ' must reject before persistence.' );
+		affl_assert_same( array(), $order->notes, $label . ' must reject before notes.' );
+	}
+} );
+
+affl_test( 'complete final Store API data persists without browser POST and replacement is idempotent', function () {
+	$extension = affl_firearm_blocks_fixture();
+	$order = new AFFL_Test_Blocks_Order();
+	$_POST = array();
+	$data = affl_complete_blocks_ffl_data();
+	$extension->update_order_from_request( $order, affl_blocks_checkout_request( 'POST', $data ) );
+
+	affl_assert_same( 42, $order->meta['_ffl_dealer_id'] );
+	affl_assert_same( 'fixture-license', $order->meta['_ffl_license_field'] );
+	affl_assert_same( 'fixture-uuid', $order->meta['_ffl_uuid'] );
+	affl_assert_same( 'Fixture Dealer', $order->shipping['company'] );
+	affl_assert_same( '42 Dealer Street', $order->shipping['address_1'] );
+	affl_assert_same( 1, count( $order->notes ) );
+
+	$replacement = array_merge(
+		$data,
+		array(
+			'fflDealerId'       => '84',
+			'fflExpirationDate' => '',
+			'fflUuid'           => '',
+			'fflCompanyName'    => 'Replacement Dealer',
+			'fflDealerAddress1' => '84 New Dealer Street',
+		)
+	);
+	$extension->update_order_from_request( $order, affl_blocks_checkout_request( 'POST', $replacement ) );
+	affl_assert_same( 84, $order->meta['_ffl_dealer_id'] );
+	affl_assert_false( isset( $order->meta['_ffl_expiration_date'] ) );
+	affl_assert_false( isset( $order->meta['_ffl_uuid'] ) );
+	affl_assert_same( 'Replacement Dealer', $order->shipping['company'] );
+	affl_assert_same( 2, count( $order->notes ), 'Meaningful license details replacement should add one new note.' );
+
+	$extension->update_order_from_request( $order, affl_blocks_checkout_request( 'POST', $replacement ) );
+	affl_assert_same( 2, count( $order->notes ), 'Replaying identical final data must not duplicate notes.' );
+} );
+
+affl_test( 'final Store API completion adds one note when a partial draft already stored the same license', function () {
+	$extension = affl_firearm_blocks_fixture();
+	$order = new AFFL_Test_Blocks_Order();
+	$order->meta['_ffl_license_field'] = 'fixture-license';
+	$data = affl_complete_blocks_ffl_data();
+	$data['fflExpirationDate'] = '';
+	$data['fflUuid']           = '';
+
+	$extension->update_order_from_request( $order, affl_blocks_checkout_request( 'POST', $data ) );
+	affl_assert_same( 1, count( $order->notes ), 'The incomplete-to-complete transition must create the first valid FFL note.' );
+	$extension->update_order_from_request( $order, affl_blocks_checkout_request( 'POST', $data ) );
+	affl_assert_same( 1, count( $order->notes ), 'Replaying the complete selection must not duplicate the note.' );
+} );
+
+affl_test( 'partial Store API PUT and PATCH preserve an existing draft without requiring current data', function () {
+	foreach ( array( 'PUT', 'PATCH' ) as $method ) {
+		$extension = affl_firearm_blocks_fixture();
+		$order = new AFFL_Test_Blocks_Order();
+		$order->meta = array(
+			'_ffl_dealer_id'       => 999,
+			'_ffl_license_field'   => 'stale-license',
+			'_ffl_expiration_date' => 'stale-expiration',
+			'_ffl_uuid'            => 'stale-uuid',
+		);
+		$before = $order->meta;
+		$extension->update_order_from_request( $order, affl_blocks_checkout_request( $method ) );
+		affl_assert_same( $before, $order->meta, $method . ' must preserve the draft.' );
+		affl_assert_same( 0, $order->save_count );
+		affl_assert_same( array(), $order->notes );
+	}
+} );
+
+affl_test( 'final Store API ammunition POST validates a started dealer after its address replaces the restricted state', function () {
+	$restrictions = array(
+		array(
+			'id'         => 1,
+			'conditions' => array( array( 'type' => 'ship_state', 'states' => array( 'CA' ) ) ),
+		),
+	);
+	$extension = affl_cart_blocks_fixture( $restrictions );
+	unset( WC()->cart->items['b'] );
+	$order = new AFFL_Test_Blocks_Order();
+	$order->shipping['state'] = 'UT';
+	$data = affl_complete_blocks_ffl_data();
+	$data['fflDealerCity'] = '';
+	try {
+		$extension->update_order_from_request( $order, affl_blocks_checkout_request( 'POST', $data ) );
+		affl_fail( 'A partial current ammunition dealer was accepted after its destination replaced the restricted customer state.' );
+	} catch ( AFFL_Test_Route_Exception $error ) {
+		affl_assert_contains( 'complete FFL dealer', $error->getMessage() );
+	}
+	affl_assert_same( array(), $order->meta );
 } );
 
 affl_test( 'REST cart updates do not run the classic checkout page redirect', function () {

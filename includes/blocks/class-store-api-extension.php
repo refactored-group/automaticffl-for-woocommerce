@@ -398,11 +398,17 @@ class Store_Api_Extension {
 	 */
 	public function update_order_from_request( $order, $request ) {
 		$extensions = $request->get_param( 'extensions' );
-		$ffl_data   = is_array( $extensions ) && isset( $extensions[ self::NAMESPACE ] )
+		$has_ffl_data = is_array( $extensions ) && array_key_exists( self::NAMESPACE, $extensions );
+		$ffl_data     = $has_ffl_data && is_array( $extensions[ self::NAMESPACE ] )
 			? $extensions[ self::NAMESPACE ]
 			: array();
+		$is_final_post = is_callable( array( $request, 'get_method' ) ) && 'POST' === strtoupper( (string) $request->get_method() );
 
-		if ( empty( $extensions ) || ! isset( $extensions[ self::NAMESPACE ] ) ) {
+		if ( $is_final_post ) {
+			$this->validate_final_request( $order, $ffl_data, $has_ffl_data );
+		}
+
+		if ( ! $has_ffl_data ) {
 			return;
 		}
 
@@ -412,8 +418,16 @@ class Store_Api_Extension {
 			}
 		}
 
-		if ( ! empty( $ffl_data['fflLicense'] ) ) {
-			$ffl_license = sanitize_text_field( $ffl_data['fflLicense'] );
+		$ffl_license = $this->get_extension_value( $ffl_data, 'fflLicense' );
+		if ( '' !== $ffl_license ) {
+			$expiration_date            = $this->get_extension_value( $ffl_data, 'fflExpirationDate' );
+			$uuid                       = $this->get_extension_value( $ffl_data, 'fflUuid' );
+			$complete_selection         = $this->has_complete_current_selection( $order, $ffl_data );
+			$previous_complete_selection = $this->order_has_complete_selection( $order );
+			$note_changed                = ! $previous_complete_selection
+				|| $ffl_license !== (string) $order->get_meta( '_ffl_license_field' )
+				|| $expiration_date !== (string) $order->get_meta( '_ffl_expiration_date' )
+				|| $uuid !== (string) $order->get_meta( '_ffl_uuid' );
 
 			// Save the canonical dealer ID used for order attribution.
 			$dealer_id = absint( $this->get_extension_value( $ffl_data, 'fflDealerId' ) );
@@ -424,29 +438,79 @@ class Store_Api_Extension {
 			// Save FFL license to order meta.
 			$order->update_meta_data( '_ffl_license_field', $ffl_license );
 
-			// Save expiration date if provided.
-			if ( ! empty( $ffl_data['fflExpirationDate'] ) ) {
-				$expiration_date = sanitize_text_field( $ffl_data['fflExpirationDate'] );
-				$order->update_meta_data( '_ffl_expiration_date', $expiration_date );
-			}
-
-			// Save UUID if provided.
-			if ( ! empty( $ffl_data['fflUuid'] ) ) {
-				$uuid = sanitize_text_field( $ffl_data['fflUuid'] );
-				$order->update_meta_data( '_ffl_uuid', $uuid );
+			// A complete dealer selection replaces optional license details too.
+			foreach (
+				array(
+					'fflExpirationDate' => array( '_ffl_expiration_date', $expiration_date ),
+					'fflUuid'           => array( '_ffl_uuid', $uuid ),
+				) as $field => $optional
+			) {
+				list( $meta_key, $value ) = $optional;
+				if ( '' !== $value ) {
+					$order->update_meta_data( $meta_key, $value );
+				} elseif ( $complete_selection || array_key_exists( $field, $ffl_data ) ) {
+					$order->delete_meta_data( $meta_key );
+				}
 			}
 
 			$this->set_order_shipping_from_ffl_data( $order, $ffl_data );
 
 			$order->save();
 
-			// Build enhanced order note.
-			$note = Config::build_enhanced_order_note(
-				$ffl_license,
-				! empty( $ffl_data['fflExpirationDate'] ) ? sanitize_text_field( $ffl_data['fflExpirationDate'] ) : '',
-				! empty( $ffl_data['fflUuid'] ) ? sanitize_text_field( $ffl_data['fflUuid'] ) : ''
+			if ( $complete_selection && $note_changed ) {
+				$note = Config::build_enhanced_order_note( $ffl_license, $expiration_date, $uuid );
+				$order->add_order_note( $note );
+			}
+		}
+	}
+
+	/**
+	 * Validate current Store API data before a final checkout POST mutates the order.
+	 *
+	 * @since 1.0.35
+	 *
+	 * @param \WC_Order $order        Draft order.
+	 * @param array     $ffl_data     Current request extension data.
+	 * @param bool      $has_ffl_data Whether the current request included the extension.
+	 * @return void
+	 * @throws \Automattic\WooCommerce\StoreApi\Exceptions\RouteException Invalid cart or dealer data.
+	 */
+	private function validate_final_request( $order, array $ffl_data, $has_ffl_data ) {
+		$analyzer = new Cart_Analyzer();
+		if ( $analyzer->has_api_error() ) {
+			return;
+		}
+
+		$this->validate_mixed_cart( $order, $analyzer );
+
+		$current_selection_started = false;
+		foreach ( array( 'fflDealerId', 'fflLicense', 'fflCompanyName', 'fflExpirationDate', 'fflUuid' ) as $field ) {
+			if ( '' !== $this->get_extension_value( $ffl_data, $field ) ) {
+				$current_selection_started = true;
+				break;
+			}
+		}
+
+		$requires_dealer = $analyzer->has_firearms() || $current_selection_started;
+		if ( ! $requires_dealer && $analyzer->is_ammo_only() ) {
+			$destination = $this->get_order_destination( $order );
+			$requires_dealer = $analyzer->requires_ffl_for_state( $destination );
+			if ( ! $requires_dealer && WC()->session ) {
+				$selected_state = WC()->session->get( 'automaticffl_ammo_state', '' );
+				$requires_dealer = is_string( $selected_state ) && $analyzer->requires_ffl_for_state( $selected_state );
+			}
+			// A prior draft selection must never satisfy an omitted current selection.
+			if ( ! $requires_dealer && '' !== (string) $order->get_meta( '_ffl_license_field' ) ) {
+				$requires_dealer = true;
+			}
+		}
+
+		if ( $requires_dealer && ( ! $has_ffl_data || ! $this->has_complete_current_selection( $order, $ffl_data ) ) ) {
+			throw new \Automattic\WooCommerce\StoreApi\Exceptions\RouteException(
+				'ffl_dealer_required',
+				__( 'Please select a complete FFL dealer for this order.', 'automaticffl-for-wc' ),
+				400
 			);
-			$order->add_order_note( $note );
 		}
 	}
 
@@ -506,19 +570,149 @@ class Store_Api_Extension {
 	 */
 	private function has_dealer_address_data( array $ffl_data ) {
 		$keys = array(
+			'fflCompanyName',
 			'fflDealerAddress1',
 			'fflDealerCity',
-			'fflDealerState',
 			'fflDealerPostcode',
+			'fflDealerCountry',
 		);
 
 		foreach ( $keys as $key ) {
-			if ( '' !== $this->get_extension_value( $ffl_data, $key ) ) {
-				return true;
+			if ( '' === $this->get_extension_value( $ffl_data, $key ) ) {
+				return false;
 			}
 		}
 
-		return false;
+		$destination = US_States::to_woocommerce_destination(
+			$this->get_extension_value( $ffl_data, 'fflDealerCountry' ),
+			$this->get_extension_value( $ffl_data, 'fflDealerState' )
+		);
+
+		return ! $this->is_state_required( $destination['country'] ) || '' !== $destination['state'];
+	}
+
+	/**
+	 * Determine whether a final request contains one complete current dealer.
+	 *
+	 * @since 1.0.35
+	 *
+	 * @param \WC_Order $order    Draft order before extension mutation.
+	 * @param array     $ffl_data Current request extension data.
+	 * @return bool
+	 */
+	private function has_complete_current_selection( $order, array $ffl_data ) {
+		if ( 0 >= absint( $this->get_extension_value( $ffl_data, 'fflDealerId' ) )
+			|| '' === $this->get_extension_value( $ffl_data, 'fflLicense' )
+			|| ! $this->has_dealer_address_data( $ffl_data ) ) {
+			return false;
+		}
+
+		$first_name = $this->get_order_address_value( $order, 'shipping', 'first_name' );
+		$last_name  = $this->get_order_address_value( $order, 'shipping', 'last_name' );
+		if ( '' === $first_name ) {
+			$first_name = $this->get_order_address_value( $order, 'billing', 'first_name' );
+		}
+		if ( '' === $last_name ) {
+			$last_name = $this->get_order_address_value( $order, 'billing', 'last_name' );
+		}
+
+		return '' !== $first_name && '' !== $last_name;
+	}
+
+	/**
+	 * Determine whether the saved order contains a complete FFL projection.
+	 *
+	 * @since 1.0.35
+	 *
+	 * @param \WC_Order $order Order object.
+	 * @return bool
+	 */
+	private function order_has_complete_selection( $order ) {
+		if ( 0 >= absint( $order->get_meta( '_ffl_dealer_id' ) )
+			|| '' === sanitize_text_field( (string) $order->get_meta( '_ffl_license_field' ) ) ) {
+			return false;
+		}
+
+		foreach ( array( 'company', 'address_1', 'city', 'postcode', 'country' ) as $field ) {
+			if ( '' === $this->get_order_address_value( $order, 'shipping', $field ) ) {
+				return false;
+			}
+		}
+
+		$country = $this->get_order_address_value( $order, 'shipping', 'country' );
+		$state   = $this->get_order_address_value( $order, 'shipping', 'state' );
+		if ( $this->is_state_required( $country ) && '' === $state ) {
+			return false;
+		}
+
+		$first_name = $this->get_order_address_value( $order, 'shipping', 'first_name' );
+		$last_name  = $this->get_order_address_value( $order, 'shipping', 'last_name' );
+		if ( '' === $first_name ) {
+			$first_name = $this->get_order_address_value( $order, 'billing', 'first_name' );
+		}
+		if ( '' === $last_name ) {
+			$last_name = $this->get_order_address_value( $order, 'billing', 'last_name' );
+		}
+
+		return '' !== $first_name && '' !== $last_name;
+	}
+
+	/**
+	 * Read a sanitized order address value.
+	 *
+	 * @since 1.0.35
+	 *
+	 * @param \WC_Order $order Order object.
+	 * @param string    $type  shipping or billing.
+	 * @param string    $field Address field.
+	 * @return string
+	 */
+	private function get_order_address_value( $order, $type, $field ) {
+		$getter = 'get_' . $type . '_' . $field;
+		if ( ! is_callable( array( $order, $getter ) ) ) {
+			return '';
+		}
+
+		$value = $order->$getter();
+		return is_scalar( $value ) ? sanitize_text_field( (string) $value ) : '';
+	}
+
+	/**
+	 * Resolve the current order destination before FFL extension mutation.
+	 *
+	 * @since 1.0.35
+	 *
+	 * @param \WC_Order $order Order object.
+	 * @return string
+	 */
+	private function get_order_destination( $order ) {
+		$destination = US_States::resolve_destination(
+			$this->get_order_address_value( $order, 'shipping', 'country' ),
+			$this->get_order_address_value( $order, 'shipping', 'state' )
+		);
+		if ( '' === $destination ) {
+			$destination = US_States::resolve_destination(
+				$this->get_order_address_value( $order, 'billing', 'country' ),
+				$this->get_order_address_value( $order, 'billing', 'state' )
+			);
+		}
+		return $destination;
+	}
+
+	/**
+	 * Check WooCommerce's country-specific state requirement.
+	 *
+	 * @since 1.0.35
+	 *
+	 * @param string $country WooCommerce country code.
+	 * @return bool
+	 */
+	private function is_state_required( $country ) {
+		if ( ! WC()->countries || ! is_callable( array( WC()->countries, 'get_address_fields' ) ) ) {
+			return false;
+		}
+		$fields = WC()->countries->get_address_fields( $country, 'shipping_' );
+		return ! empty( $fields['shipping_state']['required'] );
 	}
 
 	/**
@@ -539,6 +733,42 @@ class Store_Api_Extension {
 	}
 
 	/**
+	 * Enforce existing mixed-cart policy at both Store API validation boundaries.
+	 *
+	 * @since 1.0.35
+	 *
+	 * @param \WC_Order    $order    Order object.
+	 * @param Cart_Analyzer $analyzer Current cart analyzer.
+	 * @return void
+	 * @throws \Automattic\WooCommerce\StoreApi\Exceptions\RouteException Invalid mixed cart.
+	 */
+	private function validate_mixed_cart( $order, Cart_Analyzer $analyzer ) {
+		if ( $analyzer->is_firearms_regular_mixed() ) {
+			throw new \Automattic\WooCommerce\StoreApi\Exceptions\RouteException(
+				'ffl_regular_mixed',
+				__( 'Firearms must be shipped to an FFL dealer and cannot be combined with regular products.', 'automaticffl-for-wc' ),
+				400
+			);
+		}
+
+		if ( $analyzer->is_ammo_regular_mixed() ) {
+			$shipping_destination = $this->get_order_destination( $order );
+			if ( $analyzer->requires_ffl_for_state( $shipping_destination ) ) {
+				$state_name = US_States::get_name( $shipping_destination );
+				throw new \Automattic\WooCommerce\StoreApi\Exceptions\RouteException(
+					'ammo_regular_mixed_restricted',
+					sprintf(
+						/* translators: %s: state name */
+						__( 'Ammunition and regular products in your cart require separate orders for shipping to %s. Modify your cart.', 'automaticffl-for-wc' ),
+						$state_name
+					),
+					400
+				);
+			}
+		}
+	}
+
+	/**
 	 * Validate the order has FFL license if required.
 	 *
 	 * @param \WC_Order $order The order object.
@@ -556,44 +786,14 @@ class Store_Api_Extension {
 			return;
 		}
 
-		if ( $analyzer->is_firearms_regular_mixed() ) {
-			throw new \Automattic\WooCommerce\StoreApi\Exceptions\RouteException(
-				'ffl_regular_mixed',
-				__( 'Firearms must be shipped to an FFL dealer and cannot be combined with regular products.', 'automaticffl-for-wc' ),
-				400
-			);
-		}
-
-		// Ammo + regular mixed cart in restricted state - block checkout.
-		if ( $analyzer->is_ammo_regular_mixed() ) {
-			$shipping_destination = US_States::resolve_destination( $order->get_shipping_country(), $order->get_shipping_state() );
-			if ( empty( $shipping_destination ) ) {
-				$shipping_destination = US_States::resolve_destination( $order->get_billing_country(), $order->get_billing_state() );
-			}
-
-			if ( $analyzer->requires_ffl_for_state( $shipping_destination ) ) {
-				$state_name = US_States::get_name( $shipping_destination );
-
-				throw new \Automattic\WooCommerce\StoreApi\Exceptions\RouteException(
-					'ammo_regular_mixed_restricted',
-					sprintf(
-						/* translators: %s: state name */
-						__( 'Ammunition and regular products in your cart require separate orders for shipping to %s. Modify your cart.', 'automaticffl-for-wc' ),
-						$state_name
-					),
-					400
-				);
-			}
-		}
+		$this->validate_mixed_cart( $order, $analyzer );
 
 		// Firearms always need FFL
 		if ( $analyzer->has_firearms() ) {
-			$ffl_license = $order->get_meta( '_ffl_license_field' );
-
-			if ( empty( $ffl_license ) ) {
+			if ( ! $this->order_has_complete_selection( $order ) ) {
 				throw new \Automattic\WooCommerce\StoreApi\Exceptions\RouteException(
 					'ffl_dealer_required',
-					__( 'Please select an FFL dealer for your firearm order.', 'automaticffl-for-wc' ),
+					__( 'Please select a complete FFL dealer for your firearm order.', 'automaticffl-for-wc' ),
 					400
 				);
 			}
@@ -602,15 +802,13 @@ class Store_Api_Extension {
 
 		// Ammo only - check state restriction
 		if ( $analyzer->is_ammo_only() ) {
-			$shipping_destination = US_States::resolve_destination( $order->get_shipping_country(), $order->get_shipping_state() );
+			$shipping_destination = $this->get_order_destination( $order );
 
 			if ( $analyzer->requires_ffl_for_state( $shipping_destination ) ) {
-				$ffl_license = $order->get_meta( '_ffl_license_field' );
-
-				if ( empty( $ffl_license ) ) {
+				if ( ! $this->order_has_complete_selection( $order ) ) {
 					throw new \Automattic\WooCommerce\StoreApi\Exceptions\RouteException(
 						'ffl_dealer_required_ammo',
-						__( 'Please select an FFL dealer for ammunition shipping to this state.', 'automaticffl-for-wc' ),
+						__( 'Please select a complete FFL dealer for ammunition shipping to this state.', 'automaticffl-for-wc' ),
 						400
 					);
 				}

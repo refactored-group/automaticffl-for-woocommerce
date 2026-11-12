@@ -92,6 +92,7 @@ function affl_reset_test_state() {
 class WP_Error {
 	private $code;
 	private $message;
+	public $errors = array();
 
 	public function __construct( $code = '', $message = '' ) {
 		$this->code    = $code;
@@ -104,6 +105,30 @@ class WP_Error {
 
 	public function get_error_message() {
 		return $this->message;
+	}
+
+	public function add( $code, $message, $data = array() ) {
+		unset( $data );
+		$this->errors[ $code ][] = $message;
+	}
+
+	public function get_error_messages( $code = '' ) {
+		if ( '' !== $code ) {
+			return isset( $this->errors[ $code ] ) ? $this->errors[ $code ] : array();
+		}
+		$messages = array();
+		foreach ( $this->errors as $items ) {
+			$messages = array_merge( $messages, $items );
+		}
+		return $messages;
+	}
+
+	public function get_error_codes() {
+		return array_keys( $this->errors );
+	}
+
+	public function remove( $code ) {
+		unset( $this->errors[ $code ] );
 	}
 }
 
@@ -310,8 +335,21 @@ function sanitize_text_field( $value ) {
 	return trim( preg_replace( '/[\r\n\t]+/', ' ', strip_tags( (string) $value ) ) );
 }
 
+function sanitize_email( $value ) {
+	return filter_var( (string) $value, FILTER_SANITIZE_EMAIL );
+}
+
+function absint( $value ) {
+	return abs( (int) $value );
+}
+
 function __( $text, $domain = null ) {
 	unset( $domain );
+	return $text;
+}
+
+function _x( $text, $context, $domain = null ) {
+	unset( $context, $domain );
 	return $text;
 }
 

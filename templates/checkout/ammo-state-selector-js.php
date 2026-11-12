@@ -164,6 +164,21 @@ jQuery(document).ready(function($) {
 	}
 
 	/**
+	 * Remove the dealer-required checkout banner once the current destination
+	 * no longer requires an FFL or the shopper has completed the selection.
+	 */
+	function clearDealerRequiredCheckoutError() {
+		$('.automaticffl-checkout-error').remove();
+		$('.woocommerce-error [data-id="ffl_dealer_required"]').each(function() {
+			var $notice = $(this).closest('.woocommerce-error');
+			$(this).remove();
+			if ($notice.find('li').length === 0) {
+				$notice.remove();
+			}
+		});
+	}
+
+	/**
 	 * Show the standard WooCommerce shipping address fields.
 	 * The WooCommerce heading is always hidden (our custom h3 replaces it).
 	 */
@@ -211,6 +226,7 @@ jQuery(document).ready(function($) {
 		// only thing that empties it — so the lock self-clears when a future
 		// "Change Dealer" flow explicitly resets state.
 		if (dealerSelected) {
+			clearDealerRequiredCheckoutError();
 			hideShippingForm();
 			moveFieldsIntoFFLContainer();
 			$messageContainer.empty().hide();
@@ -220,6 +236,7 @@ jQuery(document).ready(function($) {
 		}
 
 		if (!state) {
+			clearDealerRequiredCheckoutError();
 			// No state selected yet: prompt, full shipping form visible.
 			showShippingForm();
 			restoreFieldsToOriginalPosition();
@@ -241,6 +258,7 @@ jQuery(document).ready(function($) {
 			$fflContainer.show();
 			fflRequired = true;
 		} else {
+			clearDealerRequiredCheckoutError();
 			// Unrestricted state: restore the full shipping form and drop
 			// any previously-selected dealer so the customer ships to their
 			// own address.
@@ -303,6 +321,7 @@ jQuery(document).ready(function($) {
 			if (fflRequired) {
 				$('#automaticffl-state-message').hide();
 			}
+			clearDealerRequiredCheckoutError();
 		}
 	});
 

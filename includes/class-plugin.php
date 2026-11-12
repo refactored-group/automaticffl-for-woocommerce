@@ -159,9 +159,8 @@ class Plugin {
 		// Load map experience (firearms flow only — ammo-only handled above).
 		add_action( 'woocommerce_after_checkout_shipping_form', array( Checkout::class, 'get_ffl' ) );
 		add_action( 'woocommerce_after_order_notes', array( Checkout::class, 'get_ffl' ), 5 );
-		add_action('woocommerce_after_order_notes', array(Checkout::class, 'add_automaticffl_checkout_field'));
-		add_action('woocommerce_checkout_update_order_meta', array(Checkout::class, 'after_checkout_create_order'), 20, 2);
-		add_action('woocommerce_checkout_update_order_meta', array(Checkout::class, 'save_automaticffl_checkout_field_value'));
+		add_action( 'woocommerce_checkout_create_order', array( Checkout::class, 'save_automaticffl_checkout_fields' ), 90, 2 );
+		add_action( 'woocommerce_checkout_update_order_meta', array( Checkout::class, 'after_checkout_create_order' ), 20, 2 );
 		add_action('wp_enqueue_scripts', array($this, 'automaticffl_enqueue'));
 
 		// AJAX handler for cart state selection (ammo + regular mixed carts).
@@ -189,8 +188,10 @@ class Plugin {
 		// Validate checkout for ammo + regular mixed carts in restricted states.
 		add_action( 'woocommerce_checkout_process', array( $this, 'validate_ammo_regular_checkout' ) );
 
-		// Validate mixed firearm carts, FFL license, and shipping name.
-		add_action( 'woocommerce_checkout_process', array( $this, 'validate_ffl_checkout' ) );
+		// Keep current dealer shipping in normalized checkout data before a
+		// gateway snapshots it, then validate that complete normalized payload.
+		add_filter( 'woocommerce_checkout_posted_data', array( $this, 'normalize_classic_ffl_checkout_data' ) );
+		add_action( 'woocommerce_after_checkout_validation', array( $this, 'validate_classic_ffl_checkout_data' ), 999, 2 );
 
 		// Restore persistent shipping before a fresh eligible ammo checkout so neither
 		// Classic nor Blocks can start from a stale dealer destination in the session.
@@ -262,6 +263,175 @@ class Plugin {
 				.note_content p { margin-bottom: 10px !important; }
 			</style>';
 		});
+	}
+
+	/**
+	 * Preserve a current Classic dealer selection in WooCommerce's normalized data.
+	 *
+	 * WooCommerce copies billing into shipping when the different-address toggle is
+	 * absent or the store is billing-only. Read the submitted dealer fields once at
+	 * this authenticated collection boundary so gateways snapshot the dealer rather
+	 * than the customer's billing address.
+	 *
+	 * @since 1.0.35
+	 *
+	 * @param array $data Normalized WooCommerce checkout data.
+	 * @return array
+	 */
+	public function normalize_classic_ffl_checkout_data( $data ) {
+		if ( ! is_array( $data ) ) {
+			return $data;
+		}
+
+		$selection_fields = array(
+			'ffl_dealer_id',
+			'ffl_license_field',
+			'ffl_expiration_date',
+			'ffl_uuid',
+			'ffl_company_name',
+		);
+		$has_current_selection = false;
+
+		foreach ( $selection_fields as $field ) {
+			$value = self::get_posted_checkout_field_value( $field );
+			if ( '' === $value && array_key_exists( $field, $data ) ) {
+				$value = self::sanitize_checkout_value( $data[ $field ] );
+			}
+			$data[ $field ] = $value;
+			if ( '' !== $value ) {
+				$has_current_selection = true;
+			}
+		}
+
+		if ( ! $has_current_selection ) {
+			return $data;
+		}
+
+		foreach ( self::SHIPPING_FIELDS as $field ) {
+			$key          = 'shipping_' . $field;
+			$data[ $key ] = self::get_posted_checkout_field_value( $key );
+		}
+
+		if ( '' === $data['shipping_first_name'] ) {
+			$data['shipping_first_name'] = self::get_checkout_field_value( $data, 'billing_first_name' );
+		}
+		if ( '' === $data['shipping_last_name'] ) {
+			$data['shipping_last_name'] = self::get_checkout_field_value( $data, 'billing_last_name' );
+		}
+		if ( '' !== $data['ffl_company_name'] ) {
+			$data['shipping_company'] = $data['ffl_company_name'];
+		}
+
+		$destination = US_States::to_woocommerce_destination(
+			$data['shipping_country'],
+			$data['shipping_state']
+		);
+		$data['shipping_country'] = $destination['country'];
+		$data['shipping_state']   = $destination['state'];
+
+		return $data;
+	}
+
+	/**
+	 * Validate one complete current dealer in normalized Classic checkout data.
+	 *
+	 * @since 1.0.35
+	 *
+	 * @param array     $data   Normalized checkout data.
+	 * @param \WP_Error $errors WooCommerce validation errors.
+	 * @return void
+	 */
+	public function validate_classic_ffl_checkout_data( $data, $errors ) {
+		if ( ! is_array( $data ) || ! is_object( $errors ) || ! is_callable( array( $errors, 'add' ) ) ) {
+			return;
+		}
+
+		$analyzer = new Cart_Analyzer();
+		if ( $analyzer->has_api_error() ) {
+			return;
+		}
+
+		if ( $analyzer->is_firearms_regular_mixed() ) {
+			$errors->add(
+				'ffl_regular_mixed',
+				__( 'Firearms must be shipped to an FFL dealer and cannot be combined with regular products.', 'automaticffl-for-wc' )
+			);
+			return;
+		}
+
+		$current_selection_started = false;
+		foreach ( array( 'ffl_dealer_id', 'ffl_license_field', 'ffl_company_name', 'ffl_expiration_date', 'ffl_uuid' ) as $field ) {
+			if ( '' !== self::get_supplied_checkout_field_value( $data, $field ) ) {
+				$current_selection_started = true;
+				break;
+			}
+		}
+
+		$requires_dealer = $analyzer->has_firearms() || $current_selection_started;
+		if ( ! $requires_dealer && $analyzer->is_ammo_only() ) {
+			$destination = US_States::resolve_destination(
+				self::get_supplied_checkout_field_value( $data, 'shipping_country' ),
+				self::get_supplied_checkout_field_value( $data, 'shipping_state' )
+			);
+			$requires_dealer = $analyzer->requires_ffl_for_state( $destination );
+		}
+
+		if ( ! $requires_dealer ) {
+			return;
+		}
+
+		$dealer_id = self::get_supplied_checkout_field_value( $data, 'ffl_dealer_id' );
+		$required  = array(
+			'ffl_license_field',
+			'ffl_company_name',
+			'shipping_address_1',
+			'shipping_city',
+			'shipping_postcode',
+			'shipping_country',
+		);
+		$complete  = 0 < absint( $dealer_id );
+
+		foreach ( $required as $field ) {
+			if ( '' === self::get_supplied_checkout_field_value( $data, $field ) ) {
+				$complete = false;
+			}
+		}
+
+		$first_name = self::get_supplied_checkout_field_value( $data, 'shipping_first_name' );
+		$last_name  = self::get_supplied_checkout_field_value( $data, 'shipping_last_name' );
+		if ( '' === $first_name ) {
+			$first_name = self::get_supplied_checkout_field_value( $data, 'billing_first_name' );
+		}
+		if ( '' === $last_name ) {
+			$last_name = self::get_supplied_checkout_field_value( $data, 'billing_last_name' );
+		}
+		if ( '' === $first_name || '' === $last_name ) {
+			$complete = false;
+		}
+
+		$country = self::get_supplied_checkout_field_value( $data, 'shipping_country' );
+		if ( WC()->countries && is_callable( array( WC()->countries, 'get_address_fields' ) ) ) {
+			$address_fields = WC()->countries->get_address_fields( $country, 'shipping_' );
+			if ( ! empty( $address_fields['shipping_state']['required'] ) && '' === self::get_supplied_checkout_field_value( $data, 'shipping_state' ) ) {
+				$complete = false;
+			}
+		}
+
+		if ( ! $complete ) {
+			// WooCommerce validates the hidden dealer shipping fields before this
+			// conditional validator runs. When a dealer is required, replace those
+			// implementation-detail errors (and any other errors from this attempt)
+			// with one actionable next step. A later submission with a complete
+			// dealer will expose any remaining ordinary checkout errors normally.
+			foreach ( $errors->get_error_codes() as $error_code ) {
+				$errors->remove( $error_code );
+			}
+			$errors->add(
+				'ffl_dealer_required',
+				__( 'Please select a complete FFL dealer for this order.', 'automaticffl-for-wc' ),
+				array( 'id' => 'ffl_dealer_required' )
+			);
+		}
 	}
 
 	/**
@@ -350,11 +520,12 @@ class Plugin {
 	 * @return void
 	 */
 	public function override_classic_ffl_shipping_address( $order, $data ) {
-		if ( ! self::should_handle_posted_ffl_order() ) {
+		$data = is_array( $data ) ? $data : array();
+		if ( empty( $data['ffl_license_field'] ) ) {
 			return;
 		}
 
-		self::set_order_shipping_from_posted_ffl_dealer( $order, is_array( $data ) ? $data : array() );
+		self::set_order_shipping_from_ffl_checkout_data( $order, $data );
 	}
 
 	/**
@@ -378,17 +549,18 @@ class Plugin {
 			return;
 		}
 
-		if ( empty( $order->get_meta( '_ffl_license_field' ) ) && ! self::has_posted_ffl_selection() ) {
+		if ( empty( $order->get_meta( '_ffl_license_field' ) ) ) {
 			return;
 		}
 
 		$posted_data = is_array( $posted_data ) ? $posted_data : array();
+		if ( '' === self::get_supplied_checkout_field_value( $posted_data, 'ffl_license_field' ) ) {
+			return;
+		}
 
 		self::set_order_billing_from_checkout_data( $order, $posted_data );
 
-		if ( self::has_posted_ffl_selection() ) {
-			self::set_order_shipping_from_posted_ffl_dealer( $order, $posted_data );
-		}
+		self::set_order_shipping_from_ffl_checkout_data( $order, $posted_data );
 
 		$order->save();
 		$this->clear_ffl_destination_session();
@@ -836,34 +1008,6 @@ class Plugin {
 	}
 
 	/**
-	 * Determine whether the current classic checkout post contains a selected FFL dealer.
-	 *
-	 * @since 1.0.22
-	 *
-	 * @return bool
-	 */
-	private static function has_posted_ffl_selection() {
-		// phpcs:ignore WordPress.Security.NonceVerification.Missing -- WooCommerce verifies the checkout nonce before these hooks run.
-		return ! empty( $_POST['ffl_license_field'] );
-	}
-
-	/**
-	 * Determine whether the current classic checkout should receive FFL address handling.
-	 *
-	 * @since 1.0.22
-	 *
-	 * @return bool
-	 */
-	private static function should_handle_posted_ffl_order() {
-		if ( ! self::has_posted_ffl_selection() ) {
-			return false;
-		}
-
-		$analyzer = new Cart_Analyzer();
-		return $analyzer->has_ffl_products() && ! $analyzer->is_mixed_ffl_regular();
-	}
-
-	/**
 	 * Set order billing fields from WooCommerce checkout data.
 	 *
 	 * @since 1.0.22
@@ -893,7 +1037,7 @@ class Plugin {
 				continue;
 			}
 
-			$value  = self::get_checkout_field_value( $data, $key );
+			$value  = self::get_supplied_checkout_field_value( $data, $key );
 			$setter = 'set_billing_' . $field;
 			if ( is_callable( array( $order, $setter ) ) ) {
 				$order->$setter( 'email' === $field ? sanitize_email( $value ) : $value );
@@ -910,25 +1054,25 @@ class Plugin {
 	 * @param array     $data  Posted checkout data.
 	 * @return void
 	 */
-	private static function set_order_shipping_from_posted_ffl_dealer( $order, array $data ) {
-		$shipping_first_name = self::get_posted_checkout_field_value( 'shipping_first_name' );
+	private static function set_order_shipping_from_ffl_checkout_data( $order, array $data ) {
+		$shipping_first_name = self::get_supplied_checkout_field_value( $data, 'shipping_first_name' );
 		if ( '' === $shipping_first_name ) {
-			$shipping_first_name = self::get_checkout_field_value( $data, 'billing_first_name' );
+			$shipping_first_name = self::get_supplied_checkout_field_value( $data, 'billing_first_name' );
 		}
 
-		$shipping_last_name = self::get_posted_checkout_field_value( 'shipping_last_name' );
+		$shipping_last_name = self::get_supplied_checkout_field_value( $data, 'shipping_last_name' );
 		if ( '' === $shipping_last_name ) {
-			$shipping_last_name = self::get_checkout_field_value( $data, 'billing_last_name' );
+			$shipping_last_name = self::get_supplied_checkout_field_value( $data, 'billing_last_name' );
 		}
 
-		$shipping_company = self::get_posted_checkout_field_value( 'ffl_company_name' );
+		$shipping_company = self::get_supplied_checkout_field_value( $data, 'ffl_company_name' );
 		if ( '' === $shipping_company ) {
-			$shipping_company = self::get_posted_checkout_field_value( 'shipping_company' );
+			$shipping_company = self::get_supplied_checkout_field_value( $data, 'shipping_company' );
 		}
 
 		$destination = US_States::to_woocommerce_destination(
-			self::get_posted_checkout_field_value( 'shipping_country' ),
-			self::get_posted_checkout_field_value( 'shipping_state' )
+			self::get_supplied_checkout_field_value( $data, 'shipping_country' ),
+			self::get_supplied_checkout_field_value( $data, 'shipping_state' )
 		);
 
 		$shipping_values = array(
@@ -936,12 +1080,12 @@ class Plugin {
 			'last_name'  => $shipping_last_name,
 			'company'    => $shipping_company,
 			'country'    => $destination['country'],
-			'address_1'  => self::get_posted_checkout_field_value( 'shipping_address_1' ),
-			'address_2'  => self::get_posted_checkout_field_value( 'shipping_address_2' ),
-			'city'       => self::get_posted_checkout_field_value( 'shipping_city' ),
+			'address_1'  => self::get_supplied_checkout_field_value( $data, 'shipping_address_1' ),
+			'address_2'  => self::get_supplied_checkout_field_value( $data, 'shipping_address_2' ),
+			'city'       => self::get_supplied_checkout_field_value( $data, 'shipping_city' ),
 			'state'      => $destination['state'],
-			'postcode'   => self::get_posted_checkout_field_value( 'shipping_postcode' ),
-			'phone'      => self::get_posted_checkout_field_value( 'shipping_phone' ),
+			'postcode'   => self::get_supplied_checkout_field_value( $data, 'shipping_postcode' ),
+			'phone'      => self::get_supplied_checkout_field_value( $data, 'shipping_phone' ),
 		);
 
 		foreach ( $shipping_values as $field => $value ) {
@@ -1007,12 +1151,7 @@ class Plugin {
 	 * @return bool
 	 */
 	private static function checkout_data_has_field( array $data, $key ) {
-		if ( array_key_exists( $key, $data ) ) {
-			return true;
-		}
-
-		// phpcs:ignore WordPress.Security.NonceVerification.Missing -- WooCommerce verifies the checkout nonce before these hooks run.
-		return isset( $_POST[ $key ] );
+		return array_key_exists( $key, $data );
 	}
 
 	/**
@@ -1030,6 +1169,23 @@ class Plugin {
 		}
 
 		return self::get_posted_checkout_field_value( $key );
+	}
+
+	/**
+	 * Read and sanitize only data explicitly supplied by WooCommerce.
+	 *
+	 * Stored gateway snapshots and asynchronous order creation do not have the
+	 * original browser request. Validation and order projection must therefore
+	 * never fill missing snapshot fields from an unrelated current POST.
+	 *
+	 * @since 1.0.35
+	 *
+	 * @param array  $data Checkout data.
+	 * @param string $key  Field key.
+	 * @return string
+	 */
+	private static function get_supplied_checkout_field_value( array $data, $key ) {
+		return array_key_exists( $key, $data ) ? self::sanitize_checkout_value( $data[ $key ] ) : '';
 	}
 
 	/**

@@ -181,87 +181,51 @@ class Checkout {
 		<?php
 	}
 
-	public static function add_automaticffl_checkout_field($checkout) {
-		if ( self::needs_ffl_checkout() ) {
-			$analyzer = self::get_analyzer();
-			woocommerce_form_field('ffl_dealer_id', array(
-				'type' => 'hidden',
-				'class' => array('hidden'),
-				'label' => __('FFL Dealer ID', 'automaticffl-for-wc'),
-				'required' => false,
-			), $checkout->get_value('ffl_dealer_id'));
-
-			woocommerce_form_field('ffl_license_field', array(
-				'type' => 'hidden',
-				'class' => array('hidden'),
-				'label' => __('FFL License', 'automaticffl-for-wc'),
-				'placeholder' => __('FFL License', 'automaticffl-for-wc'),
-				'required' => $analyzer->has_firearms(),
-			), $checkout->get_value('ffl_license_field'));
-
-			// Hidden field for FFL expiration date.
-			woocommerce_form_field('ffl_expiration_date', array(
-				'type' => 'hidden',
-				'class' => array('hidden'),
-				'label' => __('FFL Expiration Date', 'automaticffl-for-wc'),
-				'required' => false,
-			), $checkout->get_value('ffl_expiration_date'));
-
-			// Hidden field for FFL UUID (for certificate link).
-			woocommerce_form_field('ffl_uuid', array(
-				'type' => 'hidden',
-				'class' => array('hidden'),
-				'label' => __('FFL UUID', 'automaticffl-for-wc'),
-				'required' => false,
-			), $checkout->get_value('ffl_uuid'));
-
-			// Hidden field for FFL dealer company name.
-			woocommerce_form_field('ffl_company_name', array(
-				'type' => 'hidden',
-				'class' => array('hidden'),
-				'label' => __('FFL Company Name', 'automaticffl-for-wc'),
-				'required' => false,
-			), $checkout->get_value('ffl_company_name'));
+	/**
+	 * Save native FFL checkout data before the order is first persisted.
+	 *
+	 * The supplied data may come from a stored gateway snapshot, so this method
+	 * deliberately has no dependency on the current browser POST or nonce.
+	 * Authentication remains the responsibility of the checkout entry point.
+	 *
+	 * @since 1.0.35
+	 *
+	 * @param \WC_Order $order Order being created.
+	 * @param array     $data  Normalized checkout data.
+	 * @return void
+	 */
+	public static function save_automaticffl_checkout_fields( $order, $data ) {
+		if ( ! is_array( $data ) || ! isset( $data['ffl_license_field'] ) || ! is_scalar( $data['ffl_license_field'] ) ) {
+			return;
 		}
-	}
+		$ffl_license = sanitize_text_field( (string) $data['ffl_license_field'] );
+		if ( '' === $ffl_license ) {
+			return;
+		}
 
-	public static function save_automaticffl_checkout_field_value($order_id) {
-		// Verify WooCommerce checkout nonce (defense-in-depth; WC_Checkout::process_checkout() also checks).
-		if ( ! isset( $_POST['woocommerce-process-checkout-nonce'] )
-			|| ! wp_verify_nonce( sanitize_text_field( wp_unslash( $_POST['woocommerce-process-checkout-nonce'] ) ), 'woocommerce-process_checkout' )
+		$dealer_id = isset( $data['ffl_dealer_id'] ) && is_scalar( $data['ffl_dealer_id'] )
+			? absint( $data['ffl_dealer_id'] )
+			: 0;
+		if ( $dealer_id ) {
+			$order->update_meta_data( '_ffl_dealer_id', $dealer_id );
+		}
+
+		$order->update_meta_data( '_ffl_license_field', $ffl_license );
+
+		foreach (
+			array(
+				'ffl_expiration_date' => '_ffl_expiration_date',
+				'ffl_uuid'            => '_ffl_uuid',
+			) as $field => $meta_key
 		) {
-			return;
-		}
-
-		$order = wc_get_order( $order_id );
-		if ( ! $order ) {
-			return;
-		}
-
-		$updated = false;
-
-		if ( ! empty( $_POST['ffl_dealer_id'] ) ) {
-			$dealer_id = absint( wp_unslash( $_POST['ffl_dealer_id'] ) );
-			if ( $dealer_id ) {
-				$order->update_meta_data( '_ffl_dealer_id', $dealer_id );
-				$updated = true;
+			$value = isset( $data[ $field ] ) && is_scalar( $data[ $field ] )
+				? sanitize_text_field( (string) $data[ $field ] )
+				: '';
+			if ( '' === $value ) {
+				$order->delete_meta_data( $meta_key );
+			} else {
+				$order->update_meta_data( $meta_key, $value );
 			}
-		}
-		if ( ! empty( $_POST['ffl_license_field'] ) ) {
-			$order->update_meta_data( '_ffl_license_field', sanitize_text_field( wp_unslash( $_POST['ffl_license_field'] ) ) );
-			$updated = true;
-		}
-		if ( ! empty( $_POST['ffl_expiration_date'] ) ) {
-			$order->update_meta_data( '_ffl_expiration_date', sanitize_text_field( wp_unslash( $_POST['ffl_expiration_date'] ) ) );
-			$updated = true;
-		}
-		if ( ! empty( $_POST['ffl_uuid'] ) ) {
-			$order->update_meta_data( '_ffl_uuid', sanitize_text_field( wp_unslash( $_POST['ffl_uuid'] ) ) );
-			$updated = true;
-		}
-
-		if ( $updated ) {
-			$order->save();
 		}
 	}
 
@@ -287,6 +251,42 @@ class Checkout {
 	public static function automaticffl_custom_fields( $fields ) {
 		if ( self::needs_ffl_checkout() ) {
 			$analyzer = self::get_analyzer();
+			$fields['order'] = isset( $fields['order'] ) && is_array( $fields['order'] ) ? $fields['order'] : array();
+			$fields['order'] = array_merge(
+				$fields['order'],
+				array(
+					'ffl_dealer_id'       => array(
+						'type'     => 'hidden',
+						'class'    => array( 'hidden' ),
+						'label'    => __( 'FFL Dealer ID', 'automaticffl-for-wc' ),
+						'required' => false,
+					),
+					'ffl_license_field'   => array(
+						'type'     => 'hidden',
+						'class'    => array( 'hidden' ),
+						'label'    => __( 'FFL License', 'automaticffl-for-wc' ),
+						'required' => false,
+					),
+					'ffl_expiration_date' => array(
+						'type'     => 'hidden',
+						'class'    => array( 'hidden' ),
+						'label'    => __( 'FFL Expiration Date', 'automaticffl-for-wc' ),
+						'required' => false,
+					),
+					'ffl_uuid'            => array(
+						'type'     => 'hidden',
+						'class'    => array( 'hidden' ),
+						'label'    => __( 'FFL Certificate UUID', 'automaticffl-for-wc' ),
+						'required' => false,
+					),
+					'ffl_company_name'    => array(
+						'type'     => 'hidden',
+						'class'    => array( 'hidden' ),
+						'label'    => __( 'FFL Company Name', 'automaticffl-for-wc' ),
+						'required' => false,
+					),
+				)
+			);
 			// Only replace shipping_phone with hidden "Dealer Phone" for firearms carts.
 			// Ammo-only carts keep the standard shipping form (including phone) visible
 			// so the state field can drive FFL requirement detection.
